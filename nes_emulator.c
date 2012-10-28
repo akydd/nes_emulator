@@ -48,23 +48,46 @@ void adc_imm()
 {
 	S++;
 	uint8_t imm = memory[S];
+	imm += (P & C_FLAG);
+	uint8_t sum = A + imm;
+
+	add_set_c_flag(A, imm);
+	add_set_v_flag(A, imm, sum);
+
+	A = sum;
+
 	S++;
 }
 
 /*
  * Determine if the carry flag should be set when adding a and b.
  */
-void adc_set_c_flag(uint8_t a, uint8_t b)
+void add_set_c_flag(uint8_t a, uint8_t b)
 {
 	/* if carry flag is zero, check if a + b > 0xff.
 	 * Otherwise, check if a + b >= 0xff. */
 	if (P & C_FLAG == 0) {
-		if(a > 0Xff - b) {
+		if(a > 0xff - b) {
 			P |= C_FLAG;
 		}
 	} else {
 		if (a >= 0xff - b) {
 			P |= C_FLAG;
 		}
+	}
+}
+
+/*
+ * Determine if the overflow flag should be set after adding a and b.
+ */
+void add_set_v_flag(uint8_t a, uint8_t b, uint8_t sum)
+{
+	int overflow = 0;
+	if((((a|b) ^ 0x80) & 0x80) == 0x80) {
+		overflow = 1;
+	}
+
+	if((overflow == 1) ^ ((P & C_FLAG) == C_FLAG)) {
+		P |= V_FLAG;
 	}
 }
