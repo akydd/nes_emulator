@@ -46,18 +46,92 @@ int main(void)
 
 void adc_imm()
 {
-	S++;
-	uint8_t imm = memory[S];
-	imm += (P & C_FLAG);
-	uint8_t sum = A + imm;
+	PC++;
+	uint16_t addr = PC;
+	uint8_t val = memory[addr];
+	val += (P & C_FLAG);
+	uint8_t sum = A + val;
 
-	add_set_c_flag(A, imm);
-	add_set_v_flag(A, imm, sum);
+	add_set_c_flag(A, val);
+	add_set_v_flag(A, val, sum);
 
 	A = sum;
 
-	S++;
+	PC++;
 }
+
+void adc_zero()
+{
+	PC++;
+	uint16_t addr = memory[PC];
+	uint8_t val = memory[addr];
+	val += (P & C_FLAG);
+	uint8_t sum = A + val;
+
+	add_set_c_flag(A, val);
+	add_set_v_flag(A, val, sum);
+
+	A = sum;
+
+	PC++;
+}
+
+void adc_zero_x()
+{
+	PC++;
+	uint16_t addr = memory[PC] + X;
+	uint8_t val = memory[addr];
+	val += (P & C_FLAG);
+	uint8_t sum = A + val;
+
+	add_set_c_flag(A, val);
+	add_set_v_flag(A, val, sum);
+
+	A = sum;
+
+	PC++;
+}
+
+void adc_abs()
+{
+	PC++;
+	uint16_t addr = memory[PC];
+	addr = addr << 8;
+	PC++;
+	addr |= memory[PC];
+
+	uint8_t val = memory[addr];
+	val += (P & C_FLAG);
+	uint8_t sum = A + val;
+
+	add_set_c_flag(A, val);
+	add_set_v_flag(A, val, sum);
+
+	A = sum;
+
+	PC++;
+}
+
+void adc_abs_x()
+{
+	PC++;
+	uint16_t addr = memory[PC];
+	addr = addr << 8;
+	PC++;
+	addr |= memory[PC];
+
+	uint8_t val = memory[addr + X];
+	val += (P & C_FLAG);
+	uint8_t sum = A + val;
+
+	add_set_c_flag(A, val);
+	add_set_v_flag(A, val, sum);
+
+	A = sum;
+
+	PC++;
+}
+
 
 /*
  * Determine if the carry flag should be set when adding a and b.
@@ -66,7 +140,7 @@ void add_set_c_flag(uint8_t a, uint8_t b)
 {
 	/* if carry flag is zero, check if a + b > 0xff.
 	 * Otherwise, check if a + b >= 0xff. */
-	if (P & C_FLAG == 0) {
+	if ((P & C_FLAG) == 0) {
 		if(a > 0xff - b) {
 			P |= C_FLAG;
 		}
