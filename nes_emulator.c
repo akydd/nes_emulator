@@ -157,7 +157,7 @@ void add_set_c_flag(uint8_t a, uint8_t b)
 void add_set_v_flag(uint8_t a, uint8_t b, uint8_t sum)
 {
 	int overflow = 0;
-	if((((a|b) ^ 0x80) & 0x80) == 0x80) {
+	if((((a|b) ^ sum) & 0x80) == 0x80) {
 		overflow = 1;
 	}
 
