@@ -119,7 +119,7 @@ void process_code(uint8_t code)
 
 void process_00_code(uint8_t code)
 {
-	static void (* const pf[]) (uint8_t) = {
+	static void (* const i_00[]) (uint8_t) = {
 		&nul, &bit, &jmp, &jmp_abs, &sty, &ldy, &cpy, &cpx
 	};
 
@@ -127,14 +127,14 @@ void process_00_code(uint8_t code)
 	uint8_t aaa = (code>>5) & 0x07;
 	uint8_t bbb = (code>>2) & 0x07;
 
-	if(aaa < sizeof(pf) / sizeof(*pf)) {
-		pf[aaa](bbb);
+	if(aaa < sizeof(i_00) / sizeof(*i_00)) {
+		i_00[aaa](bbb);
 	}
 }
 
 void process_01_code(uint8_t code)
 {
-	static void (* const pf[]) (uint8_t) = {
+	static void (* const i_01[]) (uint8_t) = {
 		&ora, &and, &eor, &adc, &sta, &lda, &cmp, &sbc
 	};
 
@@ -142,14 +142,14 @@ void process_01_code(uint8_t code)
 	uint8_t aaa = (code>>5) & 0x07;
 	uint8_t bbb = (code>>2) & 0x07;
 
-	if(aaa < sizeof(pf) / sizeof(*pf)) {
-		pf[aaa](bbb);
+	if(aaa < sizeof(i_01) / sizeof(*i_01)) {
+		i_01[aaa](bbb);
 	}
 }
 
 void process_10_code(uint8_t code)
 {
-	static void (* const pf[]) (uint8_t) = {
+	static void (* const i_10[]) (uint8_t) = {
 		&asl, &rol, &lsr, &ror, &stx, &ldx, &dec, &inc
 	};
 
@@ -157,8 +157,8 @@ void process_10_code(uint8_t code)
 	uint8_t aaa = (code>>5) & 0x07;
 	uint8_t bbb = (code>>2) & 0x07;
 
-	if(aaa < sizeof(pf) / sizeof(*pf)) {
-		pf[aaa](bbb);
+	if(aaa < sizeof(i_10) / sizeof(*i_10)) {
+		i_10[aaa](bbb);
 	}
 }
 /* 
@@ -405,6 +405,28 @@ void cmp(uint8_t mode)
 	} else {
 		P |= Z_FLAG;
 	}
+
+	PC++;
+}
+
+void sbc(uint8_t mode)
+{
+	PC++;
+
+	uint8_t val = read_addr_mode_01(mode);
+	uint8_t diff = A - val;
+	if ((P & C_FLAG) == 0) {
+		diff--;
+	}
+
+	/* TODO: figure these out 
+	add_set_carry_flag(A, val);
+	add_set_overflow_flag(A, val, sum);
+	*/
+	set_negative_flag(diff);
+	set_zero_flag(diff);
+
+	A = diff;
 
 	PC++;
 }
