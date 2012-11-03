@@ -25,12 +25,20 @@ void add_set_carry_flag(uint8_t, uint8_t);
 void add_set_overflow_flag(uint8_t, uint8_t, uint8_t);
 void set_zero_flag(uint8_t);
 void set_negative_flag(uint8_t);
+void set_overflow_flag(uint8_t);
 /* processing instruction sets */
 void process_code(uint8_t);
 void process_00_code(uint8_t);
 void process_01_code(uint8_t);
 void process_10_code(uint8_t);
 /* instructions */
+void bit(uint8_t);
+void jmp(uint8_t);
+void jmp_abs(uint8_t);
+void sty(uint8_t);
+void ldy(uint8_t);
+void cpy(uint8_t);
+void cpx(uint8_t);
 void nul(uint8_t);
 void ora(uint8_t);
 void and(uint8_t);
@@ -41,6 +49,7 @@ void lda(uint8_t);
 void cmp(uint8_t);
 void sbc(uint8_t);
 /* addressing modes */
+uint16_t get_relative(void);
 uint16_t get_accumulator(void);
 uint16_t get_zero_page_indirect_index_y(void);
 uint16_t get_zero(void);
@@ -70,7 +79,6 @@ uint8_t P = 0;	/* processor status flags */
 #define V_FLAG 1<<6
 #define N_FLAG 1<<7
 
-#define N_TEST 1<<7
 
 int main(void)
 {
@@ -117,6 +125,9 @@ void process_code(uint8_t code)
 	}
 }
 
+/* 
+ * Instructions in the 00 instruction set
+ */
 void process_00_code(uint8_t code)
 {
 	static void (* const i_00[]) (uint8_t) = {
@@ -132,6 +143,9 @@ void process_00_code(uint8_t code)
 	}
 }
 
+/*
+ * Instructions in the 01 instruction set
+ */
 void process_01_code(uint8_t code)
 {
 	static void (* const i_01[]) (uint8_t) = {
@@ -147,6 +161,9 @@ void process_01_code(uint8_t code)
 	}
 }
 
+/*
+ * Instructions in the 10 instruction set
+ */
 void process_10_code(uint8_t code)
 {
 	static void (* const i_10[]) (uint8_t) = {
@@ -166,6 +183,20 @@ void process_10_code(uint8_t code)
  * This mode determines which value gets used in the computation, so these
  * functions can be reused for all instructions.
  */
+
+/*
+ * Relative mode converts the byte at the counter to a signed 8 bit int.
+ */
+uint16_t get_relative()
+{
+	int8_t offset = memory[PC];
+	/* Had to do some trickery here, as I don't increment the PC
+	 * properly. In the real CPU, the PC would already have been
+	 * incremented past the instruction that uses relative addressing.
+	 * That's why I add 1 to the return value. */
+	int16_t addr = (int16_t)PC + offset;
+	return (uint16_t)addr + 1;
+}
 
 /*
  * Accumulator mode return the value in the accumulator
@@ -197,31 +228,31 @@ uint16_t get_absolute()
 }
 
 /*
- * Zero Page mode returns the address given by the operand
+ * Zero Page mode returns the address given by the operand, mod 0xFF.
  */
 uint16_t get_zero()
 {
-	uint16_t addr = (uint16_t)memory[PC];
+	uint16_t addr = (uint16_t)(memory[PC] % 0xFF);
 	return addr;
 }
 
 /*
  * Zero Page index with X mode returns the address given by the sum
- * of the operand and X.
+ * of the operand and X, mod 0xFF.
  */
 uint16_t get_zero_x()
 {
-	uint16_t addr = (uint16_t)memory[PC] + X;
+	uint16_t addr = (uint16_t)((memory[PC] + X) % 0xFF);
 	return addr;
 }
 
 /*
  * Zero Page index with Y mode returns the address given by the sum
- * of the operand and Y.
+ * of the operand and Y, mod 0xFF
  */
 uint16_t get_zero_y()
 {
-	uint16_t addr = (uint16_t)memory[PC] + Y;
+	uint16_t addr = (uint16_t)((memory[PC] + Y) % 0xFF);
 	return addr;
 }
 
@@ -275,7 +306,16 @@ uint8_t read_addr_mode_01(uint8_t mode)
 	if(mode < sizeof(pf_01) / sizeof(*pf_01)) {
 		return memory[pf_01[mode]()];
 	}
-	(void)printf("No such addressing mode!\n");
+	(void)printf("No such addressing mode for instruction set 01!\n");
+	exit(EXIT_FAILURE);
+}
+
+uint8_t read_addr_mode_00(uint8_t mode)
+{
+	if(mode < sizeof(pf) / sizeof(*pf)) {
+		return memory[pf[mode]()];
+	}
+	(void)printf("No such addressing mode for instruction set 00!\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -283,6 +323,16 @@ void write_addr_mode_01(uint8_t mode, uint8_t byte)
 {
 	if(mode < sizeof(pf_01) / sizeof(*pf_01)) {
 		memory[pf_01[mode]()] = byte;
+	} else {
+		(void)printf("No such addressing mode!\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+void write_addr_mode_00(uint8_t mode, uint8_t byte)
+{
+	if(mode < sizeof(pf) / sizeof(*pf)) {
+		memory[pf[mode]()] = byte;
 	} else {
 		(void)printf("No such addressing mode!\n");
 		exit(EXIT_FAILURE);
@@ -391,7 +441,7 @@ void lda(uint8_t mode)
  * compare Accumulator to value at location of operand:
  * A < val => set negative flag
  * A > val => set carry flag
- * A == val => set zero flag
+ * A == val => set zero flag, set carry flag
  */
 void cmp(uint8_t mode)
 {
@@ -404,6 +454,7 @@ void cmp(uint8_t mode)
 		P |= C_FLAG;
 	} else {
 		P |= Z_FLAG;
+		P |= C_FLAG;
 	}
 
 	PC++;
@@ -427,6 +478,109 @@ void sbc(uint8_t mode)
 	set_zero_flag(diff);
 
 	A = diff;
+
+	PC++;
+}
+
+/*
+ * Set the flags according to the result of A anded with byte at address.
+ * Result is not stored.
+ */
+void bit(uint8_t mode)
+{
+	PC++;
+
+	uint8_t val = read_addr_mode_00(mode);
+	uint8_t and = A & val;
+
+	set_negative_flag(and);
+	set_zero_flag(and);
+	set_overflow_flag(and);
+
+	PC++;
+}
+
+/*
+ * Set the PC as specified by the operand.  Indirect mode.
+ */
+void jmp(uint8_t mode)
+{
+	PC++;
+	PC = memory[get_absolute()];
+}
+
+/*
+ * Set the PC as specified by the operand.  Absolute mode.
+ */
+void jmp_abs(uint8_t mode)
+{
+	PC++;
+	PC = get_absolute();
+}
+
+/*
+ * Store contents of Y into memory
+ */
+void sty(uint8_t mode)
+{
+	PC++;
+	write_addr_mode_00(mode, Y);
+}
+
+/*
+ * Load memory into Y, setting Z and N flags
+ */
+void ldy(uint8_t mode)
+{
+	PC++;
+	Y = read_addr_mode_00(mode);
+
+	set_negative_flag(Y);
+	set_zero_flag(Y);
+}
+
+/* 
+ * compare Y to value at location of operand:
+ * Y < val => set negative flag
+ * Y > val => set carry flag
+ * Y == val => set zero flag, set carry flag
+ */
+void cpy(uint8_t mode)
+{
+	PC++;
+
+	uint8_t val = read_addr_mode_00(mode);
+	if(Y < val) {
+		P |= N_FLAG;
+	} else if (Y > val) {
+		P |= C_FLAG;
+	} else {
+		P |= Z_FLAG;
+		P |= C_FLAG;
+	}
+
+	PC++;
+}
+
+/* 
+ * compare X to value at location of operand:
+ * X < val => set negative flag
+ * X > val => set carry flag
+ * X == val => set zero flag, set carry flag
+ */
+void cpx(uint8_t mode)
+{
+	PC++;
+
+	uint8_t val = read_addr_mode_00(mode);
+	if(X < val) {
+		P |= N_FLAG;
+	} else if (X > val) {
+		P |= C_FLAG;
+	} else {
+		P |= Z_FLAG;
+		P |= C_FLAG;
+	}
 
 	PC++;
 }
@@ -473,7 +627,14 @@ void set_zero_flag(uint8_t a)
 
 void set_negative_flag(uint8_t a)
 {
-	if ((a & N_TEST) == N_TEST) {
+	if ((a & N_FLAG) == N_FLAG) {
 		P |= N_FLAG;
+	}
+}
+
+void set_overflow_flag(uint8_t a)
+{
+	if ((a & V_FLAG) == V_FLAG) {
+		P |= V_FLAG;
 	}
 }
