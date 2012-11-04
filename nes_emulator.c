@@ -48,6 +48,30 @@ void sta(uint8_t);
 void lda(uint8_t);
 void cmp(uint8_t);
 void sbc(uint8_t);
+void asl(uint8_t);
+void rol(uint8_t);
+void lsr(uint8_t);
+void ror(uint8_t);
+void stx(uint8_t);
+void ldx(uint8_t);
+void dec(uint8_t);
+void inc(uint8_t);
+void php();
+void clc();
+void plp();
+void sec();
+void pha();
+void cli();
+void pla();
+void sei();
+void dey();
+void tya();
+void tay();
+void clv();
+void iny();
+void cld();
+void inx();
+void sed();
 /* addressing modes */
 uint16_t get_relative(void);
 uint16_t get_accumulator(void);
@@ -63,19 +87,22 @@ uint16_t get_absolute_y(void);
 #define MEM_SIZE 2 * 1024
 
 /* 2 kilobytes of memory */
-uint8_t memory[MEM_SIZE];
+uint8_t memory[MEM_SIZE];	/* zero page: [0..255] */
+				/* stack: [256..511] */
 
 /* registers, all unsigned */
-uint16_t PC;	/* program counter */
-uint8_t S = 0;	/* stack pounter */
-uint8_t A = 0;	/* accumulator */
-uint8_t X = 0;	/* X index */
-uint8_t Y = 0;	/* Y index */
-uint8_t P = 0;	/* processor status flags */
+uint16_t PC = 0;	/* program counter */
+uint16_t S = 256;	/* stack pointer */
+uint8_t A = 0;		/* accumulator */
+uint8_t X = 0;		/* X index */
+uint8_t Y = 0;		/* Y index */
+uint8_t P = 0;		/* processor status flags */
 
-/* flags, carry, zero, overflow, negative */
+/* flags: carry, zero, interrupt disable, overflow, negative */
+/* NV___IZC */
 #define C_FLAG 1<<0
 #define Z_FLAG 1<<1
+#define I_FLAG 1<<2
 #define V_FLAG 1<<6
 #define N_FLAG 1<<7
 
@@ -114,14 +141,29 @@ void process_code(uint8_t code)
 	/* opcodes are formatted as aaabbbcc, where aaa and cc determine
 	 * the instruction, and bbb determines the addressing mode. */
 
+	/* There are some codes that don't fit the above pattern.  Handle them
+	 * first! */
+
+	static void (* const x8[]) (void) = {
+		&php, &clc, &plp, &sec, &pha, &cli, &pla, &sei,
+		&dey, &tya, &tay, &clv, &iny, &cld, &inx, &sed
+	};
+
 	static void (* const pf[]) (uint8_t) = {
 		&process_00_code, &process_01_code, &process_10_code
 	};
 
-	/* determine the instruction set.  Cases for cc = 00, 01, or 10 */
-	uint8_t cc = code & 0x03;
-	if(cc < sizeof(pf) / sizeof(*pf)) {
-		pf[cc](code);
+	uint8_t bbcc = code & 0x08;
+	if(bbcc == 0x08) {
+		uint8_t aabb = code>>4;
+		x8[aabb]();
+	} else {
+		/* determine the instruction set.
+		 * Cases for cc = 00, 01, or 10 */
+		uint8_t cc = code & 0x03;
+		if(cc < sizeof(pf) / sizeof(*pf)) {
+			pf[cc](code);
+		}
 	}
 }
 
@@ -471,9 +513,9 @@ void sbc(uint8_t mode)
 	}
 
 	/* TODO: figure these out 
-	add_set_carry_flag(A, val);
-	add_set_overflow_flag(A, val, sum);
-	*/
+	   add_set_carry_flag(A, val);
+	   add_set_overflow_flag(A, val, sum);
+	   */
 	set_negative_flag(diff);
 	set_zero_flag(diff);
 
@@ -525,6 +567,7 @@ void sty(uint8_t mode)
 {
 	PC++;
 	write_addr_mode_00(mode, Y);
+	PC++;
 }
 
 /*
@@ -537,6 +580,7 @@ void ldy(uint8_t mode)
 
 	set_negative_flag(Y);
 	set_zero_flag(Y);
+	PC++;
 }
 
 /* 
@@ -583,6 +627,227 @@ void cpx(uint8_t mode)
 	}
 
 	PC++;
+}
+
+/*
+ * shift bits to the left, pushing in 0.
+ */
+void asl(uint8_t mode)
+{
+	PC++;
+
+	uint8_t old_val = read_addr_mode_01(mode);
+	uint8_t new_val = old_val<<1;
+	write_addr_mode_01(mode, new_val);
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+
+	if((old_val & N_FLAG) == N_FLAG) {
+		P |= C_FLAG;
+	}
+	PC++;
+}
+
+/*
+ * Rotate bits to the left, pushing in value of carry flag.
+ */
+void rol(uint8_t mode)
+{
+	PC++;
+
+	uint8_t old_val = read_addr_mode_01(mode);
+	uint8_t new_val = old_val<<1;
+	new_val |= (P & C_FLAG);
+	write_addr_mode_01(mode, new_val);
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+
+	if((old_val & N_FLAG) == N_FLAG) {
+		P |= C_FLAG;
+	}
+	PC++;
+}
+
+/*
+ * Logical shift right.  Pop into the carry flag.
+ */
+void lsr(uint8_t mode)
+{
+	PC++;
+
+	uint8_t old_val = read_addr_mode_01(mode);
+	uint8_t new_val = old_val>>1;
+	write_addr_mode_01(mode, new_val);
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+
+	if((old_val & C_FLAG) == C_FLAG) {
+		P |= C_FLAG;
+	}
+	PC++;
+}
+
+/*
+ * Rotate bits right, pushing in carry flag value and poping into carry flag.
+ */
+void ror(uint8_t mode)
+{
+	PC++;
+
+	uint8_t old_val = read_addr_mode_01(mode);
+	uint8_t new_val = old_val>>1;
+	if((P & C_FLAG) == C_FLAG) {
+		new_val |= N_FLAG;
+	}
+	write_addr_mode_01(mode, new_val);
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+
+	if((old_val & C_FLAG) == C_FLAG) {
+		P |= C_FLAG;
+	}
+	PC++;
+}
+
+/*
+ * Store X into memory
+ */
+void stx(uint8_t mode)
+{
+	PC++;
+	write_addr_mode_01(mode, X);
+	PC++;
+}
+
+/*
+ * Load memory into X, setting Z and N flags
+ */
+void ldx(uint8_t mode)
+{
+	PC++;
+	X = read_addr_mode_01(mode);
+
+	set_negative_flag(X);
+	set_zero_flag(X);
+	PC++;
+}
+
+/*
+ * Subtract 1 from value at memory and stores back.
+ */
+void dec(uint8_t mode)
+{
+	PC++;
+	uint8_t old_val = read_addr_mode_01(mode);
+	uint8_t new_val = old_val - 1;
+	write_addr_mode_01(mode, new_val);
+
+	set_negative_flag(new_val);
+	set_zero_flag(new_val);
+	PC++;
+}
+
+/*
+ * Add 1 to value at memory and stores back.
+ */
+void inc(uint8_t mode)
+{
+	PC++;
+	uint8_t old_val = read_addr_mode_01(mode);
+	uint8_t new_val = old_val + 1;
+	write_addr_mode_01(mode, new_val);
+
+	set_negative_flag(new_val);
+	set_zero_flag(new_val);
+	PC++;
+}
+
+/*
+ * Push processor status flags onto the stack
+ */
+void php()
+{
+	memory[S] = P;
+	S++;
+	PC++;
+}
+
+/*
+ * Clear carry flag
+ */
+void clc()
+{
+	P &= ~C_FLAG;
+	PC++;
+}
+
+/*
+ * Pull processor status from stack
+ */
+void plp()
+{
+	P = memory[S];
+	S--;
+	PC++;
+}
+
+/*
+ * Set carry flag
+ */
+void sec()
+{
+	P |= C_FLAG;
+	PC++;
+}
+
+/*
+ * Push accumulator onto stack
+ */
+void pha()
+{
+	memory[S] = A;
+	S++;
+	PC++;
+}
+
+/*
+ * Clear the interrupt disable flag
+ */
+void cli()
+{
+	P &= ~I_FLAG;
+	PC++;
+}
+
+/*
+ * Pull accumulator status from stack
+ */
+void pla()
+{
+	A = memory[S];
+	S--;
+	PC++;
+}
+
+/*
+ * Set Interrupt disable flag
+ */
+void sei()
+{
+	P |= I_FLAG;
+	PC++;
+}
+
+/*
+ * Decrement Y
+ */
+void dey()
+{
+	Y;
 }
 
 /*
