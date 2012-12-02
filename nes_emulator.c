@@ -98,11 +98,14 @@ uint8_t X = 0;		/* X index */
 uint8_t Y = 0;		/* Y index */
 uint8_t P = 0;		/* processor status flags */
 
-/* flags: carry, zero, interrupt disable, overflow, negative */
-/* NV___IZC */
+/* flags:
+ * carry, zero, interrupt disable, decimal mode,
+ * break, overflow, negative */
+/* NV__DIZC */
 #define C_FLAG 1<<0
 #define Z_FLAG 1<<1
 #define I_FLAG 1<<2
+#define D_FLAG 1<<3
 #define V_FLAG 1<<6
 #define N_FLAG 1<<7
 
@@ -847,7 +850,61 @@ void sei()
  */
 void dey()
 {
-	Y;
+	Y--;
+	set_negative_flag(Y);
+	set_zero_flag(Y);
+	PC++;
+}
+
+/*
+ * Transfer Y to A
+ */
+void tya()
+{
+	A = Y;
+	set_negative_flag(A);
+	set_zero_flag(A);
+	PC++;
+}
+
+/*
+ * Transfer A to Y
+ */
+void tay()
+{
+	Y = A;
+	set_negative_flag(Y);
+	set_zero_flag(Y);
+	PC++;
+}
+
+/*
+ * Clear the overflow flag
+ */
+void clv()
+{
+	P &= ~V_FLAG;
+	PC++;
+}
+
+/*
+ * Increment Y
+ */
+void iny()
+{
+	Y++;
+	set_negative_flag(Y);
+	set_zero_flag(Y);
+	PC++;
+}
+
+/*
+ * Clear the decimal flag
+ */
+void cld()
+{
+	P &= ~D_FLAG;
+	PC++;
 }
 
 /*
