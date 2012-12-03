@@ -206,7 +206,7 @@ void process_code(uint8_t code)
 	 * Branch instructions
 	 * All others
 	 */
-	if(((code & 0x0a) == 0x0a) && ((code>>4) <= 0x0d)
+	if (((code | 0x0a) == code) && ((code>>4) <= 0x0d)
 			&& ((code>>4) >= 0x08)) {
 		/*
 		 * The highest 4 bits take values [8..13].  We map them
@@ -214,26 +214,28 @@ void process_code(uint8_t code)
 		 */
 		int index = (code>>4) - 8;
 		xa[index]();
-	} else if((code & 0x08) == 0x08) {
+	} else if ((code | 0x08) == code) {
 		/*
 		 * The highest 4 bits map directly to [0..15].
 		 */
 		int index = code>>4;
 		x8[index]();
-	} else if((code & 0x10) == 0x10) {
+	} else if ((code | 0x10) == code) {
 		/*
 		 * The highest 4 bits of code are odd numbers in [0..16].
 		 * We map them to [0..7].
 		 */
-		int index = ((code>>4) - 1)/2;
+		int index = ((code>>4) - 1) / 2;
 		branch[index]();
+	} else if ((code | 0x00) == code) {
+		/* brk, jsr, rti, rts */
 	} else {
 		/* 
 		 * determine the instruction set.
 		 * Cases for cc = 00, 01, or 10
 		 */
 		uint8_t cc = code & 0x03;
-		if(cc < sizeof(pf) / sizeof(*pf)) {
+		if (cc < sizeof(pf) / sizeof(*pf)) {
 			pf[cc](code);
 		}
 	}
@@ -1098,6 +1100,67 @@ void beq()
 	} else {
 		PC++;
 	}
+}
+
+/*
+ * copy X to accumulator and set flags
+ */
+void txa()
+{
+	A = X;
+	set_negative_flag(A);
+	set_zero_flag(A);
+	PC++;
+}
+
+/*
+ * copy X to the stack pointer
+ */
+void txs()
+{
+	S = X;
+	PC++;
+}
+
+/*
+ * Copy accumulator into X register and set flags
+ */
+void tax()
+{
+	X = A;
+	set_negative_flag(X);
+	set_zero_flag(X);
+	PC++;
+}
+
+/*
+ * Copy contents of stack register to X register and set flags
+ */
+void tsx()
+{
+	X = S;
+	set_negative_flag(X);
+	set_zero_flag(X);
+	PC++;
+}
+
+/*
+ * Decrement the X register, set flags as appropriate
+ */
+void dex()
+{
+	X--;
+	set_negative_flag(X);
+	set_zero_flag(X);
+	PC++;
+}
+
+/*
+ * No operation
+ */
+void nop()
+{
+	PC++;
 }
 
 /*
