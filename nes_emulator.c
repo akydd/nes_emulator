@@ -56,6 +56,7 @@ void stx(uint8_t);
 void ldx(uint8_t);
 void dec(uint8_t);
 void inc(uint8_t);
+/* 16 single byte opcodes */
 void php();
 void clc();
 void plp();
@@ -72,6 +73,22 @@ void iny();
 void cld();
 void inx();
 void sed();
+/* 6 single-byte opcodes */
+void txa();
+void txs();
+void tax();
+void tsx();
+void dex();
+void nop();
+/* branch instructions */
+void bpl();
+void bmi();
+void bvc();
+void bvs();
+void bcc();
+void bcs();
+void bne();
+void beq();
 /* addressing modes */
 uint16_t get_relative(void);
 uint16_t get_accumulator(void);
@@ -101,11 +118,12 @@ uint8_t P = 0;		/* processor status flags */
 /* flags:
  * carry, zero, interrupt disable, decimal mode,
  * break, overflow, negative */
-/* NV__DIZC */
+/* NV_BDIZC */
 #define C_FLAG 1<<0
 #define Z_FLAG 1<<1
 #define I_FLAG 1<<2
 #define D_FLAG 1<<3
+#define B_FLAG 1<<4
 #define V_FLAG 1<<6
 #define N_FLAG 1<<7
 
@@ -141,28 +159,79 @@ static uint16_t (* const pf[]) (void) = {
 
 void process_code(uint8_t code)
 {
-	/* opcodes are formatted as aaabbbcc, where aaa and cc determine
-	 * the instruction, and bbb determines the addressing mode. */
+	/* Opcodes are endoded in one of the following bit sequences:
+	 *
+	 * aaabbbcc
+	 * 	cc determines the instruction set
+	 * 	aaa determines the instruction
+	 * 	bbb determines the addressing mode
+	 *
+	 * dddd1000
+	 * 	16 single-byte opcodes, indexed by dddd
+	 *
+	 * xxy10000
+	 * 	These are conditional branch instructions
+	 * 	xx indicates the flag
+	 * 	y is compared with the above flag
+	 *
+	 * 1eee1010
+	 * 	Another 6 single-byte opcodes, index by 0 <= eee <= 5
+	 */
 
-	/* There are some codes that don't fit the above pattern.  Handle them
-	 * first! */
-
+	/* 16 single-byte opcodes */
 	static void (* const x8[]) (void) = {
 		&php, &clc, &plp, &sec, &pha, &cli, &pla, &sei,
 		&dey, &tya, &tay, &clv, &iny, &cld, &inx, &sed
+	};
+
+	/* 6 single-byte opcodes */
+	static void (* const xa[]) (void) = {
+		&txa, &txs, &tax, &tsx, &dex, &nop
+	};
+
+	/* branch instructions */
+	static void (* const branch[]) (void) = {
+		&bpl, &bmi, &bvc, &bvs,
+		&bcc, &bcs, &bne, &beq
 	};
 
 	static void (* const pf[]) (uint8_t) = {
 		&process_00_code, &process_01_code, &process_10_code
 	};
 
-	uint8_t bbcc = code & 0x08;
-	if(bbcc == 0x08) {
-		uint8_t aabb = code>>4;
-		x8[aabb]();
+	/* 
+	 * Check for opcode format in the following order:
+	 * 6 single-byte opcodes
+	 * 16 single-byte opcodes
+	 * Branch instructions
+	 * All others
+	 */
+	if(((code & 0x0a) == 0x0a) && ((code>>4) <= 0x0d)
+			&& ((code>>4) >= 0x08)) {
+		/*
+		 * The highest 4 bits take values [8..13].  We map them
+		 * to [0..5].
+		 */
+		int index = (code>>4) - 8;
+		xa[index]();
+	} else if((code & 0x08) == 0x08) {
+		/*
+		 * The highest 4 bits map directly to [0..15].
+		 */
+		int index = code>>4;
+		x8[index]();
+	} else if((code & 0x10) == 0x10) {
+		/*
+		 * The highest 4 bits of code are odd numbers in [0..16].
+		 * We map them to [0..7].
+		 */
+		int index = ((code>>4) - 1)/2;
+		branch[index]();
 	} else {
-		/* determine the instruction set.
-		 * Cases for cc = 00, 01, or 10 */
+		/* 
+		 * determine the instruction set.
+		 * Cases for cc = 00, 01, or 10
+		 */
 		uint8_t cc = code & 0x03;
 		if(cc < sizeof(pf) / sizeof(*pf)) {
 			pf[cc](code);
@@ -905,6 +974,130 @@ void cld()
 {
 	P &= ~D_FLAG;
 	PC++;
+}
+
+/*
+ * Increment X
+ */
+void inx()
+{
+	X++;
+	set_negative_flag(X);
+	set_zero_flag(X);
+	PC++;
+}
+
+/*
+ * Set Decimal mode flag
+ */
+void sed()
+{
+	P |= D_FLAG;
+	PC++;
+}
+
+/*
+ * If negative flag is clear, add relative displacement to PC
+ */
+void bpl()
+{
+	PC++;
+	if((P & N_FLAG) != N_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If negative flag is set, add relative displacement to PC
+ */
+void bmi()
+{
+	PC++;
+	if((P & N_FLAG) == N_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If overflow flag is clear, add relative displacement to PC
+ */
+void bvc()
+{
+	PC++;
+	if((P & V_FLAG) != V_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If overflow flag is set, add relative displacement to PC
+ */
+void bvs()
+{
+	PC++;
+	if((P & V_FLAG) == V_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If carry flag is clear, add relative displacement to PC
+ */
+void bcc()
+{
+	PC++;
+	if((P & C_FLAG) != C_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If carry flag is set, add relative displacement to PC
+ */
+void bcs()
+{
+	PC++;
+	if((P & C_FLAG) == C_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If zero flag is clear, add relative displacement to PC
+ */
+void bne()
+{
+	PC++;
+	if((P & Z_FLAG) != Z_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
+}
+
+/*
+ * If zero flag is set, add relative displacement to PC
+ */
+void beq()
+{
+	PC++;
+	if((P & Z_FLAG) == Z_FLAG) {
+		PC = get_relative();
+	} else {
+		PC++;
+	}
 }
 
 /*
