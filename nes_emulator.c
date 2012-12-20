@@ -109,7 +109,7 @@ uint8_t memory[MEM_SIZE];	/* zero page: [0..255] */
 
 /* registers, all unsigned */
 uint16_t PC = 0;	/* program counter */
-uint16_t S = 256;	/* stack pointer */
+uint16_t S = 511;	/* stack pointer grows down from 0x1FF, or 511 */
 uint8_t A = 0;		/* accumulator */
 uint8_t X = 0;		/* X index */
 uint8_t Y = 0;		/* Y index */
@@ -846,7 +846,7 @@ void inc(uint8_t mode)
 void php()
 {
 	memory[S] = P;
-	S++;
+	S--;
 	PC++;
 }
 
@@ -884,7 +884,7 @@ void sec()
 void pha()
 {
 	memory[S] = A;
-	S++;
+	S--;
 	PC++;
 }
 
@@ -903,7 +903,7 @@ void cli()
 void pla()
 {
 	A = memory[S];
-	S--;
+	S++;
 	PC++;
 }
 
