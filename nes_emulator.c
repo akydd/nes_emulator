@@ -28,11 +28,6 @@ void set_negative_flag(uint8_t);
 void set_overflow_flag(uint8_t);
 void set_break_flag();
 void set_interrupt_flag();
-/* processing instruction sets */
-void process_code(uint8_t);
-void process_00_code(uint8_t);
-void process_01_code(uint8_t);
-void process_10_code(uint8_t);
 /* instructions */
 void bit(uint8_t);
 void jmp(uint8_t);
@@ -135,35 +130,10 @@ uint8_t P = 0;		/* processor status flags */
 #define Z_FLAG 1<<1
 #define C_FLAG 1<<0
 
-
 int main(void)
 {
 	return 0;
 }
-
-/* function ptr array for memory access modes when cc = 01 */
-static uint16_t (* const pf_01[]) (void) = {
-	&get_zero_page_indexed_indirect,
-	&get_zero,
-	&get_immediate,
-	&get_absolute,
-	&get_zero_page_indirect_index_y,
-	&get_zero_x,
-	&get_absolute_y,
-	&get_absolute_x
-};
-
-/* function ptr array for memory access modes when cc = 00 or cc = 10 */
-static uint16_t (* const pf[]) (void) = {
-	&get_immediate,
-	&get_zero,
-	&get_accumulator,
-	&get_absolute,
-	NULL,
-	&get_zero_x,
-	NULL,
-	&get_absolute_x
-};
 
 void process_code(uint8_t code)
 {
@@ -173,142 +143,43 @@ void process_code(uint8_t code)
 	 * 	cc determines the instruction set
 	 * 	aaa determines the instruction
 	 * 	bbb determines the addressing mode
-	 */
-	static void (* const pf[]) (uint8_t) = {
-		&process_00_code, &process_01_code, &process_10_code
-	};
-
-	/*
+	 *
 	 * 2) dddd1000
 	 * 	16 single-byte opcodes, indexed by dddd
-	 */
-	static void (* const x8[]) (void) = {
-		&php, &clc, &plp, &sec, &pha, &cli, &pla, &sei,
-		&dey, &tya, &tay, &clv, &iny, &cld, &inx, &sed
-	};
-
-	/*
+	 *
 	 * 3) xxy10000
 	 * 	Conditional branch instructions.
 	 * 	xx indicates the flag
 	 * 	y is compared with the above flag
-	 */
-	static void (* const branch[]) (void) = {
-		&bpl, &bmi, &bvc, &bvs,
-		&bcc, &bcs, &bne, &beq
-	};
-
-	/*
+	 *
 	 * 4) 1eee1010
 	 * 	Other 6 single-byte opcodes, indexed by 0 <= eee <= 5
+	 *
+	 * However, trying to implement this filter, especially when each
+	 * intruction can operate on operands of different sizes, was to much
+	 * for me!  So instead each instruction-mode pair is implemented
+	 * separately, stored in this function pointer table.
+	 *
+	 * ind_x	= (d, X)	= (Indirect, X)
+	 * zero_pg 	= d 		= Zero Page
+	 * (blank)	= (blank)	= Implied
+	 * imm		= #		= Immediate
+	 * A		= A		= Accumulator
+	 * a		= a		= Absolute
+	 * r		= r		= Relative
+	 * ind_y	= (d), Y	= (Indirect), Y
+	 * zero_pg_x	= d, X		= Zero Page, X
+	 * abs_y	= a, Y		= Absolute, Y
+	 * abs_x	= a, X		= Absolute, X
+	 *
 	 */
-	static void (* const xa[]) (void) = {
-		&txa, &txs, &tax, &tsx, &dex, &nop
+	
+	static void (* const pf[]) (void) = {
+		&brk, &ora_ind_x, NULL, NULL, NULL, &ora_zero_pg, &asl_zero_pg, NULL, &php, &ora_imm, &asl_A, NULL, NULL, &ora_a, &asl_a, NULL,
+		&bpl_r, &ora_ind_y, NULL, NULL, NULL, &ora_zero_pg_x, &asl_zero_pg_x, NULL, &clc, &ora_abs_y, NULL, NULL, NULL, $ora_abs_x, &asl_abs_x, NULL
 	};
-
-	/* 
-	 * Check for opcode format in the following order:
-	 * 4) 6 single-byte opcodes
-	 * 2) 16 single-byte opcodes
-	 * 3) Branch instructions
-	 * X) TODO
-	 * 1) All others
-	 */
-	if (((code | 0x0a) == code) && ((code>>4) <= 0x0d)
-			&& ((code>>4) >= 0x08)) {
-		/*
-		 * The highest 4 bits take values [8..13].  We map them
-		 * to [0..5].
-		 */
-		int index = (code>>4) - 8;
-		xa[index]();
-	} else if ((code | 0x08) == code) {
-		/*
-		 * The highest 4 bits map directly to [0..15].
-		 */
-		int index = code>>4;
-		x8[index]();
-	} else if ((code | 0x10) == code) {
-		/*
-		 * The highest 4 bits of code are odd numbers in [0..16].
-		 * We map them to [0..7].
-		 */
-		int index = ((code>>4) - 1) / 2;
-		branch[index]();
-	} else if (code == 0x00) {
-		/*  brk */
-		brk();
-	} else if (code == 0x20) {
-		/* jsr */
-	} else if (code == 0x40) {
-		/* rti */
-	} else if (code == 0x60) {
-		/* rts */
-	} else {
-		/* 
-		 * determine the instruction set.
-		 * Cases for cc = 00, 01, or 10
-		 */
-		uint8_t cc = code & 0x03;
-		if (cc < sizeof(pf) / sizeof(*pf)) {
-			pf[cc](code);
-		}
-	}
 }
 
-/* 
- * Instructions in the 00 instruction set
- */
-void process_00_code(uint8_t code)
-{
-	static void (* const i_00[]) (uint8_t) = {
-		&nul, &bit, &jmp, &jmp_abs, &sty, &ldy, &cpy, &cpx
-	};
-
-	/* determine the instruction and addressing mode. */
-	uint8_t aaa = (code>>5) & 0x07;
-	uint8_t bbb = (code>>2) & 0x07;
-
-	if(aaa < sizeof(i_00) / sizeof(*i_00)) {
-		i_00[aaa](bbb);
-	}
-}
-
-/*
- * Instructions in the 01 instruction set
- */
-void process_01_code(uint8_t code)
-{
-	static void (* const i_01[]) (uint8_t) = {
-		&ora, &and, &eor, &adc, &sta, &lda, &cmp, &sbc
-	};
-
-	/* determine the instruction and addressing mode. */
-	uint8_t aaa = (code>>5) & 0x07;
-	uint8_t bbb = (code>>2) & 0x07;
-
-	if(aaa < sizeof(i_01) / sizeof(*i_01)) {
-		i_01[aaa](bbb);
-	}
-}
-
-/*
- * Instructions in the 10 instruction set
- */
-void process_10_code(uint8_t code)
-{
-	static void (* const i_10[]) (uint8_t) = {
-		&asl, &rol, &lsr, &ror, &stx, &ldx, &dec, &inc
-	};
-
-	/* determine the instruction and addressing mode. */
-	uint8_t aaa = (code>>5) & 0x07;
-	uint8_t bbb = (code>>2) & 0x07;
-
-	if(aaa < sizeof(i_10) / sizeof(*i_10)) {
-		i_10[aaa](bbb);
-	}
-}
 /* 
  * common memory access functions for addressing modes.
  * This mode determines which value gets used in the computation, so these
@@ -316,103 +187,117 @@ void process_10_code(uint8_t code)
  */
 
 /*
- * Relative mode converts the byte at the counter to a signed 8 bit int.
+ * Relative mode converts the byte at the counter to a signed 8 bit int and
+ * adds the displacement to the counter.
  */
 uint16_t get_relative()
 {
 	int8_t offset = memory[PC];
-	/* Had to do some trickery here, as I don't increment the PC
-	 * properly. In the real CPU, the PC would already have been
-	 * incremented past the instruction that uses relative addressing.
-	 * That's why I add 1 to the return value. */
-	int16_t addr = (int16_t)PC + offset;
-	return (uint16_t)addr + 1;
+	PC++;
+	return PC + offset;
 }
 
 /*
  * Accumulator mode return the value in the accumulator
  */
-uint16_t get_accumulator()
+uint8_t *get_accumulator()
 {
-	return (uint16_t)A;
+	return &A;
 }
 
 /*
  * Immediate mode returns the operand after the instr
  */
-uint16_t get_immediate()
+uint8_t get_immediate()
 {
-	return PC;
+	uint8_t op_1 = memory[PC];
+	PC++;
+	return op_1;
 }
 
 /*
- * Absolute mode returns the 16-bit address at the PC
+ * Absolute mode returns the value at the 16-bit address specified by two
+ * operands.  The 16-bit address is stored little-endian.
  */
-uint16_t get_absolute()
+uint8_t get_absolute()
 {
-	uint16_t addr = memory[PC];
-	addr = addr << 8;
+	uint16_t low = memory[PC];
 	PC++;
-	addr |= memory[PC];
-
-	return addr;
+	uint16_t high = memory[PC];
+	PC++;
+	uint16_t = ((high<<8) | low)
+	return memory[addr];
 }
 
 /*
  * Zero Page mode returns the address given by the operand, mod 0xFF.
  */
-uint16_t get_zero()
+uint8_t get_zero()
 {
 	uint16_t addr = (uint16_t)(memory[PC] % 0xFF);
-	return addr;
+	PC++;
+	return memory[addr];
 }
 
 /*
  * Zero Page index with X mode returns the address given by the sum
  * of the operand and X, mod 0xFF.
  */
-uint16_t get_zero_x()
+uint8_t get_zero_x()
 {
 	uint16_t addr = (uint16_t)((memory[PC] + X) % 0xFF);
-	return addr;
+	PC++;
+	return memory[addr];
 }
 
 /*
  * Zero Page index with Y mode returns the address given by the sum
  * of the operand and Y, mod 0xFF
  */
-uint16_t get_zero_y()
+uint8_t get_zero_y()
 {
 	uint16_t addr = (uint16_t)((memory[PC] + Y) % 0xFF);
-	return addr;
+	PC++;
+	return memory[addr];
 }
 
 /*
  * Absolute index with X mode returns the address given by the
- * sum of X and the operand.
+ * sum of X and the 16-bit address given by the operand.
  */
-uint16_t get_absolute_x()
+uint8_t get_absolute_x()
 {
-	uint16_t addr = (uint16_t)memory[PC] + X;
-	return addr;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	PC++;
+	uint16_t addr = ((high<<8) | low);
+	return memory[addr + X];
 }
 
 /*
  * Absolute index with Y mode returns the address given by the
- * sum of Y and the operand.
+ * sum of Y and the 16-bit address given by the operand.
  */
-uint16_t get_absolute_y()
+uint8_t get_absolute_y()
 {
-	uint16_t addr = (uint16_t)memory[PC] + Y;
-	return addr;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	PC++;
+	uint16_t addr = ((high<<8) | low);
+	return memory[addr + Y];
 }
 
 /*
  * Zero Page indexed indirect mode returns the 2-byte address given
  * by the values of the memory at addresses (operand + X) and (operand + X + 1).
  */
-uint16_t get_zero_page_indexed_indirect()
+uint8_t get_zero_page_indexed_indirect()
 {
+	uint8_t op = PC;
+	PC++;
+
 	uint16_t addr = (uint16_t)memory[PC + X];
 	addr = addr << 8;
 	addr |= memory[PC + X + 1];
@@ -432,44 +317,6 @@ uint16_t get_zero_page_indirect_index_y()
 	return addr;
 }
 
-uint8_t read_addr_mode_01(uint8_t mode)
-{
-	if(mode < sizeof(pf_01) / sizeof(*pf_01)) {
-		return memory[pf_01[mode]()];
-	}
-	(void)printf("No such addressing mode for instruction set 01!\n");
-	exit(EXIT_FAILURE);
-}
-
-uint8_t read_addr_mode_00(uint8_t mode)
-{
-	if(mode < sizeof(pf) / sizeof(*pf)) {
-		return memory[pf[mode]()];
-	}
-	(void)printf("No such addressing mode for instruction set 00!\n");
-	exit(EXIT_FAILURE);
-}
-
-void write_addr_mode_01(uint8_t mode, uint8_t byte)
-{
-	if(mode < sizeof(pf_01) / sizeof(*pf_01)) {
-		memory[pf_01[mode]()] = byte;
-	} else {
-		(void)printf("No such addressing mode!\n");
-		exit(EXIT_FAILURE);
-	}
-}
-
-void write_addr_mode_00(uint8_t mode, uint8_t byte)
-{
-	if(mode < sizeof(pf) / sizeof(*pf)) {
-		memory[pf[mode]()] = byte;
-	} else {
-		(void)printf("No such addressing mode!\n");
-		exit(EXIT_FAILURE);
-	}
-}
-
 void nul(uint8_t mode)
 {
 	(void)printf("No such code!\n");
@@ -481,14 +328,11 @@ void nul(uint8_t mode)
 void ora(uint8_t mode)
 {
 	PC++;
-
 	uint8_t val = read_addr_mode_01(mode);
 	A |= val;
 
 	set_negative_flag(A);
 	set_zero_flag(A);
-
-	PC++;
 }
 
 /*
@@ -879,8 +723,8 @@ void clc()
  */
 void plp()
 {
+	S++;
 	P = memory[S];
-	S--;
 	PC++;
 }
 
@@ -917,8 +761,8 @@ void cli()
  */
 void pla()
 {
-	A = memory[S];
 	S++;
+	A = memory[S];
 	PC++;
 }
 
@@ -1179,13 +1023,21 @@ void nop()
 }
 
 /* 
- * break
+ * break: Set the break flag, push high byte of PC onto the stack, push the low
+ * byte of PC onto the stack, push the status flags on the stack, then address
+ * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
 void brk()
 {
+	PC += 2;
 	set_break_flag();
-	set_interrupt_flag();
-	PC++;
+	uint8_t PC_low_byte = PC;
+	memory[S] = PC>>8;
+	S--;
+	memory[S] = PC_low_byte;
+	S--;
+	memory[S] = P;
+	S--;
 }
 
 /* 
