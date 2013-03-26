@@ -26,6 +26,8 @@ void add_set_overflow_flag(uint8_t, uint8_t, uint8_t);
 void set_zero_flag(uint8_t);
 void set_negative_flag(uint8_t);
 void set_overflow_flag(uint8_t);
+void set_break_flag();
+void set_interrupt_flag();
 /* processing instruction sets */
 void process_code(uint8_t);
 void process_00_code(uint8_t);
@@ -89,6 +91,11 @@ void bcc();
 void bcs();
 void bne();
 void beq();
+/* other instructions */
+void brk();
+void jsr_abs();
+void rti();
+void rts();
 /* addressing modes */
 uint16_t get_relative(void);
 uint16_t get_accumulator(void);
@@ -115,17 +122,18 @@ uint8_t X = 0;		/* X index */
 uint8_t Y = 0;		/* Y index */
 uint8_t P = 0;		/* processor status flags */
 
-/* flags:
- * carry, zero, interrupt disable, decimal mode,
- * break, overflow, negative */
-/* NV_BDIZC */
-#define C_FLAG 1<<0
-#define Z_FLAG 1<<1
-#define I_FLAG 1<<2
-#define D_FLAG 1<<3
-#define B_FLAG 1<<4
-#define V_FLAG 1<<6
+/* 
+ * Flags, from left to right:
+ * Negative, oVerflow, Break, Decimal mode, Interrupt disable, Zero, Carry
+ * NV_BDIZC
+ */
 #define N_FLAG 1<<7
+#define V_FLAG 1<<6
+#define B_FLAG 1<<4
+#define D_FLAG 1<<3
+#define I_FLAG 1<<2
+#define Z_FLAG 1<<1
+#define C_FLAG 1<<0
 
 
 int main(void)
@@ -161,50 +169,50 @@ void process_code(uint8_t code)
 {
 	/* Opcodes are endoded in one of the following bit sequences:
 	 *
-	 * aaabbbcc
+	 * 1) aaabbbcc
 	 * 	cc determines the instruction set
 	 * 	aaa determines the instruction
 	 * 	bbb determines the addressing mode
-	 *
-	 * dddd1000
-	 * 	16 single-byte opcodes, indexed by dddd
-	 *
-	 * xxy10000
-	 * 	These are conditional branch instructions
-	 * 	xx indicates the flag
-	 * 	y is compared with the above flag
-	 *
-	 * 1eee1010
-	 * 	Another 6 single-byte opcodes, index by 0 <= eee <= 5
 	 */
+	static void (* const pf[]) (uint8_t) = {
+		&process_00_code, &process_01_code, &process_10_code
+	};
 
-	/* 16 single-byte opcodes */
+	/*
+	 * 2) dddd1000
+	 * 	16 single-byte opcodes, indexed by dddd
+	 */
 	static void (* const x8[]) (void) = {
 		&php, &clc, &plp, &sec, &pha, &cli, &pla, &sei,
 		&dey, &tya, &tay, &clv, &iny, &cld, &inx, &sed
 	};
 
-	/* 6 single-byte opcodes */
-	static void (* const xa[]) (void) = {
-		&txa, &txs, &tax, &tsx, &dex, &nop
-	};
-
-	/* branch instructions */
+	/*
+	 * 3) xxy10000
+	 * 	Conditional branch instructions.
+	 * 	xx indicates the flag
+	 * 	y is compared with the above flag
+	 */
 	static void (* const branch[]) (void) = {
 		&bpl, &bmi, &bvc, &bvs,
 		&bcc, &bcs, &bne, &beq
 	};
 
-	static void (* const pf[]) (uint8_t) = {
-		&process_00_code, &process_01_code, &process_10_code
+	/*
+	 * 4) 1eee1010
+	 * 	Other 6 single-byte opcodes, indexed by 0 <= eee <= 5
+	 */
+	static void (* const xa[]) (void) = {
+		&txa, &txs, &tax, &tsx, &dex, &nop
 	};
 
 	/* 
 	 * Check for opcode format in the following order:
-	 * 6 single-byte opcodes
-	 * 16 single-byte opcodes
-	 * Branch instructions
-	 * All others
+	 * 4) 6 single-byte opcodes
+	 * 2) 16 single-byte opcodes
+	 * 3) Branch instructions
+	 * X) TODO
+	 * 1) All others
 	 */
 	if (((code | 0x0a) == code) && ((code>>4) <= 0x0d)
 			&& ((code>>4) >= 0x08)) {
@@ -227,8 +235,15 @@ void process_code(uint8_t code)
 		 */
 		int index = ((code>>4) - 1) / 2;
 		branch[index]();
-	} else if ((code | 0x00) == code) {
-		/* brk, jsr, rti, rts */
+	} else if (code == 0x00) {
+		/*  brk */
+		brk();
+	} else if (code == 0x20) {
+		/* jsr */
+	} else if (code == 0x40) {
+		/* rti */
+	} else if (code == 0x60) {
+		/* rts */
 	} else {
 		/* 
 		 * determine the instruction set.
@@ -765,7 +780,7 @@ void lsr(uint8_t mode)
 }
 
 /*
- * Rotate bits right, pushing in carry flag value and poping into carry flag.
+ * Rotate bits right, pushing in carry flag value and popping into carry flag.
  */
 void ror(uint8_t mode)
 {
@@ -1163,6 +1178,31 @@ void nop()
 	PC++;
 }
 
+/* 
+ * break
+ */
+void brk()
+{
+	set_break_flag();
+	set_interrupt_flag();
+	PC++;
+}
+
+/* 
+ * Pulls the flags and PC from the stack
+ * TODO: ensure that I'm pulling the PC from the stack correctly
+ */
+void rti()
+{
+	P = memory[S];
+	S++;
+	PC = memory[S];
+	PC<<8;
+	S++;
+	PC |= memory[S];
+	S++;
+}
+
 /*
  * Determine if the carry flag should be set when adding a and b.
  */
@@ -1215,4 +1255,14 @@ void set_overflow_flag(uint8_t a)
 	if ((a & V_FLAG) == V_FLAG) {
 		P |= V_FLAG;
 	}
+}
+
+void set_break_flag()
+{
+	P |= B_FLAG;
+}
+
+void set_interrupt_flag()
+{
+	P |= I_FLAG;
 }
