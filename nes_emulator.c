@@ -29,12 +29,24 @@ void set_overflow_flag(uint8_t);
 void set_break_flag();
 void set_interrupt_flag();
 /* instructions */
+void brk();
 void ora_ind_x();
 void ora_zero_pg();
 void asl_zero_pg();
-/* TODO: 16 single byte opcodes */
 void php();
+void ora_imm();
+void asl_A();
+void ora_a();
+void asl_a();
+void bpl_r();
+void ora_ind_y();
+void ora_zero_pg_x();
+void asl_zero_pg_x();
 void clc();
+void ora_abs_y();
+void ora_abs_x();
+void asl_abs_x();
+/* TODO: 16 single byte opcodes
 void plp();
 void sec();
 void pha();
@@ -49,15 +61,14 @@ void iny();
 void cld();
 void inx();
 void sed();
-/* TODO: 6 single-byte opcodes */
+TODO: 6 single-byte opcodes
 void txa();
 void txs();
 void tax();
 void tsx();
 void dex();
 void nop();
-/* TODO: branch instructions */
-void bpl();
+TODO: branch instructions
 void bmi();
 void bvc();
 void bvs();
@@ -65,11 +76,11 @@ void bcc();
 void bcs();
 void bne();
 void beq();
-/* TODO: other instructions */
-void brk();
+TODO: other instructions
 void jsr_abs();
 void rti();
 void rts();
+*/
 
 #define MEM_SIZE 2 * 1024
 
@@ -169,125 +180,21 @@ void process_code(uint8_t code)
 }
 
 /* 
- * common memory access functions for addressing modes.
- * This mode determines which value gets used in the computation, so these
- * functions can be reused for all instructions.
+ * break: Set the break flag, push high byte of PC onto the stack, push the low
+ * byte of PC onto the stack, push the status flags on the stack, then address
+ * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
-
-/*
- * Relative mode converts the byte at the counter to a signed 8 bit int and
- * adds the displacement to the counter.
- */
-uint16_t get_relative()
+void brk()
 {
-	int8_t offset = memory[PC];
-	PC++;
-	return PC + offset;
-}
-
-/*
- * Accumulator mode return the value in the accumulator
- */
-uint8_t get_accumulator()
-{
-	return A;
-}
-
-/*
- * Immediate mode returns the operand after the instr
- */
-uint8_t get_immediate()
-{
-	uint8_t op_1 = memory[PC];
-	PC++;
-	return op_1;
-}
-
-/*
- * Absolute mode returns the value at the 16-bit address specified by two
- * operands.  The 16-bit address is stored little-endian.
- */
-uint8_t get_absolute()
-{
-	uint16_t low = memory[PC];
-	PC++;
-	uint16_t high = memory[PC];
-	PC++;
-	uint16_t addr = ((high<<8) | low);
-	return memory[addr];
-}
-
-/*
- * Zero Page mode returns the address given by the operand, mod 0xFF.
- */
-uint8_t get_zero()
-{
-	uint16_t addr = (uint16_t)(memory[PC] % 0xFF);
-	PC++;
-	return memory[addr];
-}
-
-/*
- * Zero Page index with X mode returns the address given by the sum
- * of the operand and X, mod 0xFF.
- */
-uint8_t get_zero_x()
-{
-	uint16_t addr = (uint16_t)((memory[PC] + X) % 0xFF);
-	PC++;
-	return memory[addr];
-}
-
-/*
- * Zero Page index with Y mode returns the address given by the sum
- * of the operand and Y, mod 0xFF
- */
-uint8_t get_zero_y()
-{
-	uint16_t addr = (uint16_t)((memory[PC] + Y) % 0xFF);
-	PC++;
-	return memory[addr];
-}
-
-/*
- * Absolute index with X mode returns the address given by the
- * sum of X and the 16-bit address given by the operand.
- */
-uint8_t get_absolute_x()
-{
-	uint16_t low = memory[PC];
-	PC++;
-	uint16_t high = memory[PC];
-	PC++;
-	uint16_t addr = ((high<<8) | low);
-	return memory[addr + X];
-}
-
-/*
- * Absolute index with Y mode returns the address given by the
- * sum of Y and the 16-bit address given by the operand.
- */
-uint8_t get_absolute_y()
-{
-	uint16_t low = memory[PC];
-	PC++;
-	uint16_t high = memory[PC];
-	PC++;
-	uint16_t addr = ((high<<8) | low);
-	return memory[addr + Y];
-}
-
-/*
- * Zero Page indirect indexed with Y mode returns the 2-byte
- * address given by the ((value at the address of the operand) + Y) and ((value
- * at the address of the operand) + Y) + 1.
- */
-uint16_t get_zero_page_indirect_index_y()
-{
-	uint16_t addr = (uint16_t)memory[PC] + Y;
-	addr = addr << 8;
-	addr |= memory[PC] + Y + 1;
-	return addr;
+	PC += 2;
+	set_break_flag();
+	uint8_t PC_low_byte = PC;
+	memory[S] = PC>>8;
+	S--;
+	memory[S] = PC_low_byte;
+	S--;
+	memory[S] = P;
+	S--;
 }
 
 /*
@@ -331,6 +238,192 @@ void asl_zero_pg()
 	PC++;
 
 	uint8_t val = memory[addr];
+	uint8_t new_val = val<<1;
+	memory[addr] = new_val;
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+	if((val & N_FLAG) == N_FLAG) {
+		P |= C_FLAG;
+	}
+}
+
+/*
+ * Push processor status flags onto the stack
+ */
+void php()
+{
+	PC++;
+	memory[S] = P;
+	S--;
+}
+
+void ora_imm()
+{
+	PC++;
+	uint8_t val = memory[PC];
+	PC++;
+
+	A |= val;
+	set_negative_flag(A);
+	set_zero_flag(A);
+}
+
+void asl_A()
+{
+	PC++;
+
+	uint8_t val = A;
+	uint8_t new_val = val<<1;
+	A = new_val;
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+	if((val & N_FLAG) == N_FLAG) {
+		P |= C_FLAG;
+	}
+}
+
+void ora_a()
+{
+	PC++;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	uint16_t addr = (high<<8) | low;
+	uint8_t val = memory[addr];
+	PC++;
+
+	A |= val;
+	set_negative_flag(A);
+	set_zero_flag(A);
+}
+
+void asl_a()
+{
+	PC++;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	uint16_t addr = (high<<8) | low;
+	uint8_t val = memory[addr];
+	PC++;
+
+	uint8_t new_val = val<<1;
+	memory[addr] = new_val;
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+	if((val & N_FLAG) == N_FLAG) {
+		P |= C_FLAG;
+	}
+}
+
+/*
+ * If negative flag is clear, add relative displacement to PC
+ */
+void bpl_r()
+{
+	PC++;
+	int offset = memory[PC];
+	PC++;
+
+	if((P & N_FLAG) != N_FLAG) {
+		PC += offset;
+	}
+}
+
+void ora_ind_y()
+{
+	PC++;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t addr = ((memory[low + 1]<<8) | memory[low]) + Y;
+
+	uint8_t val = memory[addr];
+	A |= val;
+
+	set_negative_flag(A);
+	set_zero_flag(A);
+}
+
+void ora_zero_pg_x()
+{
+	PC++;
+	uint16_t addr = memory[PC] + X;
+	PC++;
+	uint8_t val = memory[addr];
+	A |= val;
+
+	set_negative_flag(A);
+	set_zero_flag(A);
+}
+
+void asl_zero_pg_x()
+{
+	PC++;
+	uint16_t addr = memory[PC] + X;
+	PC++;
+	uint8_t val = memory[addr];
+
+	uint8_t new_val = val<<1;
+	memory[addr] = new_val;
+
+	set_zero_flag(new_val);
+	set_negative_flag(new_val);
+	if((val & N_FLAG) == N_FLAG) {
+		P |= C_FLAG;
+	}
+}
+
+/*
+ * Clear carry flag
+ */
+void clc()
+{
+	P &= ~C_FLAG;
+	PC++;
+}
+
+void ora_abs_y()
+{
+	PC++;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC]<<8;
+	PC++;
+	uint16_t addr = (high | low) + Y;
+
+	uint8_t val = memory[addr];
+	A |= val;
+
+	set_negative_flag(A);
+	set_zero_flag(A);
+}
+
+void ora_abs_x()
+{
+	PC++;
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC]<<8;
+	PC++;
+	uint16_t addr = (high | low) + X;
+
+	uint8_t val = memory[addr];
+	A |= val;
+
+	set_negative_flag(A);
+	set_zero_flag(A);
+}
+
+void asl_abs_x()
+{
+	PC++;
+	uint16_t addr = memory[PC] + X;
+	PC++;
+	uint8_t val = memory[addr];
+
 	uint8_t new_val = val<<1;
 	memory[addr] = new_val;
 
@@ -686,32 +779,13 @@ void inc(uint8_t mode)
 }
 
 /*
- * Push processor status flags onto the stack
- */
-void php()
-{
-	memory[S] = P;
-	S--;
-	PC++;
-}
-
-/*
- * Clear carry flag
- */
-void clc()
-{
-	P &= ~C_FLAG;
-	PC++;
-}
-
-/*
  * Pull processor status from stack
  */
 void plp()
 {
+	PC++;
 	S++;
 	P = memory[S];
-	PC++;
 }
 
 /*
@@ -719,8 +793,8 @@ void plp()
  */
 void sec()
 {
-	P |= C_FLAG;
 	PC++;
+	P |= C_FLAG;
 }
 
 /*
@@ -728,9 +802,9 @@ void sec()
  */
 void pha()
 {
+	PC++;
 	memory[S] = A;
 	S--;
-	PC++;
 }
 
 /*
@@ -738,8 +812,8 @@ void pha()
  */
 void cli()
 {
-	P &= ~I_FLAG;
 	PC++;
+	P &= ~I_FLAG;
 }
 
 /*
@@ -747,9 +821,9 @@ void cli()
  */
 void pla()
 {
+	PC++;
 	S++;
 	A = memory[S];
-	PC++;
 }
 
 /*
@@ -757,8 +831,8 @@ void pla()
  */
 void sei()
 {
-	P |= I_FLAG;
 	PC++;
+	P |= I_FLAG;
 }
 
 /*
@@ -766,10 +840,10 @@ void sei()
  */
 void dey()
 {
+	PC++;
 	Y--;
 	set_negative_flag(Y);
 	set_zero_flag(Y);
-	PC++;
 }
 
 /*
@@ -777,10 +851,10 @@ void dey()
  */
 void tya()
 {
+	PC++;
 	A = Y;
 	set_negative_flag(A);
 	set_zero_flag(A);
-	PC++;
 }
 
 /*
@@ -788,10 +862,10 @@ void tya()
  */
 void tay()
 {
+	PC++;
 	Y = A;
 	set_negative_flag(Y);
 	set_zero_flag(Y);
-	PC++;
 }
 
 /*
@@ -799,8 +873,8 @@ void tay()
  */
 void clv()
 {
-	P &= ~V_FLAG;
 	PC++;
+	P &= ~V_FLAG;
 }
 
 /*
@@ -808,10 +882,10 @@ void clv()
  */
 void iny()
 {
+	PC++;
 	Y++;
 	set_negative_flag(Y);
 	set_zero_flag(Y);
-	PC++;
 }
 
 /*
@@ -819,8 +893,8 @@ void iny()
  */
 void cld()
 {
-	P &= ~D_FLAG;
 	PC++;
+	P &= ~D_FLAG;
 }
 
 /*
@@ -828,10 +902,10 @@ void cld()
  */
 void inx()
 {
+	PC++;
 	X++;
 	set_negative_flag(X);
 	set_zero_flag(X);
-	PC++;
 }
 
 /*
@@ -839,21 +913,8 @@ void inx()
  */
 void sed()
 {
+	PC++;
 	P |= D_FLAG;
-	PC++;
-}
-
-/*
- * If negative flag is clear, add relative displacement to PC
- */
-void bpl()
-{
-	PC++;
-	if((P & N_FLAG) != N_FLAG) {
-		PC = get_relative();
-	} else {
-		PC++;
-	}
 }
 
 /*
@@ -1009,24 +1070,6 @@ void nop()
 }
 
 /* 
- * break: Set the break flag, push high byte of PC onto the stack, push the low
- * byte of PC onto the stack, push the status flags on the stack, then address
- * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
- */
-void brk()
-{
-	PC += 2;
-	set_break_flag();
-	uint8_t PC_low_byte = PC;
-	memory[S] = PC>>8;
-	S--;
-	memory[S] = PC_low_byte;
-	S--;
-	memory[S] = P;
-	S--;
-}
-
-/* 
  * Pulls the flags and PC from the stack
  * TODO: ensure that I'm pulling the PC from the stack correctly
  */
@@ -1104,3 +1147,82 @@ void set_interrupt_flag()
 {
 	P |= I_FLAG;
 }
+
+/*
+uint16_t get_relative()
+{
+	int8_t offset = memory[PC];
+	PC++;
+	return PC + offset;
+}
+
+uint8_t get_accumulator()
+{
+	return A;
+}
+
+uint8_t get_immediate()
+{
+	uint8_t op_1 = memory[PC];
+	PC++;
+	return op_1;
+}
+
+uint8_t get_absolute()
+{
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	PC++;
+	uint16_t addr = ((high<<8) | low);
+	return memory[addr];
+}
+
+uint8_t get_zero()
+{
+	uint16_t addr = (uint16_t)(memory[PC] % 0xFF);
+	PC++;
+	return memory[addr];
+}
+
+uint8_t get_zero_x()
+{
+	uint16_t addr = (uint16_t)((memory[PC] + X) % 0xFF);
+	PC++;
+	return memory[addr];
+}
+
+uint8_t get_zero_y()
+{
+	uint16_t addr = (uint16_t)((memory[PC] + Y) % 0xFF);
+	PC++;
+	return memory[addr];
+}
+
+uint8_t get_absolute_x()
+{
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	PC++;
+	uint16_t addr = ((high<<8) | low);
+	return memory[addr + X];
+}
+
+uint8_t get_absolute_y()
+{
+	uint16_t low = memory[PC];
+	PC++;
+	uint16_t high = memory[PC];
+	PC++;
+	uint16_t addr = ((high<<8) | low);
+	return memory[addr + Y];
+}
+
+uint16_t get_zero_page_indirect_index_y()
+{
+	uint16_t addr = (uint16_t)memory[PC] + Y;
+	addr = addr << 8;
+	addr |= memory[PC] + Y + 1;
+	return addr;
+}*/
