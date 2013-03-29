@@ -16,6 +16,7 @@
  * =============================================================================
  */
 #include <stdint.h>
+#include <stdlib.h>
 #include "cpu.h"
 
 void init(struct cpu *cpu)
@@ -28,7 +29,8 @@ void init(struct cpu *cpu)
 	cpu->P = 0;
 
 	/* clear the cpu mem */
-	for(uint8_t *mem_ptr = cpu->memory; mem_ptr < cpu->memory + MEM_SIZE; mem_ptr++)
+	uint8_t *mem_ptr = NULL;
+	for(mem_ptr = cpu->memory; mem_ptr < cpu->memory + MEM_SIZE; mem_ptr++)
 	{
 		*mem_ptr = 0;
 	}

@@ -35,7 +35,8 @@ static char *test_cpu_init()
 
 	/* check that mem is all cleared */
 	int clear = 1;
-	for(uint8_t *mem = cpu.memory; mem < cpu.memory + MEM_SIZE; mem++)
+	uint8_t *mem = NULL;
+	for(mem = cpu.memory; mem < cpu.memory + MEM_SIZE; mem++)
 	{
 		if (*mem != 0)
 		{
@@ -51,12 +52,15 @@ static char *test_cpu_init()
 	mu_assert("X not init", cpu.X == 0);
 	mu_assert("Y not init", cpu.Y == 0);
 	mu_assert("P not init", cpu.P == 0);
+	return 0;
 }
 
 static char *test_brk()
 {
 	init(&cpu);
 	brk(&cpu);
+
+	return 0;
 }
 
 static char *all_tests() {

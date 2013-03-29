@@ -43,7 +43,7 @@ struct cpu {
 	uint8_t X;	/* X index */
 	uint8_t Y;	/* Y index */
 	uint8_t P;	/* processor status flags */
-}
+};
 
 void init(struct cpu *);
 
