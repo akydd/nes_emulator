@@ -48,6 +48,18 @@ struct cpu {
 
 void init(struct cpu *);
 
+/* Stack manipulation */
+void push16_stack(uint16_t, struct cpu *);
+void push8_stack(uint8_t, struct cpu *);
+
+/* 
+ * Memory manipulation: read N bits and move the PC to the follow address.
+ * Values aren't really "popped", as they are still accessible if you know
+ * the address.
+ */
+uint16_t pop16_mem(struct cpu *);
+uint8_t pop8_mem(struct cpu *);
+
 /*
  * Determine if the carry flag should be set when adding a and b.
  */

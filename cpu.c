@@ -36,6 +36,41 @@ void init(struct cpu *cpu)
 	}
 }
 
+/* Stack manipulation */
+void push16_stack(uint16_t val, struct cpu *cpu)
+{
+	/* push high byte, then low */
+	cpu->memory[cpu->S] = val>>8;
+	cpu->S--;
+	cpu->memory[cpu->S] = val;
+	cpu->S--;
+}
+
+void push8_stack(uint8_t val, struct cpu *cpu)
+{
+	cpu->memory[cpu->S] = val;
+	cpu->S--;
+}
+
+/* Memory manipulation */
+uint16_t pop16_mem(struct cpu *cpu)
+{
+	uint16_t low = cpu->memory[cpu->PC];
+	cpu->PC++;
+	uint16_t high = cpu->memory[cpu->PC];
+	cpu->PC++;
+	return (high<<8) | low;
+}
+
+uint8_t pop8_mem(struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[cpu->PC];
+	cpu->PC++;
+	return val;
+}
+
+/* Functions for flags */
+
 /*
  * Determine if the carry flag should be set when adding a and b.
  */

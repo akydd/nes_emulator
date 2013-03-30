@@ -29,32 +29,6 @@ int tests_run = 0;
 
 struct cpu cpu;
 
-static char *test_cpu_init()
-{
-	init(&cpu);
-
-	/* check that mem is all cleared */
-	int clear = 1;
-	uint8_t *mem = NULL;
-	for(mem = cpu.memory; mem < cpu.memory + MEM_SIZE; mem++)
-	{
-		if (*mem != 0)
-		{
-			clear = 0;
-			break;
-		}
-	}
-	mu_assert("Mem not cleared", clear == 1);
-
-	mu_assert("PC not init", cpu.PC == 0);
-	mu_assert("S not init", cpu.S == 511);
-	mu_assert("A not init", cpu.A == 0);
-	mu_assert("X not init", cpu.X == 0);
-	mu_assert("Y not init", cpu.Y == 0);
-	mu_assert("P not init", cpu.P == 0);
-	return 0;
-}
-
 static char *test_brk()
 {
 	init(&cpu);
@@ -362,13 +336,29 @@ static char *test_asl_abs_x()
 	return 0;
 }
 
+static char *test_jsr_abs()
+{
+	init(&cpu);
+
+	cpu.memory[1] = 0xB4;
+	cpu.memory[2] = 0x0E;
+
+	jsr_abs(&cpu);
+
+	mu_assert("jsr_abs - PC not set", cpu.PC == 0x0EB4);
+	mu_assert("jsr_abs - stack high byte wrong", cpu.memory[cpu.S+2] == 0);
+	mu_assert("jsr_abs - stack low byte wrong", cpu.memory[cpu.S+1] == 2);
+
+	return 0;
+}
+
 static char *all_tests()
 {
 	/*
 	 * Checklist for tested addressing modes:
 	 *
-	 * Mode		Tested
-	 * -------------------
+	 * Mode		Read Tested	Write tesed
+	 * ----------------------------------------
 	 * ind_x	y
 	 * zero_pg	y
 	 * implied	y
@@ -382,7 +372,6 @@ static char *all_tests()
 	 * abs_x	y
 	 * ind		n
 	 */
-	mu_run_test(test_cpu_init);
 	mu_run_test(test_brk);
 	mu_run_test(test_ora_ind_x);
 	mu_run_test(test_ora_zero_pg);
@@ -402,6 +391,7 @@ static char *all_tests()
 	mu_run_test(test_ora_abs_y);
 	mu_run_test(test_ora_abs_x);
 	mu_run_test(test_asl_abs_x);
+	mu_run_test(test_jsr_abs);
 
 	return 0;
 }

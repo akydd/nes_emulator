@@ -20,87 +20,64 @@
 #include "cpu.h"
 #include "instructions.h"
 
-/* 
- * break: Set the break flag, push high byte of PC onto the stack, push the low
- * byte of PC onto the stack, push the status flags on the stack, then address
- * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
- */
-void brk(struct cpu *cpu)
+/* Common functions for addressing modes */
+inline uint16_t imm(struct cpu *cpu)
 {
-	cpu->PC += 2;
-	set_break_flag(cpu);
-	uint8_t PC_low_byte = cpu->PC;
-	cpu->memory[cpu->S] = cpu->PC>>8;
-	cpu->S--;
-	cpu->memory[cpu->S] = PC_low_byte;
-	cpu->S--;
-	cpu->memory[cpu->S] = cpu->P;
-	cpu->S--;
-}
-
-inline uint16_t ind_x(struct cpu *cpu)
-{
-	   uint8_t addr_of_low = cpu->memory[cpu->PC] + cpu->X;
-	   uint16_t low = cpu->memory[addr_of_low];
-	   uint16_t high = cpu->memory[addr_of_low + 1]<<8;
-	   return (high | low);
-}
-
-/*
- * bitwise or of operand and the accumulator, stored in accumulator
- */
-void ora_ind_x(struct cpu *cpu)
-{
-	cpu->PC++;
-	/*
-	   uint8_t addr_of_low = cpu->memory[cpu->PC] + cpu->X;
-	   uint16_t low = cpu->memory[addr_of_low];
-	   uint16_t high = cpu->memory[addr_of_low + 1]<<8;
-	   uint16_t addr = high | low;
-	   */
-	uint16_t addr = ind_x(cpu);
-	cpu->PC++;
-
-	uint8_t val = cpu->memory[addr];
-	cpu->A |= val;
-
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	return cpu->PC++;
 }
 
 inline uint16_t zero_pg(struct cpu *cpu)
 {
-	return cpu->memory[cpu->PC];
+	return (uint16_t)pop8_mem(cpu);
 }
 
-void ora_zero_pg(struct cpu *cpu)
+inline uint16_t abs_(struct cpu *cpu)
 {
-	cpu->PC++;
-	/*
-	   uint16_t addr = cpu->memory[cpu->PC];
-	   */
-	uint16_t addr = zero_pg(cpu);
-	cpu->PC++;
+	return pop16_mem(cpu);
+}
 
+inline uint16_t ind_x(struct cpu *cpu)
+{
+	uint8_t addr_of_low = pop8_mem(cpu) + cpu->X;
+	uint16_t low = cpu->memory[addr_of_low];
+	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	return (high | low);
+}
+
+inline uint16_t ind_y(struct cpu *cpu)
+{
+	uint8_t addr_of_low = pop8_mem(cpu);
+	uint16_t low = cpu->memory[addr_of_low];
+	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	return (high|low) + cpu->Y;
+}
+
+inline uint16_t abs_y(struct cpu *cpu)
+{
+	return pop16_mem(cpu) + cpu->Y;
+}
+
+inline uint16_t abs_x(struct cpu *cpu)
+{
+	return pop16_mem(cpu) + cpu->X;
+}
+
+inline uint16_t zero_pg_x(struct cpu *cpu)
+{
+	return (uint16_t)(pop8_mem(cpu) + cpu->X);
+}
+
+/* Common functions for executing instructions */
+inline void ora(uint16_t addr, struct cpu *cpu)
+{
 	uint8_t val = cpu->memory[addr];
 	cpu->A |= val;
-
 	set_negative_flag(cpu->A, cpu);
 	set_zero_flag(cpu->A, cpu);
 }
 
-/*
- * shift bits to the left, pushing in 0.
- */
-void asl_zero_pg(struct cpu *cpu)
+inline void asl(uint16_t addr, struct cpu *cpu)
 {
-	cpu->PC++;
-	/*
-	   uint16_t addr = cpu->memory[cpu->PC];
-	   */
-	uint16_t addr = zero_pg(cpu);
-	cpu->PC++;
-
 	uint8_t val = cpu->memory[addr];
 	uint8_t new_val = val<<1;
 	cpu->memory[addr] = new_val;
@@ -112,25 +89,60 @@ void asl_zero_pg(struct cpu *cpu)
 	}
 }
 
+/* 
+ * break: Set the break flag, push PC onto the stack,
+ * push the status flags on the stack, then address
+ * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
+ */
+void brk(struct cpu *cpu)
+{
+	cpu->PC += 2;
+	set_break_flag(cpu);
+	push16_stack(cpu->PC, cpu);
+	push8_stack(cpu->P, cpu);
+}
+
+/*
+ * bitwise or of operand and the accumulator, stored in accumulator
+ */
+void ora_ind_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu);
+	ora(addr, cpu);
+}
+
+void ora_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	ora(addr, cpu);
+}
+
+/*
+ * shift bits to the left, pushing in 0.
+ */
+void asl_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	asl(addr, cpu);
+}
+
 /*
  * Push processor status flags onto the stack
  */
 void php(struct cpu *cpu)
 {
 	cpu->PC++;
-	cpu->memory[cpu->S] = cpu->P;
-	cpu->S--;
+	push8_stack(cpu->P, cpu);
 }
 
 void ora_imm(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t val = cpu->memory[cpu->PC];
-	cpu->PC++;
-
-	cpu->A |= val;
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	uint16_t addr = imm(cpu);
+	ora(addr, cpu);
 }
 
 void asl_acc(struct cpu *cpu)
@@ -148,53 +160,18 @@ void asl_acc(struct cpu *cpu)
 	}
 }
 
-inline uint16_t abs_(struct cpu *cpu)
-{
-	uint16_t low = cpu->memory[cpu->PC];
-	cpu->PC++;
-	uint16_t high = cpu->memory[cpu->PC];
-	return (high<<8) | low;
-}
-
 void ora_abs(struct cpu *cpu)
 {
 	cpu->PC++;
-	/*
-	uint16_t low = cpu->memory[cpu->PC];
-	cpu->PC++;
-	uint16_t high = cpu->memory[cpu->PC];
-	uint16_t addr = (high<<8) | low;
-	*/
 	uint16_t addr = abs_(cpu);
-	uint8_t val = cpu->memory[addr];
-	cpu->PC++;
-
-	cpu->A |= val;
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	ora(addr, cpu);
 }
 
 void asl_abs(struct cpu *cpu)
 {
 	cpu->PC++;
-	/* 
-	uint16_t low = cpu->memory[cpu->PC];
-	cpu->PC++;
-	uint16_t high = cpu->memory[cpu->PC];
-	uint16_t addr = (high<<8) | low;
-	*/
 	uint16_t addr = abs_(cpu);
-	uint8_t val = cpu->memory[addr];
-	cpu->PC++;
-
-	uint8_t new_val = val<<1;
-	cpu->memory[addr] = new_val;
-
-	set_zero_flag(new_val, cpu);
-	set_negative_flag(new_val, cpu);
-	if((val & N_FLAG) == N_FLAG) {
-		cpu->P |= C_FLAG;
-	}
+	asl(addr, cpu);
 }
 
 /*
@@ -203,8 +180,7 @@ void asl_abs(struct cpu *cpu)
 void bpl_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = cpu->memory[cpu->PC];
-	cpu->PC++;
+	uint8_t offset = pop8_mem(cpu);
 
 	if((cpu->P & N_FLAG) == 0) {
 		if(offset >= 0x80) { 
@@ -221,72 +197,25 @@ void bpl_r(struct cpu *cpu)
 	}
 }
 
-inline uint16_t ind_y(struct cpu *cpu)
-{
-	uint8_t addr_of_low = cpu->memory[cpu->PC];
-	uint16_t low = cpu->memory[addr_of_low];
-	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
-	return (high|low) + cpu->Y;
-
-}
-
 void ora_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
-	/*
-	uint8_t addr_of_low = cpu->memory[cpu->PC];
-	uint16_t low = cpu->memory[addr_of_low];
-	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
-	uint16_t addr = (high|low) + cpu->Y;
-	*/
 	uint16_t addr = ind_y(cpu);
-	cpu->PC++;
-
-	uint8_t val = cpu->memory[addr];
-	cpu->A |= val;
-
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
-}
-
-inline uint16_t zero_pg_x(struct cpu *cpu)
-{
-	return cpu->memory[cpu->PC] + cpu->X;
+	ora(addr, cpu);
 }
 
 void ora_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	/*
-	uint16_t addr = cpu->memory[cpu->PC] + cpu->X;
-	*/
 	uint16_t addr = zero_pg_x(cpu);
-	cpu->PC++;
-	uint8_t val = cpu->memory[addr];
-	cpu->A |= val;
-
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	ora(addr, cpu);
 }
 
 void asl_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	/*
-	uint16_t addr = cpu->memory[cpu->PC] + cpu->X;
-	*/
 	uint16_t addr = zero_pg_x(cpu);
-	cpu->PC++;
-	uint8_t val = cpu->memory[addr];
-
-	uint8_t new_val = val<<1;
-	cpu->memory[addr] = new_val;
-
-	set_zero_flag(new_val, cpu);
-	set_negative_flag(new_val, cpu);
-	if((val & N_FLAG) == N_FLAG) {
-		cpu->P |= C_FLAG;
-	}
+	asl(addr, cpu);
 }
 
 /*
@@ -301,51 +230,29 @@ void clc(struct cpu *cpu)
 void ora_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t low = cpu->memory[cpu->PC];
-	cpu->PC++;
-	uint16_t high = cpu->memory[cpu->PC]<<8;
-	cpu->PC++;
-	uint16_t addr = (high | low) + cpu->Y;
-
-	uint8_t val = cpu->memory[addr];
-	cpu->A |= val;
-
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	uint16_t addr = abs_y(cpu);
+	ora(addr, cpu);
 }
 
 void ora_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t low = cpu->memory[cpu->PC];
-	cpu->PC++;
-	uint16_t high = cpu->memory[cpu->PC]<<8;
-	cpu->PC++;
-	uint16_t addr = (high | low) + cpu->X;
-
-	uint8_t val = cpu->memory[addr];
-	cpu->A |= val;
-
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	uint16_t addr = abs_x(cpu);
+	ora(addr, cpu);
 }
 
 void asl_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t low = cpu->memory[cpu->PC];
-	cpu->PC++;
-	uint16_t high = cpu->memory[cpu->PC]<<8;
-	cpu->PC++;
-	uint16_t addr = (high | low) + cpu->X;
+	uint16_t addr = abs_x(cpu);
+	asl(addr, cpu);
+}
 
-	uint8_t val = cpu->memory[addr];
-	uint8_t new_val = val<<1;
-	cpu->memory[addr] = new_val;
-
-	set_zero_flag(new_val, cpu);
-	set_negative_flag(new_val, cpu);
-	if((val & N_FLAG) == N_FLAG) {
-		cpu->P |= C_FLAG;
-	}
+void jsr_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t transfer_addr = abs_(cpu);
+	uint16_t next_op_addr = cpu->PC-1;
+	push16_stack(next_op_addr, cpu);
+	cpu->PC = transfer_addr;
 }
