@@ -19,7 +19,6 @@
 #include <stdint.h>
 #include "cpu.h"
 #include "instructions.h"
-#include <stdio.h>
 
 /* 
  * break: Set the break flag, push high byte of PC onto the stack, push the low
@@ -39,17 +38,28 @@ void brk(struct cpu *cpu)
 	cpu->S--;
 }
 
+inline uint16_t ind_x(struct cpu *cpu)
+{
+	   uint8_t addr_of_low = cpu->memory[cpu->PC] + cpu->X;
+	   uint16_t low = cpu->memory[addr_of_low];
+	   uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	   return (high | low);
+}
+
 /*
  * bitwise or of operand and the accumulator, stored in accumulator
  */
 void ora_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t addr_of_low = cpu->memory[cpu->PC] + cpu->X;
-	uint16_t low = cpu->memory[addr_of_low];
-	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	/*
+	   uint8_t addr_of_low = cpu->memory[cpu->PC] + cpu->X;
+	   uint16_t low = cpu->memory[addr_of_low];
+	   uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	   uint16_t addr = high | low;
+	   */
+	uint16_t addr = ind_x(cpu);
 	cpu->PC++;
-	uint16_t addr = high | low;
 
 	uint8_t val = cpu->memory[addr];
 	cpu->A |= val;
@@ -58,10 +68,18 @@ void ora_ind_x(struct cpu *cpu)
 	set_zero_flag(cpu->A, cpu);
 }
 
+inline uint16_t zero_pg(struct cpu *cpu)
+{
+	return cpu->memory[cpu->PC];
+}
+
 void ora_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t addr = cpu->memory[cpu->PC];
+	/*
+	   uint16_t addr = cpu->memory[cpu->PC];
+	   */
+	uint16_t addr = zero_pg(cpu);
 	cpu->PC++;
 
 	uint8_t val = cpu->memory[addr];
@@ -77,7 +95,10 @@ void ora_zero_pg(struct cpu *cpu)
 void asl_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t addr = cpu->memory[cpu->PC];
+	/*
+	   uint16_t addr = cpu->memory[cpu->PC];
+	   */
+	uint16_t addr = zero_pg(cpu);
 	cpu->PC++;
 
 	uint8_t val = cpu->memory[addr];
@@ -112,7 +133,7 @@ void ora_imm(struct cpu *cpu)
 	set_zero_flag(cpu->A, cpu);
 }
 
-void asl_A(struct cpu *cpu)
+void asl_acc(struct cpu *cpu)
 {
 	cpu->PC++;
 
@@ -127,13 +148,24 @@ void asl_A(struct cpu *cpu)
 	}
 }
 
-void ora_a(struct cpu *cpu)
+inline uint16_t abs_(struct cpu *cpu)
+{
+	uint16_t low = cpu->memory[cpu->PC];
+	cpu->PC++;
+	uint16_t high = cpu->memory[cpu->PC];
+	return (high<<8) | low;
+}
+
+void ora_abs(struct cpu *cpu)
 {
 	cpu->PC++;
+	/*
 	uint16_t low = cpu->memory[cpu->PC];
 	cpu->PC++;
 	uint16_t high = cpu->memory[cpu->PC];
 	uint16_t addr = (high<<8) | low;
+	*/
+	uint16_t addr = abs_(cpu);
 	uint8_t val = cpu->memory[addr];
 	cpu->PC++;
 
@@ -142,13 +174,16 @@ void ora_a(struct cpu *cpu)
 	set_zero_flag(cpu->A, cpu);
 }
 
-void asl_a(struct cpu *cpu)
+void asl_abs(struct cpu *cpu)
 {
 	cpu->PC++;
+	/* 
 	uint16_t low = cpu->memory[cpu->PC];
 	cpu->PC++;
 	uint16_t high = cpu->memory[cpu->PC];
 	uint16_t addr = (high<<8) | low;
+	*/
+	uint16_t addr = abs_(cpu);
 	uint8_t val = cpu->memory[addr];
 	cpu->PC++;
 
@@ -174,10 +209,10 @@ void bpl_r(struct cpu *cpu)
 	if((cpu->P & N_FLAG) == 0) {
 		if(offset >= 0x80) { 
 			/* 
-			Need special conversion when unsigned
-	       		int would be converted to a negative
-			signed int.
-			*/
+			   Need special conversion when unsigned
+			   int would be converted to a negative
+			   signed int.
+			   */
 			offset = 0xFF - offset + 1;
 			cpu->PC -= offset;
 		} else {
@@ -186,14 +221,26 @@ void bpl_r(struct cpu *cpu)
 	}
 }
 
-void ora_ind_y(struct cpu *cpu)
+inline uint16_t ind_y(struct cpu *cpu)
 {
-	cpu->PC++;
 	uint8_t addr_of_low = cpu->memory[cpu->PC];
 	uint16_t low = cpu->memory[addr_of_low];
 	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	return (high|low) + cpu->Y;
+
+}
+
+void ora_ind_y(struct cpu *cpu)
+{
 	cpu->PC++;
+	/*
+	uint8_t addr_of_low = cpu->memory[cpu->PC];
+	uint16_t low = cpu->memory[addr_of_low];
+	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
 	uint16_t addr = (high|low) + cpu->Y;
+	*/
+	uint16_t addr = ind_y(cpu);
+	cpu->PC++;
 
 	uint8_t val = cpu->memory[addr];
 	cpu->A |= val;
@@ -202,10 +249,18 @@ void ora_ind_y(struct cpu *cpu)
 	set_zero_flag(cpu->A, cpu);
 }
 
+inline uint16_t zero_pg_x(struct cpu *cpu)
+{
+	return cpu->memory[cpu->PC] + cpu->X;
+}
+
 void ora_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
+	/*
 	uint16_t addr = cpu->memory[cpu->PC] + cpu->X;
+	*/
+	uint16_t addr = zero_pg_x(cpu);
 	cpu->PC++;
 	uint8_t val = cpu->memory[addr];
 	cpu->A |= val;
@@ -217,7 +272,10 @@ void ora_zero_pg_x(struct cpu *cpu)
 void asl_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
+	/*
 	uint16_t addr = cpu->memory[cpu->PC] + cpu->X;
+	*/
+	uint16_t addr = zero_pg_x(cpu);
 	cpu->PC++;
 	uint8_t val = cpu->memory[addr];
 
@@ -275,10 +333,13 @@ void ora_abs_x(struct cpu *cpu)
 void asl_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t addr = cpu->memory[cpu->PC] + cpu->X;
+	uint16_t low = cpu->memory[cpu->PC];
 	cpu->PC++;
-	uint8_t val = cpu->memory[addr];
+	uint16_t high = cpu->memory[cpu->PC]<<8;
+	cpu->PC++;
+	uint16_t addr = (high | low) + cpu->X;
 
+	uint8_t val = cpu->memory[addr];
 	uint8_t new_val = val<<1;
 	cpu->memory[addr] = new_val;
 
@@ -288,4 +349,3 @@ void asl_abs_x(struct cpu *cpu)
 		cpu->P |= C_FLAG;
 	}
 }
-

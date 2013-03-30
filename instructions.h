@@ -46,8 +46,8 @@
  * zero_pg		d		Zero Page
  * (blank)		(blank)		Implied
  * imm			#		Immediate
- * A			A		Accumulator
- * a			a		Absolute
+ * acc 			A		Accumulator
+ * abs			a		Absolute
  * r			r		Relative
  * ind_y		(d), Y		(Indirect), Y
  * zero_pg_x		d, X		Zero Page, X
@@ -63,9 +63,9 @@ void ora_zero_pg(struct cpu *);
 void asl_zero_pg(struct cpu *);
 void php(struct cpu *);
 void ora_imm(struct cpu *);
-void asl_A(struct cpu *);
-void ora_a(struct cpu *);
-void asl_a(struct cpu *);
+void asl_acc(struct cpu *);
+void ora_abs(struct cpu *);
+void asl_abs(struct cpu *);
 void bpl_r(struct cpu *);
 void ora_ind_y(struct cpu *);
 void ora_zero_pg_x(struct cpu *);
@@ -77,7 +77,7 @@ void asl_abs_x(struct cpu *);
 
 /* codes 0x00 to 0xFF  */
 static void (* const pf[]) (struct cpu *) = {
-	&brk, &ora_ind_x, NULL, NULL, NULL, &ora_zero_pg, &asl_zero_pg, NULL, &php, &ora_imm, &asl_A, NULL, NULL, &ora_a, &asl_a, NULL,
+	&brk, &ora_ind_x, NULL, NULL, NULL, &ora_zero_pg, &asl_zero_pg, NULL, &php, &ora_imm, &asl_acc, NULL, NULL, &ora_abs, &asl_abs, NULL,
 	&bpl_r, &ora_ind_y, NULL, NULL, NULL, &ora_zero_pg_x, &asl_zero_pg_x, NULL, &clc, &ora_abs_y, NULL, NULL, NULL, &ora_abs_x, &asl_abs_x, NULL/*,
 	&jsr_a, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, NULL, &plp, &and_imm, &rol_A, NULL, &bit_a, &and_a, &rol_a, NULL,
 	&bmi_r, &and_ind_y, NULL, NULL, NULL, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, NULL, NULL, NULL, &and_abs_x, &rol_abs_x, NULL,

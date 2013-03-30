@@ -87,8 +87,8 @@ static char *test_ora_ind_x()
 
 	ora_ind_x(&cpu);
 
-	mu_assert("ORA - Wrong val for A", cpu.A == (5|10));
-	mu_assert("ORA - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_ind_x - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_ind_x - PC not incremented", cpu.PC == 2);
 
 	return 0;
 }
@@ -103,8 +103,8 @@ static char *test_ora_zero_pg()
 
 	ora_zero_pg(&cpu);
 
-	mu_assert("ORA - Wrong val for A", cpu.A == (5|10));
-	mu_assert("ORA - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_zero_pg - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_zero_pg - PC not incremented", cpu.PC == 2);
 
 	return 0;
 }
@@ -118,8 +118,8 @@ static char *test_asl_zero_pg()
 
 	asl_zero_pg(&cpu);
 
-	mu_assert("ASL - fail.", cpu.memory[0xB4] == 20);
-	mu_assert("ASL - PC not incremented", cpu.PC == 2);
+	mu_assert("asl_zero_pg - fail.", cpu.memory[0xB4] == 20);
+	mu_assert("asl_zero_pg - PC not incremented", cpu.PC == 2);
 
 	return 0;
 }
@@ -148,27 +148,27 @@ static char *test_ora_imm()
 
 	ora_imm(&cpu);
 
-	mu_assert("ORA - Wrong val for A", cpu.A == (5|10));
-	mu_assert("ORA - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_imm - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_imm - PC not incremented", cpu.PC == 2);
 
 	return 0;
 }
 
-static char *test_asl_A()
+static char *test_asl_acc()
 {
 	init(&cpu);
 
 	cpu.A = 10;
 
-	asl_A(&cpu);
+	asl_acc(&cpu);
 
-	mu_assert("ASL - fail.", cpu.A == 20);
-	mu_assert("ASL - PC not incremented", cpu.PC == 1);
+	mu_assert("asl_acc - fail.", cpu.A == 20);
+	mu_assert("asl_acc - PC not incremented", cpu.PC == 1);
 
 	return 0;
 }
 
-static char *test_ora_a()
+static char *test_ora_abs()
 {
 	init(&cpu);
 
@@ -177,15 +177,15 @@ static char *test_ora_a()
 	cpu.memory[2] = 0x0E;
 	cpu.memory[0x0E12] = 10;
 
-	ora_a(&cpu);
+	ora_abs(&cpu);
 
-	mu_assert("ora_a- fail.", cpu.A == (5|10));
-	mu_assert("ora_a - PC not incremented", cpu.PC == 3);
+	mu_assert("ora_abs- fail.", cpu.A == (5|10));
+	mu_assert("ora_abs - PC not incremented", cpu.PC == 3);
 
 	return 0;
 }
 
-static char *test_asl_a()
+static char *test_asl_abs()
 {
 	init(&cpu);
 
@@ -193,10 +193,10 @@ static char *test_asl_a()
 	cpu.memory[2] = 0x0E;
 	cpu.memory[0x0E12] = 10;
 
-	asl_a(&cpu);
+	asl_abs(&cpu);
 
-	mu_assert("asl_a - fail.", cpu.memory[0x0E12] == 20);
-	mu_assert("asl_a - PC not incremented", cpu.PC == 3);
+	mu_assert("asl_abs - fail.", cpu.memory[0x0E12] == 20);
+	mu_assert("asl_abs - PC not incremented", cpu.PC == 3);
 
 	return 0;
 }
@@ -345,6 +345,23 @@ static char *test_ora_abs_x()
 	return 0;
 }
 
+static char *test_asl_abs_x()
+{
+	init(&cpu);
+
+	cpu.X = 6;
+	cpu.memory[1] = 0xB4;
+	cpu.memory[2] = 0x0E;
+	cpu.memory[0x0EB4 + cpu.X] = 10;
+
+	asl_abs_x(&cpu);
+
+	mu_assert("asl_abs_x - fail.", cpu.memory[0x0EB4 + cpu.X] == 20);
+	mu_assert("asl_abs_x - PC not incremented", cpu.PC == 3);
+
+	return 0;
+}
+
 static char *all_tests()
 {
 	/*
@@ -356,8 +373,8 @@ static char *all_tests()
 	 * zero_pg	y
 	 * implied	y
 	 * imm		y
-	 * A		y
-	 * a		y
+	 * acc		y
+	 * abs		y
 	 * r		y
 	 * ind_y	y
 	 * zero_pg_x	y
@@ -372,9 +389,9 @@ static char *all_tests()
 	mu_run_test(test_asl_zero_pg);
 	mu_run_test(test_php);
 	mu_run_test(test_ora_imm);
-	mu_run_test(test_asl_A);
-	mu_run_test(test_ora_a);
-	mu_run_test(test_asl_a);
+	mu_run_test(test_asl_acc);
+	mu_run_test(test_ora_abs);
+	mu_run_test(test_asl_abs);
 	mu_run_test(test_bpl_r_clear_neg);
 	mu_run_test(test_bpl_r_clear_pos);
 	mu_run_test(test_bpl_r_set);
@@ -384,6 +401,7 @@ static char *all_tests()
 	mu_run_test(test_clc);
 	mu_run_test(test_ora_abs_y);
 	mu_run_test(test_ora_abs_x);
+	mu_run_test(test_asl_abs_x);
 
 	return 0;
 }
