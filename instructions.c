@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include "cpu.h"
 #include "instructions.h"
-
+#include <stdio.h>
 
 /* 
  * break: Set the break flag, push high byte of PC onto the stack, push the low
@@ -45,8 +45,9 @@ void brk(struct cpu *cpu)
 void ora_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t low = cpu->memory[cpu->PC + cpu->X];
-	uint16_t high = cpu->memory[cpu->PC + cpu->X + 1]<<8;
+	uint8_t addr_of_low = cpu->memory[cpu->PC] + cpu->X;
+	uint16_t low = cpu->memory[addr_of_low];
+	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
 	cpu->PC++;
 	uint16_t addr = high | low;
 
@@ -167,20 +168,32 @@ void asl_a(struct cpu *cpu)
 void bpl_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	int offset = cpu->memory[cpu->PC];
+	uint8_t offset = cpu->memory[cpu->PC];
 	cpu->PC++;
 
-	if((cpu->P & N_FLAG) != N_FLAG) {
-		cpu->PC += offset;
+	if((cpu->P & N_FLAG) == 0) {
+		if(offset >= 0x80) { 
+			/* 
+			Need special conversion when unsigned
+	       		int would be converted to a negative
+			signed int.
+			*/
+			offset = 0xFF - offset + 1;
+			cpu->PC -= offset;
+		} else {
+			cpu->PC += offset;
+		}
 	}
 }
 
 void ora_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t low = cpu->memory[cpu->PC];
+	uint8_t addr_of_low = cpu->memory[cpu->PC];
+	uint16_t low = cpu->memory[addr_of_low];
+	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
 	cpu->PC++;
-	uint16_t addr = ((cpu->memory[low + 1]<<8) | cpu->memory[low]) + cpu->Y;
+	uint16_t addr = (high|low) + cpu->Y;
 
 	uint8_t val = cpu->memory[addr];
 	cpu->A |= val;

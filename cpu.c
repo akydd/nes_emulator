@@ -22,7 +22,7 @@
 void init(struct cpu *cpu)
 {
 	cpu->PC = 0;
-	cpu->S = 511;	/* stack grows down from 0x1FF, or 511 */
+	cpu->S = STACK_START;	/* stack grows down from 0x1FF, or 511 */
 	cpu->A = 0;
 	cpu->X = 0;
 	cpu->Y = 0;

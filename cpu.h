@@ -17,6 +17,7 @@
  */
 
 #define MEM_SIZE 2 * 1024
+#define STACK_START 511
 
 /* 
  * Flags, from left to right:
