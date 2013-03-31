@@ -70,11 +70,30 @@ uint8_t pop8_mem(struct cpu *cpu)
 }
 
 /* Functions for flags */
+inline void set_status_flag(uint8_t pos, struct cpu *cpu)
+{
+	cpu->P |= 0x01<<pos;
+}
+
+inline void clear_status_flag(uint8_t pos, struct cpu *cpu)
+{
+	cpu->P &= ~(0x01<<pos);
+}
+
+void set_carry_flag(struct cpu *cpu)
+{
+	set_status_flag(0, cpu);
+}
+
+void clear_carry_flag(struct cpu *cpu)
+{
+	clear_status_flag(0, cpu);
+}
 
 /*
  * Determine if the carry flag should be set when adding a and b.
  */
-void add_set_carry_flag(uint8_t a, uint8_t b, struct cpu *cpu)
+void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 {
 	/* if carry flag is zero, check if a + b > 0xff.
 	 * Otherwise, check if a + b >= 0xff. */
@@ -92,7 +111,7 @@ void add_set_carry_flag(uint8_t a, uint8_t b, struct cpu *cpu)
 /*
  * Determine if the overflow flag should be set after adding a and b.
  */
-void add_set_overflow_flag(uint8_t a, uint8_t b, uint8_t sum, struct cpu *cpu)
+void set_overflow_flag_on_add(uint8_t a, uint8_t b, uint8_t sum, struct cpu *cpu)
 {
 	int overflow = 0;
 	if((((a|b) ^ sum) & 0x80) == 0x80) {
@@ -104,21 +123,21 @@ void add_set_overflow_flag(uint8_t a, uint8_t b, uint8_t sum, struct cpu *cpu)
 	}
 }
 
-void set_zero_flag(uint8_t a, struct cpu *cpu)
+void set_zero_flag_for_value(uint8_t a, struct cpu *cpu)
 {
 	if (a == 0) {
 		cpu->P |= Z_FLAG;
 	}
 }
 
-void set_negative_flag(uint8_t a, struct cpu *cpu)
+void set_negative_flag_for_value(uint8_t a, struct cpu *cpu)
 {
 	if ((a & N_FLAG) == N_FLAG) {
 		cpu->P |= N_FLAG;
 	}
 }
 
-void set_overflow_flag(uint8_t a, struct cpu *cpu)
+void set_overflow_flag_for_value(uint8_t a, struct cpu *cpu)
 {
 	if ((a & V_FLAG) == V_FLAG) {
 		cpu->P |= V_FLAG;

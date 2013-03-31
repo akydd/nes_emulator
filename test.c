@@ -57,11 +57,11 @@ static char *test_ora_ind_x()
 	cpu.memory[1] = 0xB4;
 	cpu.memory[0xBA] = 0x12;
 	cpu.memory[0xBB] = 0x0E;
-	cpu.memory[0x0E12] = 10;
+	cpu.memory[0x0E12] = 11;
 
 	ora_ind_x(&cpu);
 
-	mu_assert("ora_ind_x - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_ind_x - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_ind_x - PC not incremented", cpu.PC == 2);
 
 	return 0;
@@ -73,11 +73,11 @@ static char *test_ora_zero_pg()
 
 	cpu.A = 5;
 	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 10;
+	cpu.memory[0xB4] = 11;
 
 	ora_zero_pg(&cpu);
 
-	mu_assert("ora_zero_pg - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_zero_pg - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_zero_pg - PC not incremented", cpu.PC == 2);
 
 	return 0;
@@ -118,11 +118,11 @@ static char *test_ora_imm()
 	init(&cpu);
 
 	cpu.A = 5;
-	cpu.memory[1] = 10;
+	cpu.memory[1] = 11;
 
 	ora_imm(&cpu);
 
-	mu_assert("ora_imm - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_imm - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_imm - PC not incremented", cpu.PC == 2);
 
 	return 0;
@@ -149,11 +149,11 @@ static char *test_ora_abs()
 	cpu.A = 5;
 	cpu.memory[1] = 0x12; /* low byte is stored first */
 	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0E12] = 10;
+	cpu.memory[0x0E12] = 11;
 
 	ora_abs(&cpu);
 
-	mu_assert("ora_abs- fail.", cpu.A == (5|10));
+	mu_assert("ora_abs- fail.", cpu.A == (5|11));
 	mu_assert("ora_abs - PC not incremented", cpu.PC == 3);
 
 	return 0;
@@ -227,11 +227,11 @@ static char *test_ora_ind_y()
 	cpu.memory[1] = 0xB4;
 	cpu.memory[0xB4] = 0x12;
 	cpu.memory[0xB5] = 0x0E;
-	cpu.memory[0x0E12 + 6] = 10;
+	cpu.memory[0x0E12 + 6] = 11;
 
 	ora_ind_y(&cpu);
 
-	mu_assert("ora_ind_y - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_ind_y - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_ind_y - PC not incremented", cpu.PC == 2);
 
 	return 0;
@@ -244,11 +244,11 @@ static char *test_ora_zero_pg_x()
 	cpu.X = 6;
 	cpu.A = 5;
 	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4 + cpu.X] = 10;
+	cpu.memory[0xB4 + cpu.X] = 11;
 
 	ora_zero_pg_x(&cpu);
 
-	mu_assert("ora_aero_pg_x - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_aero_pg_x - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_zero_pg_x - PC not incremented", cpu.PC == 2);
 
 	return 0;
@@ -291,11 +291,11 @@ static char *test_ora_abs_y()
 	cpu.A = 5;
 	cpu.memory[1] = 0xB4;
 	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0EB4 + cpu.Y] = 10;
+	cpu.memory[0x0EB4 + cpu.Y] = 11;
 
 	ora_abs_y(&cpu);
 
-	mu_assert("ora_abs_y - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_abs_y - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_abs_y - PC not incremented", cpu.PC == 3);
 
 	return 0;
@@ -309,11 +309,11 @@ static char *test_ora_abs_x()
 	cpu.A = 5;
 	cpu.memory[1] = 0xB4;
 	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0EB4 + cpu.X] = 10;
+	cpu.memory[0x0EB4 + cpu.X] = 11;
 
 	ora_abs_x(&cpu);
 
-	mu_assert("ora_abs_x - Wrong val for A", cpu.A == (5|10));
+	mu_assert("ora_abs_x - Wrong val for A", cpu.A == (5|11));
 	mu_assert("ora_abs_x - PC not incremented", cpu.PC == 3);
 
 	return 0;
@@ -349,6 +349,66 @@ static char *test_jsr_abs()
 	mu_assert("jsr_abs - stack high byte wrong", cpu.memory[cpu.S+2] == 0);
 	mu_assert("jsr_abs - stack low byte wrong", cpu.memory[cpu.S+1] == 2);
 
+	return 0;
+}
+
+static char *test_and_ind_x()
+{
+	init(&cpu);
+
+	cpu.X = 6;
+	cpu.A = 5;
+	cpu.memory[1] = 0xB4;
+	cpu.memory[0xBA] = 0x12;
+	cpu.memory[0xBB] = 0x0E;
+	cpu.memory[0x0E12] = 11;
+
+	and_ind_x(&cpu);
+
+	mu_assert("and_ind_x - Wrong val for A", cpu.A == (5&11));
+	mu_assert("and_ind_x - PC not incremented", cpu.PC == 2);
+
+	return 0;
+}
+
+static char *test_bit_zero_pg()
+{
+	init(&cpu);
+
+	cpu.memory[1] = 0xB4;
+	cpu.A = 0x0F; /* 00001111 */
+	cpu.memory[0xB4] = 0xF0; /* 11110000 */
+	/* P should be 11000010 = 0xC2 */
+
+	bit_zero_pg(&cpu);
+
+	mu_assert("bit_zero_pg - Wrong Z_FLAG", (cpu.P & Z_FLAG) == Z_FLAG);
+	mu_assert("bit_zero_pg - Wrong N_FLAG", (cpu.P & N_FLAG) == N_FLAG);
+	mu_assert("bit_zero_pg - Wrong V_FLAG", (cpu.P & V_FLAG) == V_FLAG);
+	mu_assert("bit_zero_pg - Wrong P", cpu.P = 0xC2);
+	mu_assert("bit_zero_pg - PC not incremented", cpu.PC == 2);
+
+	return 0;
+}
+
+static char *test_and_zero_pg()
+{
+	init(&cpu);
+
+	cpu.A = 5;
+	cpu.memory[1] = 0xB4;
+	cpu.memory[0xB4] = 11;
+
+	and_zero_pg(&cpu);
+
+	mu_assert("and_zero_pg - Wrong val for A", cpu.A == (5&11));
+	mu_assert("and_zero_pg - PC not incremented", cpu.PC == 2);
+
+	return 0;
+}
+
+static char *test_rol_zero_pg()
+{
 	return 0;
 }
 
@@ -392,6 +452,10 @@ static char *all_tests()
 	mu_run_test(test_ora_abs_x);
 	mu_run_test(test_asl_abs_x);
 	mu_run_test(test_jsr_abs);
+	mu_run_test(test_and_ind_x);
+	mu_run_test(test_bit_zero_pg);
+	mu_run_test(test_and_zero_pg);
+	mu_run_test(test_rol_zero_pg);
 
 	return 0;
 }

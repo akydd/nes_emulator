@@ -46,11 +46,18 @@ struct cpu {
 	uint8_t P;	/* processor status flags */
 };
 
+/*
+ * Initialize the cpu with starting values
+ */
 void init(struct cpu *);
+
+
 
 /* Stack manipulation */
 void push16_stack(uint16_t, struct cpu *);
 void push8_stack(uint8_t, struct cpu *);
+
+
 
 /* 
  * Memory manipulation: read N bits and move the PC to the follow address.
@@ -60,22 +67,34 @@ void push8_stack(uint8_t, struct cpu *);
 uint16_t pop16_mem(struct cpu *);
 uint8_t pop8_mem(struct cpu *);
 
+
+
+/* Status flag manipulation */
+
+void set_carry_flag(struct cpu *);
+void clear_carry_flag(struct cpu *);
 /*
  * Determine if the carry flag should be set when adding a and b.
  */
-void add_set_carry_flag(uint8_t a, uint8_t b, struct cpu *);
+void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *);
 
+void set_overflow_flag(struct cpu *);
+void clear_overflow_flag(struct cpu *);
 /*
  * Determine if the overflow flag should be set after adding a and b.
  */
-void add_set_overflow_flag(uint8_t a, uint8_t b, uint8_t sum, struct cpu *);
+void set_overflow_flag_on_add(uint8_t, uint8_t, uint8_t, struct cpu *);
+void set_overflow_flag_for_value(uint8_t, struct cpu *);
 
-void set_zero_flag(uint8_t a, struct cpu *);
+void set_zero_flag(struct cpu *);
+void clear_zero_flag(struct cpu *);
+void set_zero_flag_for_value(uint8_t, struct cpu *);
 
-void set_negative_flag(uint8_t a, struct cpu *);
-
-void set_overflow_flag(uint8_t a, struct cpu *);
+void set_negative_flag(struct cpu *);
+void clear_negative_flag(struct cpu *);
+void set_negative_flag_for_value(uint8_t, struct cpu *);
 
 void set_break_flag(struct cpu *);
-
+void clear_break_flag(struct cpu *);
 void set_interrupt_flag(struct cpu *);
+void clear_interrupt_flag(struct cpu *);

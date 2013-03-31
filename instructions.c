@@ -72,8 +72,16 @@ inline void ora(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t val = cpu->memory[addr];
 	cpu->A |= val;
-	set_negative_flag(cpu->A, cpu);
-	set_zero_flag(cpu->A, cpu);
+	set_negative_flag_for_value(cpu->A, cpu);
+	set_zero_flag_for_value(cpu->A, cpu);
+}
+
+inline void and(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	cpu->A &= val;
+	set_negative_flag_for_value(cpu->A, cpu);
+	set_zero_flag_for_value(cpu->A, cpu);
 }
 
 inline void asl(uint16_t addr, struct cpu *cpu)
@@ -82,11 +90,46 @@ inline void asl(uint16_t addr, struct cpu *cpu)
 	uint8_t new_val = val<<1;
 	cpu->memory[addr] = new_val;
 
-	set_zero_flag(new_val, cpu);
-	set_negative_flag(new_val, cpu);
+	set_zero_flag_for_value(new_val, cpu);
+	set_negative_flag_for_value(new_val, cpu);
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
 	}
+}
+
+inline void bit(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	uint8_t result = cpu->A & val;
+	set_zero_flag_for_value(result, cpu);
+	cpu->P |= (val & N_FLAG);
+	cpu->P |= (val & V_FLAG);
+}
+
+inline void rol(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	uint8_t result = val<<1;
+
+}
+
+inline uint8_t bit_is_set(uint8_t value, uint8_t pos)
+{
+	if((value & 0x01<<pos) == 0x01<<pos)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+inline uint8_t high_bit_is_set(uint8_t value)
+{
+	return bit_is_set(value, 7);
+}
+
+inline uint8_t low_bit_is_set(uint8_t value)
+{
+	return bit_is_set(value, 0);
 }
 
 /* 
@@ -153,8 +196,8 @@ void asl_acc(struct cpu *cpu)
 	uint8_t new_val = val<<1;
 	cpu->A = new_val;
 
-	set_zero_flag(new_val, cpu);
-	set_negative_flag(new_val, cpu);
+	set_zero_flag_for_value(new_val, cpu);
+	set_negative_flag_for_value(new_val, cpu);
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
 	}
@@ -255,4 +298,32 @@ void jsr_abs(struct cpu *cpu)
 	uint16_t next_op_addr = cpu->PC-1;
 	push16_stack(next_op_addr, cpu);
 	cpu->PC = transfer_addr;
+}
+
+void and_ind_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu);
+	and(addr, cpu);
+}
+
+void bit_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	bit(addr, cpu);
+}
+
+void and_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	and(addr, cpu);
+}
+
+void rol_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	rol(addr, cpu);
 }
