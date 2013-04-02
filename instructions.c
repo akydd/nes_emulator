@@ -20,6 +20,30 @@
 #include "cpu.h"
 #include "instructions.h"
 
+
+
+/* helpers */
+inline uint8_t bit_is_set(uint8_t value, uint8_t pos)
+{
+	if((value & 0x01<<pos) == 0x01<<pos)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+inline uint8_t high_bit_is_set(uint8_t value)
+{
+	return bit_is_set(value, 7);
+}
+
+inline uint8_t low_bit_is_set(uint8_t value)
+{
+	return bit_is_set(value, 0);
+}
+
+
+
 /* Common functions for addressing modes */
 inline uint16_t imm(struct cpu *cpu)
 {
@@ -111,25 +135,21 @@ inline void rol(uint16_t addr, struct cpu *cpu)
 	uint8_t val = cpu->memory[addr];
 	uint8_t result = val<<1;
 
-}
-
-inline uint8_t bit_is_set(uint8_t value, uint8_t pos)
-{
-	if((value & 0x01<<pos) == 0x01<<pos)
+	/* shift carry bit into low bit */
+	if (carry_flag_is_set(cpu))
 	{
-		return 1;
+		result |= 0x01;
 	}
-	return 0;
-}
 
-inline uint8_t high_bit_is_set(uint8_t value)
-{
-	return bit_is_set(value, 7);
-}
+	/* shift bit 7 into carry flag */
+	if (high_bit_is_set(val))
+	{
+		set_carry_flag(cpu);
+	} else {
+		clear_carry_flag(cpu);
+	}
 
-inline uint8_t low_bit_is_set(uint8_t value)
-{
-	return bit_is_set(value, 0);
+	cpu->memory[addr] = result;
 }
 
 /* 
@@ -326,4 +346,49 @@ void rol_zero_pg(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	rol(addr, cpu);
+}
+
+void plp(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t val = pop8_stack(cpu);
+	cpu->P = val;
+}
+
+void and_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	and(addr, cpu);
+}
+
+void rol_acc(struct cpu *cpu)
+{
+	cpu->PC++;
+
+	uint8_t val = cpu->A;
+	uint8_t result = val<<1;
+
+	/* shift carry bit into low bit */
+	if (carry_flag_is_set(cpu))
+	{
+		result |= 0x01;
+	}
+
+	/* shift bit 7 into carry flag */
+	if (high_bit_is_set(val))
+	{
+		set_carry_flag(cpu);
+	} else {
+		clear_carry_flag(cpu);
+	}
+
+	cpu->A = result;
+}
+
+void bit_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	bit(addr, cpu);
 }

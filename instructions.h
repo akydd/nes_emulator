@@ -79,12 +79,16 @@ void and_ind_x(struct cpu *);
 void bit_zero_pg(struct cpu *);
 void and_zero_pg(struct cpu *);
 void rol_zero_pg(struct cpu *);
+void plp(struct cpu *);
+void and_imm(struct cpu *);
+void rol_acc(struct cpu *);
+void bit_abs(struct cpu *cpu);
 
 /* codes 0x00 to 0xFF  */
 static void (* const pf[]) (struct cpu *) = {
 	&brk, &ora_ind_x, NULL, NULL, NULL, &ora_zero_pg, &asl_zero_pg, NULL, &php, &ora_imm, &asl_acc, NULL, NULL, &ora_abs, &asl_abs, NULL,
 	&bpl_r, &ora_ind_y, NULL, NULL, NULL, &ora_zero_pg_x, &asl_zero_pg_x, NULL, &clc, &ora_abs_y, NULL, NULL, NULL, &ora_abs_x, &asl_abs_x, NULL,
-	&jsr_abs, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg/*, NULL, &plp, &and_imm, &rol_acc, NULL, &bit_abs, &and_abs, &rol_abs, NULL,
+	&jsr_abs, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, NULL, &plp, &and_imm, &rol_acc, NULL, &bit_abs/*, &and_abs, &rol_abs, NULL,
 	&bmi_r, &and_ind_y, NULL, NULL, NULL, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, NULL, NULL, NULL, &and_abs_x, &rol_abs_x, NULL,
 	&rti, &eor_ind_x, NULL, NULL, NULL, &eor_zero_pg, &lsr_zero_pg, NULL, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, NULL,
 	&bvc_r, &eor_ind_y, NULL, NULL, NULL, &eor_zero_pg_x, &lsr_zero_pg_x, NULL, &cli, &eor_abs_y, NULL, NULL, NULL, &eor_abs_x, &lsr_abs_x, NULL,

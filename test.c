@@ -407,8 +407,101 @@ static char *test_and_zero_pg()
 	return 0;
 }
 
-static char *test_rol_zero_pg()
+static char *test_rol_zero_pg_carry_flag_set()
 {
+	init(&cpu);
+	set_carry_flag(&cpu);
+
+	cpu.memory[1] = 0xB4;
+	cpu.memory[0xB4] = 6;
+
+	rol_zero_pg(&cpu);
+
+	mu_assert("rol_zero_pg - Wrong result", cpu.memory[0xB4] == 6*2 + 1);
+	mu_assert("rol_zero_pg - PC not incremented", cpu.PC == 2);
+	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(&cpu) == 0);
+
+	return 0;
+}
+
+static char *test_rol_zero_pg_high_bit_set()
+{
+	init(&cpu);
+
+	cpu.memory[1] = 0xB4;
+	cpu.memory[0xB4] = 0x86;
+
+	rol_zero_pg(&cpu);
+
+	mu_assert("rol_zero_pg - Wrong result", cpu.memory[0xB4] == 6*2);
+	mu_assert("rol_zero_pg - PC not incremented", cpu.PC == 2);
+	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(&cpu) == 1);
+
+	return 0;
+}
+
+static char *test_plp()
+{
+	init(&cpu);
+
+	push8_stack(0xA5, &cpu);
+
+	plp(&cpu);
+
+	mu_assert("plp - PC not incremented", cpu.PC == 1);
+	mu_assert("plp - Wrong flags", cpu.P == 0xA5);
+
+	return 0;
+}
+
+static char *test_and_imm()
+{
+	init(&cpu);
+
+	cpu.A = 5;
+	cpu.memory[1] = 11;
+
+	and_imm(&cpu);
+
+	mu_assert("and_imm - Wrong val for A", cpu.A == (5&11));
+	mu_assert("and_imm - PC not incremented", cpu.PC == 2);
+
+	return 0;
+}
+
+static char *test_rol_acc()
+{
+	init(&cpu);
+
+	cpu.A = 6;
+
+	rol_acc(&cpu);
+
+	mu_assert("rol_acc- Wrong result", cpu.A == 6*2);
+	mu_assert("rol_acc - PC not incremented", cpu.PC == 1);
+	mu_assert("rol_acc - Wrong C_FLAG", carry_flag_is_set(&cpu) == 0);
+
+	return 0;
+}
+
+static char *test_bit_abs()
+{
+	init(&cpu);
+
+	cpu.memory[1] = 0x12; /* low byte is stored first */
+	cpu.memory[2] = 0x0E;
+	cpu.A = 0x0F; /* 00001111 */
+	cpu.memory[0x0E12] = 0xF0; /* 11110000 */
+	/* P should be 11000010 = 0xC2 */
+
+	bit_abs(&cpu);
+
+	mu_assert("bit_abs - Wrong Z_FLAG", (cpu.P & Z_FLAG) == Z_FLAG);
+	mu_assert("bit_abs - Wrong N_FLAG", (cpu.P & N_FLAG) == N_FLAG);
+	mu_assert("bit_abs - Wrong V_FLAG", (cpu.P & V_FLAG) == V_FLAG);
+	mu_assert("bit_abs - Wrong P", cpu.P = 0xC2);
+	mu_assert("bit_abs - PC not incremented", cpu.PC == 3);
+
 	return 0;
 }
 
@@ -455,7 +548,12 @@ static char *all_tests()
 	mu_run_test(test_and_ind_x);
 	mu_run_test(test_bit_zero_pg);
 	mu_run_test(test_and_zero_pg);
-	mu_run_test(test_rol_zero_pg);
+	mu_run_test(test_rol_zero_pg_carry_flag_set);
+	mu_run_test(test_rol_zero_pg_high_bit_set);
+	mu_run_test(test_plp);
+	mu_run_test(test_and_imm);
+	mu_run_test(test_rol_acc);
+	mu_run_test(test_bit_abs);
 
 	return 0;
 }

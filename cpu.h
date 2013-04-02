@@ -56,6 +56,7 @@ void init(struct cpu *);
 /* Stack manipulation */
 void push16_stack(uint16_t, struct cpu *);
 void push8_stack(uint8_t, struct cpu *);
+uint8_t pop8_stack(struct cpu *);
 
 
 
@@ -71,6 +72,7 @@ uint8_t pop8_mem(struct cpu *);
 
 /* Status flag manipulation */
 
+uint8_t carry_flag_is_set(struct cpu *);
 void set_carry_flag(struct cpu *);
 void clear_carry_flag(struct cpu *);
 /*
@@ -78,6 +80,7 @@ void clear_carry_flag(struct cpu *);
  */
 void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *);
 
+uint8_t overflag_flag_is_set(struct cpu *);
 void set_overflow_flag(struct cpu *);
 void clear_overflow_flag(struct cpu *);
 /*
@@ -86,15 +89,20 @@ void clear_overflow_flag(struct cpu *);
 void set_overflow_flag_on_add(uint8_t, uint8_t, uint8_t, struct cpu *);
 void set_overflow_flag_for_value(uint8_t, struct cpu *);
 
+uint8_t zero_flag_is_set(struct cpu *);
 void set_zero_flag(struct cpu *);
 void clear_zero_flag(struct cpu *);
 void set_zero_flag_for_value(uint8_t, struct cpu *);
 
+uint8_t negative_flag_is_set(struct cpu *);
 void set_negative_flag(struct cpu *);
 void clear_negative_flag(struct cpu *);
 void set_negative_flag_for_value(uint8_t, struct cpu *);
 
+uint8_t break_flag_is_set(struct cpu *);
 void set_break_flag(struct cpu *);
 void clear_break_flag(struct cpu *);
+
+uint8_t interrupt_flag_is_set(struct cpu *);
 void set_interrupt_flag(struct cpu *);
 void clear_interrupt_flag(struct cpu *);

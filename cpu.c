@@ -36,6 +36,8 @@ void init(struct cpu *cpu)
 	}
 }
 
+
+
 /* Stack manipulation */
 void push16_stack(uint16_t val, struct cpu *cpu)
 {
@@ -51,6 +53,14 @@ void push8_stack(uint8_t val, struct cpu *cpu)
 	cpu->memory[cpu->S] = val;
 	cpu->S--;
 }
+
+uint8_t pop8_stack(struct cpu *cpu)
+{
+	cpu->S++;
+	return cpu->memory[cpu->S];
+}
+
+
 
 /* Memory manipulation */
 uint16_t pop16_mem(struct cpu *cpu)
@@ -69,25 +79,44 @@ uint8_t pop8_mem(struct cpu *cpu)
 	return val;
 }
 
-/* Functions for flags */
-inline void set_status_flag(uint8_t pos, struct cpu *cpu)
+
+
+/*
+ * Functions for setting/clearing/testing status flags
+ */
+inline uint8_t status_flag_is_set(uint8_t flag, struct cpu *cpu)
 {
-	cpu->P |= 0x01<<pos;
+	if ((cpu->P & flag) == flag)
+	{
+		return 1;
+	}
+	return 0;
 }
 
-inline void clear_status_flag(uint8_t pos, struct cpu *cpu)
+inline void set_status_flag(uint8_t flag, struct cpu *cpu)
 {
-	cpu->P &= ~(0x01<<pos);
+	cpu->P |= flag;
+}
+
+inline void clear_status_flag(uint8_t flag, struct cpu *cpu)
+{
+	cpu->P &= ~(flag);
+}
+
+/* Carry flag */
+inline uint8_t carry_flag_is_set(struct cpu *cpu)
+{
+	return status_flag_is_set(C_FLAG, cpu);
 }
 
 void set_carry_flag(struct cpu *cpu)
 {
-	set_status_flag(0, cpu);
+	set_status_flag(C_FLAG, cpu);
 }
 
 void clear_carry_flag(struct cpu *cpu)
 {
-	clear_status_flag(0, cpu);
+	clear_status_flag(C_FLAG, cpu);
 }
 
 /*
@@ -97,15 +126,31 @@ void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 {
 	/* if carry flag is zero, check if a + b > 0xff.
 	 * Otherwise, check if a + b >= 0xff. */
-	if ((cpu->P & C_FLAG) == 0) {
+	if (carry_flag_is_set(cpu) == 0) {
 		if(a > 0xff - b) {
-			cpu->P |= C_FLAG;
+			set_carry_flag(cpu);
 		}
 	} else {
 		if (a >= 0xff - b) {
-			cpu->P |= C_FLAG;
+			set_carry_flag(cpu);
 		}
 	}
+}
+
+/* Overflow flag */
+uint8_t overflow_flag_is_set(struct cpu *cpu)
+{
+	return status_flag_is_set(V_FLAG, cpu);
+}
+
+void set_overflow_flag(struct cpu *cpu)
+{
+	set_status_flag(V_FLAG, cpu);
+}
+
+void clear_overflow_flag(struct cpu *cpu)
+{
+	clear_status_flag(V_FLAG, cpu);
 }
 
 /*
@@ -118,38 +163,92 @@ void set_overflow_flag_on_add(uint8_t a, uint8_t b, uint8_t sum, struct cpu *cpu
 		overflow = 1;
 	}
 
-	if((overflow == 1) ^ ((cpu->P & C_FLAG) == C_FLAG)) {
-		cpu->P |= V_FLAG;
-	}
-}
-
-void set_zero_flag_for_value(uint8_t a, struct cpu *cpu)
-{
-	if (a == 0) {
-		cpu->P |= Z_FLAG;
-	}
-}
-
-void set_negative_flag_for_value(uint8_t a, struct cpu *cpu)
-{
-	if ((a & N_FLAG) == N_FLAG) {
-		cpu->P |= N_FLAG;
+	if((overflow == 1) ^ (carry_flag_is_set(cpu) == 1)) {
+		set_overflow_flag(cpu);
 	}
 }
 
 void set_overflow_flag_for_value(uint8_t a, struct cpu *cpu)
 {
 	if ((a & V_FLAG) == V_FLAG) {
-		cpu->P |= V_FLAG;
+		set_overflow_flag(cpu);
 	}
+}
+
+/* Zero flag */
+uint8_t zero_flag_is_set(struct cpu *cpu)
+{
+	return status_flag_is_set(Z_FLAG, cpu);
+}
+
+void set_zero_flag(struct cpu *cpu)
+{
+	set_status_flag(Z_FLAG, cpu);
+}
+
+void clear_zero_flag(struct cpu *cpu)
+{
+	clear_status_flag(Z_FLAG, cpu);
+}
+
+void set_zero_flag_for_value(uint8_t a, struct cpu *cpu)
+{
+	if (a == 0) {
+		set_zero_flag(cpu);
+	}
+}
+
+/* Negative flag */
+uint8_t negative_flag_is_set(struct cpu *cpu)
+{
+	return status_flag_is_set(N_FLAG, cpu);
+}
+
+void set_negative_flag(struct cpu *cpu)
+{
+	set_status_flag(N_FLAG, cpu);
+}
+
+void clear_negative_flag(struct cpu *cpu)
+{
+	clear_status_flag(N_FLAG, cpu);
+}
+
+void set_negative_flag_for_value(uint8_t a, struct cpu *cpu)
+{
+	if ((a & N_FLAG) == N_FLAG) {
+		set_status_flag(N_FLAG, cpu);
+	}
+}
+
+/* Break flag */
+uint8_t break_flag_is_set(struct cpu *cpu)
+{
+	return status_flag_is_set(B_FLAG, cpu);
 }
 
 void set_break_flag(struct cpu *cpu)
 {
-	cpu->P |= B_FLAG;
+	set_status_flag(B_FLAG, cpu);
+}
+
+void clear_break_flag(struct cpu *cpu)
+{
+	clear_status_flag(B_FLAG, cpu);
+}
+
+/* Interrupt flag */
+uint8_t interrupt_flag_is_set(struct cpu *cpu)
+{
+	return status_flag_is_set(I_FLAG, cpu);
 }
 
 void set_interrupt_flag(struct cpu *cpu)
 {
-	cpu->P |= I_FLAG;
+	set_status_flag(I_FLAG, cpu);
+}
+
+void clear_interrupt_flag(struct cpu *cpu)
+{
+	clear_status_flag(I_FLAG, cpu);
 }
