@@ -586,3 +586,48 @@ void lsr_abs(struct cpu *cpu)
 	uint16_t addr = abs_(cpu);
 	lsr(addr, cpu);
 }
+
+/*
+ * If overflow flag is clear, add relative displacement to cpu->PC
+ */
+void bvc_r(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t offset = pop8_mem(cpu);
+
+	if(overflow_flag_is_set(cpu) == 0) {
+		if(offset >= 0x80) { 
+			/* 
+			   Need special conversion when unsigned
+			   int would be converted to a negative
+			   signed int.
+			   */
+			offset = 0xFF - offset + 1;
+			cpu->PC -= offset;
+		} else {
+			cpu->PC += offset;
+		}
+	}
+}
+
+void eor_ind_y(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t addr = ind_y(cpu);
+	eor(addr, cpu);
+}
+
+void eor_zero_pg_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t addr = zero_pg_x(cpu);
+	eor(addr, cpu);
+}
+
+void lsr_zero_pg_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t addr = zero_pg_x(cpu);
+	lsr(addr, cpu);
+}
+
