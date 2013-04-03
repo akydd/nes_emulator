@@ -108,6 +108,14 @@ inline void and(uint16_t addr, struct cpu *cpu)
 	set_zero_flag_for_value(cpu->A, cpu);
 }
 
+inline void eor(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	cpu->A ^= val;
+	set_negative_flag_for_value(cpu->A, cpu);
+	set_zero_flag_for_value(cpu->A, cpu);
+}
+
 inline void asl(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t val = cpu->memory[addr];
@@ -150,6 +158,27 @@ inline void rol(uint16_t addr, struct cpu *cpu)
 	}
 
 	cpu->memory[addr] = result;
+}
+
+inline void lsr(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	uint8_t result = val>>1;
+
+	/* shift old bit 0 into the carry flag */
+	if(low_bit_is_set(val))
+	{
+		set_carry_flag(cpu);
+	} else {
+		clear_carry_flag(cpu);
+	}
+
+	cpu->memory[addr] = result;
+}
+
+inline void jmp(uint16_t addr, struct cpu *cpu)
+{
+	cpu->PC == addr;
 }
 
 /* 
@@ -483,4 +512,77 @@ void rti(struct cpu *cpu)
 	cpu->PC++;
 	cpu->P = pop8_stack(cpu);
 	cpu->PC = pop16_stack(cpu);
+}
+
+void eor_ind_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu);
+	eor(addr, cpu);
+}
+
+void eor_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	eor(addr, cpu);
+}
+
+
+void lsr_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	lsr(addr, cpu);
+}
+
+void pha(struct cpu *cpu)
+{
+	cpu->PC++;
+	push8_stack(cpu->A);
+}
+
+void eor_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	eor(addr, cpu);
+}
+
+void lsr_acc(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t val = cpu->A;
+	uint8_t result = val>>1;
+
+	/* shift old bit 0 into the carry flag */
+	if(low_bit_is_set(val))
+	{
+		set_carry_flag(cpu);
+	} else {
+		clear_carry_flag(cpu);
+	}
+
+	cpu->A = result;
+}
+
+void jmp_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	jmp(addr, cpu);
+}
+
+void eor_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	eor(addr, cpu);
+}
+
+void lsr_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	lsr(addr, cpu);
 }
