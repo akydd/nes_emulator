@@ -88,7 +88,8 @@ inline uint16_t abs_x(struct cpu *cpu)
 
 inline uint16_t zero_pg_x(struct cpu *cpu)
 {
-	return (uint16_t)(pop8_mem(cpu) + cpu->X);
+	uint16_t addr = (uint16_t)pop8_mem(cpu);
+	return addr + cpu->X;
 }
 
 /* Common functions for executing instructions */
@@ -158,6 +159,32 @@ inline void rol(uint16_t addr, struct cpu *cpu)
 	}
 
 	cpu->memory[addr] = result;
+	set_negative_flag_for_value(result, cpu);
+	set_zero_flag_for_value(result, cpu);
+}
+
+inline void ror(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	uint8_t result = val>>1;
+
+	/* shift carry bit into high bit */
+	if (carry_flag_is_set(cpu))
+	{
+		result |= 0x80;
+	}
+
+	/* shift bit 0 into carry flag */
+	if (low_bit_is_set(val))
+	{
+		set_carry_flag(cpu);
+	} else {
+		clear_carry_flag(cpu);
+	}
+
+	cpu->memory[addr] = result;
+	set_negative_flag_for_value(result, cpu);
+	set_zero_flag_for_value(result, cpu);
 }
 
 inline void lsr(uint16_t addr, struct cpu *cpu)
@@ -174,11 +201,34 @@ inline void lsr(uint16_t addr, struct cpu *cpu)
 	}
 
 	cpu->memory[addr] = result;
+	set_negative_flag_for_value(result, cpu);
+	set_zero_flag_for_value(result, cpu);
 }
 
 inline void jmp(uint16_t addr, struct cpu *cpu)
 {
 	cpu->PC == addr;
+}
+
+/*
+ * SUm the contents of the accuulator, value at addr, and the carry flag
+ */
+inline void adc(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t a = cpu->memory[addr];
+	uint8_t b = cpu->A;
+
+	uint8_t sum = a + b;
+	if(carry_flag_is_set(cpu))
+	{
+		sum++;
+	}
+	cpu->A = sum;
+
+	set_zero_flag_for_value(sum);
+	set_negative_flag_for_value(sum);
+	set_carry_flag_on_add(a, b, cpu);
+	set_overflow_flag_on_adc(a, b, cpu);
 }
 
 /* 
@@ -631,3 +681,41 @@ void lsr_zero_pg_x(struct cpu *cpu)
 	lsr(addr, cpu);
 }
 
+void cli(struct cpu *cpu)
+{
+	cpu->PC++;
+	clear_interrupt_flag(cpu);
+}
+
+void eor_abs_y(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu);
+	eor(addr, cpu);
+}
+
+void eor_abs_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu);
+	eor(addr, cpu);
+}
+
+void rts(struct cpu *cpu)
+{
+	cpu->PC = pop16_stack(cpu);
+}
+
+void adc_ind_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu);
+	adc(addr, cpu);
+}
+
+void adc_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	adc(addr, cpu);
+}

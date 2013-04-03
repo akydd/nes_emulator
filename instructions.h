@@ -107,6 +107,13 @@ void bvc_r(struct cpu *);
 void eor_ind_y(struct cpu *);
 void eor_zero_pg_x(struct cpu *);
 void lsr_zero_pg_x(struct cpu *);
+void cli(struct cpu *);
+void eor_abs_y(struct cpu *);
+void eor_abs_x(struct cpu *);
+void lsr_abs_x(struct cpu *);
+void rts(struct cpu *);
+void adc_ind_x(struct cpu *);
+void adc_zero_pg(struct cpu *);
 
 /* codes 0x00 to 0xFF  */
 static void (* const pf[]) (struct cpu *) = {
@@ -115,8 +122,8 @@ static void (* const pf[]) (struct cpu *) = {
 	&jsr_abs, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, NULL, &plp, &and_imm, &rol_acc, NULL, &bit_abs, &and_abs, &rol_abs, NULL,
 	&bmi_r, &and_ind_y, NULL, NULL, NULL, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, NULL, NULL, NULL, &and_abs_x, &rol_abs_x, NULL,
 	&rti, &eor_ind_x, NULL, NULL, NULL, &eor_zero_pg, &lsr_zero_pg, NULL, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, NULL,
-	&bvc_r, &eor_ind_y, NULL, NULL, NULL, &eor_zero_pg_x, &lsr_zero_pg_x, NULL/*, &cli, &eor_abs_y, NULL, NULL, NULL, &eor_abs_x, &lsr_abs_x, NULL,
-	&rts, &adc_ind_x, NULL, NULL, NULL, &adc_zero_pg, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
+	&bvc_r, &eor_ind_y, NULL, NULL, NULL, &eor_zero_pg_x, &lsr_zero_pg_x, NULL, &cli, &eor_abs_y, NULL, NULL, NULL, &eor_abs_x, &lsr_abs_x, NULL,
+	&rts, &adc_ind_x, NULL, NULL, NULL, &adc_zero_pg/*, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
 	&bvs_r, &adc_ind_y, NULL, NULL, NULL, &adc_zero_pg_x, &ror_zero_pg_x, NULL, &sei, &adc_abs_y, NULL, NULL, NULL, &adc_abs_x, &ror_abs_x, NULL,
 	NULL, &sta_ind_x, NULL, NULL, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, NULL, &dey, NULL, &txa, NULL, &sty_a, &sta_a, &stx_a, NULL,
 	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_x, NULL, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,

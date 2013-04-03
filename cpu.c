@@ -128,7 +128,7 @@ void clear_carry_flag(struct cpu *cpu)
 }
 
 /*
- * Determine if the carry flag should be set when adding a and b.
+ * Manipulate the carry flag based on an ADC operation.
  */
 void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 {
@@ -142,6 +142,8 @@ void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 		if (a >= 0xff - b) {
 			set_carry_flag(cpu);
 		}
+	} else {
+		clear_carry_flag(cpu);
 	}
 }
 
@@ -162,10 +164,11 @@ void clear_overflow_flag(struct cpu *cpu)
 }
 
 /*
- * Determine if the overflow flag should be set after adding a and b.
+ * Manipulate the overflow flag for an ADC operation
  */
-void set_overflow_flag_on_add(uint8_t a, uint8_t b, uint8_t sum, struct cpu *cpu)
+void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
 {
+	/*
 	int overflow = 0;
 	if((((a|b) ^ sum) & 0x80) == 0x80) {
 		overflow = 1;
@@ -173,6 +176,48 @@ void set_overflow_flag_on_add(uint8_t a, uint8_t b, uint8_t sum, struct cpu *cpu
 
 	if((overflow == 1) ^ (carry_flag_is_set(cpu) == 1)) {
 		set_overflow_flag(cpu);
+	}*/
+
+	/*
+	 * Convert operands to signed 16 bit, sum and check if signed two's
+	 * complement result is less than -128 or greater than 127.  If it is,
+	 * then set the overflow flag.  Clear it otherwise.
+	 */
+	int16_t op1 = (int16_t)a;
+	int16_t op2 = (int16_t)b;
+	int16_t sum = op1 + op2;
+
+	if ((sum < 127) | (sum < -128))
+	{
+		set_overflow_flag(cpu);
+	}
+	else
+	{
+		clear_overflow_flag(cpu);
+	}
+}
+
+/*
+ * Manipulate the overflow flag for an SBC operation
+ */
+void set_overflow_flag_for_sbc(uint8_t a, uint8_t b, struct cpu *cpu)
+{
+	/*
+	 * Convert operands to signed 16 bit, subtract and check if signed two's
+	 * complement result is less than -128 or greater than 127.  If it is,
+	 * then set the overflow flag.  Clear it otherwise.
+	 */
+	int16_t op1 = (int16_t)a;
+	int16_t op2 = (int16_t)b;
+	int16_t diff = op1 - op2;
+
+	if ((diff < 127) | (diff < -128))
+	{
+		set_overflow_flag(cpu);
+	}
+	else
+	{
+		clear_overflow_flag(cpu);
 	}
 }
 

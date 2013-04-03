@@ -84,9 +84,13 @@ uint8_t overflag_flag_is_set(struct cpu *);
 void set_overflow_flag(struct cpu *);
 void clear_overflow_flag(struct cpu *);
 /*
- * Determine if the overflow flag should be set after adding a and b.
+ * Manipulate the overflow flag for an ADC operation.
  */
-void set_overflow_flag_on_add(uint8_t, uint8_t, uint8_t, struct cpu *);
+void set_overflow_flag_on_adc(uint8_t, uint8_t, struct cpu *);
+/*
+ * Manipulate the overflow flag for a SBC operation.
+ */
+void set_overflow_flag_on_sbc(uint8_t, uint8_t, struct cpu *);
 void set_overflow_flag_for_value(uint8_t, struct cpu *);
 
 uint8_t zero_flag_is_set(struct cpu *);
