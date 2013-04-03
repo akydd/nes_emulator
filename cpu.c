@@ -60,6 +60,14 @@ uint8_t pop8_stack(struct cpu *cpu)
 	return cpu->memory[cpu->S];
 }
 
+uint16_t pop16_stack(struct cpu *cpu)
+{
+	cpu->S++;
+	uint16_t low = cpu->memory[cpu->S];
+	cpu->S++;
+	uint16_t high = cpu->memory[cpu->S];
+	return (high<<8) | low;
+}
 
 
 /* Memory manipulation */

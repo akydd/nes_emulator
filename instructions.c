@@ -245,7 +245,7 @@ void bpl_r(struct cpu *cpu)
 	cpu->PC++;
 	uint8_t offset = pop8_mem(cpu);
 
-	if((cpu->P & N_FLAG) == 0) {
+	if(negative_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -391,4 +391,96 @@ void bit_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	bit(addr, cpu);
+}
+
+void and_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	and(addr, cpu);
+}
+
+void rol_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	rol(addr, cpu);
+}
+
+/*
+ * Branch when negative
+ */
+void bmi_r(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t offset = pop8_mem(cpu);
+
+	if(negative_flag_is_set(cpu) == 1) {
+		if(offset >= 0x80) { 
+			/* 
+			   Need special conversion when unsigned
+			   int would be converted to a negative
+			   signed int.
+			   */
+			offset = 0xFF - offset + 1;
+			cpu->PC -= offset;
+		} else {
+			cpu->PC += offset;
+		}
+	}
+}
+
+void and_ind_y(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu);
+	and(addr, cpu);
+}
+
+void and_zero_pg_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu);
+	and(addr, cpu);
+}
+
+void rol_zero_pg_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu);
+	rol(addr, cpu);
+}
+
+void sec(struct cpu *cpu)
+{
+	cpu->PC++;
+	set_carry_flag(cpu);
+}
+
+void and_abs_y(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu);
+	and(addr, cpu);
+}
+
+void and_abs_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu);
+	and(addr, cpu);
+}
+
+void rol_abs_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu);
+	rol(addr, cpu);
+}
+
+void rti(struct cpu *cpu)
+{
+	cpu->PC++;
+	cpu->P = pop8_stack(cpu);
+	cpu->PC = pop16_stack(cpu);
 }

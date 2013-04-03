@@ -57,7 +57,7 @@ void init(struct cpu *);
 void push16_stack(uint16_t, struct cpu *);
 void push8_stack(uint8_t, struct cpu *);
 uint8_t pop8_stack(struct cpu *);
-
+uint16_t pop16_stack(struct cpu *);
 
 
 /* 

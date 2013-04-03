@@ -505,6 +505,94 @@ static char *test_bit_abs()
 	return 0;
 }
 
+static char *test_and_abs()
+{
+	init(&cpu);
+
+	cpu.A = 5;
+	cpu.memory[1] = 0x12; /* low byte is stored first */
+	cpu.memory[2] = 0x0E;
+	cpu.memory[0x0E12] = 11;
+
+	and_abs(&cpu);
+
+	mu_assert("and_abs- fail.", cpu.A == (5&11));
+	mu_assert("and_abs - PC not incremented", cpu.PC == 3);
+
+	return 0;
+}
+
+static char *test_rol_abs_carry_flag_set()
+{
+	init(&cpu);
+	set_carry_flag(&cpu);
+
+	cpu.memory[1] = 0x12;
+	cpu.memory[2] = 0x0E;
+	cpu.memory[0x0E12] = 6;
+
+	rol_abs(&cpu);
+
+	mu_assert("rol_abs - Wrong result", cpu.memory[0x0E12] == 6*2 + 1);
+	mu_assert("rol_abs - PC not incremented", cpu.PC == 3);
+	mu_assert("rol_abs - Wrong C_FLAG", carry_flag_is_set(&cpu) == 0);
+
+	return 0;
+}
+
+static char *test_bmi_r_clear()
+{
+	init(&cpu);
+	cpu.memory[1] = 0xF9; /* -7, when signed */
+
+	bmi_r(&cpu);
+
+	mu_assert("bmi_r - fail when clear", cpu.PC == 2);
+
+	return 0;
+}
+
+static char *test_bmi_r_set()
+{
+	init(&cpu);
+	cpu.P |= N_FLAG;
+	cpu.PC = 10;
+	cpu.memory[11] = 0xF9; /* -7, when signed */
+
+	bmi_r(&cpu);
+
+	mu_assert("bmi_r - fail when set", cpu.PC == 5);
+
+	return 0;
+}
+
+static char *test_sec()
+{
+	init(&cpu);
+
+	sec(&cpu);
+
+	mu_assert("sec - C_FLAG not set", (cpu.P & C_FLAG) == C_FLAG);
+	mu_assert("sec - PC not incremented", cpu.PC == 1);
+
+	return 0;
+}
+
+static char *test_rti()
+{
+	init(&cpu);
+	push8_stack(0x0A, &cpu);
+	push8_stack(0xB4, &cpu);
+	push8_stack(0x16, &cpu);
+
+	rti(&cpu);
+
+	mu_assert("rti - PC wrong", cpu.PC == 0x0AB4);
+	mu_assert("rti - status flags wrong", cpu.P == 0x16);
+
+	return 0;
+}
+
 static char *all_tests()
 {
 	/*
@@ -554,6 +642,12 @@ static char *all_tests()
 	mu_run_test(test_and_imm);
 	mu_run_test(test_rol_acc);
 	mu_run_test(test_bit_abs);
+	mu_run_test(test_and_abs);
+	mu_run_test(test_rol_abs_carry_flag_set);
+	mu_run_test(test_bmi_r_set);
+	mu_run_test(test_bmi_r_clear);
+	mu_run_test(test_sec);
+	mu_run_test(test_rti);
 
 	return 0;
 }
