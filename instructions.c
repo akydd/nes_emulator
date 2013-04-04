@@ -207,11 +207,11 @@ inline void lsr(uint16_t addr, struct cpu *cpu)
 
 inline void jmp(uint16_t addr, struct cpu *cpu)
 {
-	cpu->PC == addr;
+	cpu->PC = addr;
 }
 
 /*
- * SUm the contents of the accuulator, value at addr, and the carry flag
+ * Sum the contents of the accumulator, value at addr, and the carry flag
  */
 inline void adc(uint16_t addr, struct cpu *cpu)
 {
@@ -225,10 +225,10 @@ inline void adc(uint16_t addr, struct cpu *cpu)
 	}
 	cpu->A = sum;
 
-	set_zero_flag_for_value(sum);
-	set_negative_flag_for_value(sum);
+	set_zero_flag_for_value(sum, cpu);
+	set_negative_flag_for_value(sum, cpu);
 	set_carry_flag_on_add(a, b, cpu);
-	set_overflow_flag_on_adc(a, b, cpu);
+	set_overflow_flag_for_adc(a, b, cpu);
 }
 
 /* 
@@ -589,7 +589,7 @@ void lsr_zero_pg(struct cpu *cpu)
 void pha(struct cpu *cpu)
 {
 	cpu->PC++;
-	push8_stack(cpu->A);
+	push8_stack(cpu->A, cpu);
 }
 
 void eor_imm(struct cpu *cpu)
@@ -699,6 +699,13 @@ void eor_abs_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	eor(addr, cpu);
+}
+
+void lsr_abs_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu);
+	lsr(addr, cpu);
 }
 
 void rts(struct cpu *cpu)

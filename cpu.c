@@ -137,13 +137,15 @@ void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 	if (carry_flag_is_set(cpu) == 0) {
 		if(a > 0xff - b) {
 			set_carry_flag(cpu);
+		} else {
+			clear_carry_flag(cpu);
 		}
 	} else {
 		if (a >= 0xff - b) {
 			set_carry_flag(cpu);
+		} else {
+			clear_carry_flag(cpu);
 		}
-	} else {
-		clear_carry_flag(cpu);
 	}
 }
 
