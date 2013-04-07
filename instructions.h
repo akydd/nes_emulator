@@ -114,6 +114,39 @@ void lsr_abs_x(struct cpu *);
 void rts(struct cpu *);
 void adc_ind_x(struct cpu *);
 void adc_zero_pg(struct cpu *);
+void ror_zero_pg(struct cpu *);
+void pla(struct cpu *);
+void adc_imm(struct cpu *);
+void ror_acc(struct cpu *);
+void jmp_ind(struct cpu *);
+void adc_abs(struct cpu *);
+void ror_abs(struct cpu *);
+void bvs_r(struct cpu *);
+void adc_ind_y(struct cpu *);
+void adc_zero_pg_x(struct cpu *);
+void ror_zero_pg_x(struct cpu *);
+void sei(struct cpu *);
+void adc_abs_y(struct cpu *);
+void adc_abs_x(struct cpu *);
+void ror_abs_x(struct cpu *);
+void sta_ind_x(struct cpu *);
+void sty_zero_pg(struct cpu *);
+void sta_zero_pg(struct cpu *);
+void stx_zero_pg(struct cpu *);
+void dey(struct cpu *);
+void txa(struct cpu *);
+void sty_abs(struct cpu *);
+void sta_abs(struct cpu *);
+void stx_abs(struct cpu *);
+void bcc_r(struct cpu *);
+void sta_ind_y(struct cpu *);
+void sty_zero_pg_x(struct cpu *);
+void sta_zero_pg_x(struct cpu *);
+void stx_zero_pg_x(struct cpu *);
+void tya(struct cpu *);
+void sta_abs_y(struct cpu *);
+void txs(struct cpu *);
+void sta_abs_x(struct cpu *);
 
 /* codes 0x00 to 0xFF  */
 static void (* const pf[]) (struct cpu *) = {
@@ -123,14 +156,14 @@ static void (* const pf[]) (struct cpu *) = {
 	&bmi_r, &and_ind_y, NULL, NULL, NULL, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, NULL, NULL, NULL, &and_abs_x, &rol_abs_x, NULL,
 	&rti, &eor_ind_x, NULL, NULL, NULL, &eor_zero_pg, &lsr_zero_pg, NULL, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, NULL,
 	&bvc_r, &eor_ind_y, NULL, NULL, NULL, &eor_zero_pg_x, &lsr_zero_pg_x, NULL, &cli, &eor_abs_y, NULL, NULL, NULL, &eor_abs_x, &lsr_abs_x, NULL,
-	&rts, &adc_ind_x, NULL, NULL, NULL, &adc_zero_pg/*, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
+	&rts, &adc_ind_x, NULL, NULL, NULL, &adc_zero_pg, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
 	&bvs_r, &adc_ind_y, NULL, NULL, NULL, &adc_zero_pg_x, &ror_zero_pg_x, NULL, &sei, &adc_abs_y, NULL, NULL, NULL, &adc_abs_x, &ror_abs_x, NULL,
-	NULL, &sta_ind_x, NULL, NULL, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, NULL, &dey, NULL, &txa, NULL, &sty_a, &sta_a, &stx_a, NULL,
-	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_x, NULL, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
-	&ldy_imm, &lda_ind_x, &ldx_imm, NULL, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, NULL, &tay, &lda_imm, &tax, NULL, &ldy_a, &lda_a, &ldx_a, NULL,
+	NULL, &sta_ind_x, NULL, NULL, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, NULL, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, NULL,
+	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_x, NULL, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL/*,
+	&ldy_imm, &lda_ind_x, &ldx_imm, NULL, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, NULL, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, NULL,
 	&bcs_r, &lda_ind_y, NULL, NULL, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, NULL, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, NULL,
-	&cpy_imm, &cmp_ind_x, NULL, NULL, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, NULL, &iny, &cmp_imm, &dex, NULL, &cpy_a, &cmp_a, &dec_a, NULL,
+	&cpy_imm, &cmp_ind_x, NULL, NULL, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, NULL, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, NULL,
 	&bne_r, &cmp_ind_y, NULL, NULL, NULL, &cmp_zero_pg_x, &dec_zero_pg_x, NULL, &cld, &cmp_abs_y, NULL, NULL, NULL< &cmp_abs_x, &dec_abs_x, NULL,
-	&cpx_imm, sbc_ind_x, NULL, NULL, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, NULL, &inx, &sbc_imm, &nop, NULL, &cpx_a, &sbc_a, &inc_a, NULL,
+	&cpx_imm, sbc_ind_x, NULL, NULL, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, NULL, &inx, &sbc_imm, &nop, NULL, &cpx_abs, &sbc_abs, &inc_abs, NULL,
 	&beq_r, &sbc_ind_y, NULL, NULL, NULL, &sbc_zero_pg_x, &inc_zero_pg_x, NULL, &sed, &sbc_abs_y, NULL, NULL, NULL, &sbc_abs_x, &inc_abs_x, NULL*/
 };
