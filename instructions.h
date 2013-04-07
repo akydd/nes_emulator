@@ -51,6 +51,7 @@
  * r			r		Relative
  * ind_y		(d), Y		(Indirect), Y
  * zero_pg_x		d, X		Zero Page, X
+ * zero_pg_y		d, Y		Zero Page, Y
  * abs_y		a, Y		Absolute, Y
  * abs_x		a, X		Absolute, X
  * ind			(a)		Indirect
@@ -159,6 +160,37 @@ void tax(struct cpu *);
 void ldy_abs(struct cpu *);
 void lda_abs(struct cpu *);
 void ldx_abs(struct cpu *);
+void bcs_r(struct cpu *);
+void lda_ind_y(struct cpu *);
+void ldy_zero_pg_x(struct cpu *);
+void lda_zero_pg_x(struct cpu *);
+void ldx_zero_pg_y(struct cpu *);
+void clv(struct cpu *);
+void lda_abs_y(struct cpu *);
+void tsx(struct cpu *);
+void ldy_abs_x(struct cpu *);
+void lda_abs_x(struct cpu *);
+void ldx_abs_y(struct cpu *);
+void cpy_imm(struct cpu *);
+void cmp_ind_x(struct cpu *);
+void cpy_zero_pg(struct cpu *);
+void cmp_zero_pg(struct cpu *);
+void dec_zero_pg(struct cpu *);
+void iny(struct cpu *);
+void cmp_imm(struct cpu *);
+void dex(struct cpu *);
+void cpy_abs(struct cpu *);
+void cmp_abs(struct cpu *);
+void dec_abs(struct cpu *);
+void bne_r(struct cpu *);
+void cmp_ind_y(struct cpu *);
+void cmp_zero_pg_x(struct cpu *);
+void dec_zero_pg_x(struct cpu *);
+void cld(struct cpu *);
+void cmp_abs_y(struct cpu *);
+void cmp_abs_x(struct cpu *);
+void dec_abs_x(struct cpu *);
+
 
 /* codes 0x00 to 0xFF  */
 static void (* const pf[]) (struct cpu *) = {
@@ -172,10 +204,10 @@ static void (* const pf[]) (struct cpu *) = {
 	&bvs_r, &adc_ind_y, NULL, NULL, NULL, &adc_zero_pg_x, &ror_zero_pg_x, NULL, &sei, &adc_abs_y, NULL, NULL, NULL, &adc_abs_x, &ror_abs_x, NULL,
 	NULL, &sta_ind_x, NULL, NULL, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, NULL, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, NULL,
 	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_x, NULL, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
-	&ldy_imm, &lda_ind_x, &ldx_imm, NULL, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, NULL, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, NULL/*,
+	&ldy_imm, &lda_ind_x, &ldx_imm, NULL, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, NULL, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, NULL,
 	&bcs_r, &lda_ind_y, NULL, NULL, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, NULL, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, NULL,
 	&cpy_imm, &cmp_ind_x, NULL, NULL, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, NULL, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, NULL,
-	&bne_r, &cmp_ind_y, NULL, NULL, NULL, &cmp_zero_pg_x, &dec_zero_pg_x, NULL, &cld, &cmp_abs_y, NULL, NULL, NULL< &cmp_abs_x, &dec_abs_x, NULL,
+	&bne_r, &cmp_ind_y, NULL, NULL, NULL, &cmp_zero_pg_x, &dec_zero_pg_x, NULL, &cld, &cmp_abs_y, NULL, NULL, NULL, &cmp_abs_x, &dec_abs_x, NULL/*,
 	&cpx_imm, sbc_ind_x, NULL, NULL, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, NULL, &inx, &sbc_imm, &nop, NULL, &cpx_abs, &sbc_abs, &inc_abs, NULL,
 	&beq_r, &sbc_ind_y, NULL, NULL, NULL, &sbc_zero_pg_x, &inc_zero_pg_x, NULL, &sed, &sbc_abs_y, NULL, NULL, NULL, &sbc_abs_x, &inc_abs_x, NULL*/
 };

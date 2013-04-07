@@ -307,3 +307,13 @@ void clear_interrupt_flag(struct cpu *cpu)
 {
 	clear_status_flag(I_FLAG, cpu);
 }
+
+void set_decimal_flag(struct cpu *cpu)
+{
+	set_status_flag(D_FLAG, cpu);
+}
+
+void clear_decimal_flag(struct cpu *cpu)
+{
+	clear_status_flag(D_FLAG, cpu);
+}

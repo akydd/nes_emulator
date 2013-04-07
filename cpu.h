@@ -110,3 +110,6 @@ void clear_break_flag(struct cpu *);
 uint8_t interrupt_flag_is_set(struct cpu *);
 void set_interrupt_flag(struct cpu *);
 void clear_interrupt_flag(struct cpu *);
+
+void set_decimal_flag(struct cpu *);
+void clear_decimal_flag(struct cpu *);
