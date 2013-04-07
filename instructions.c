@@ -254,6 +254,27 @@ inline void stx(uint16_t addr, struct cpu *cpu)
 	cpu->memory[addr] = cpu->X;
 }
 
+inline void ldy(uint16_t addr, struct cpu *cpu)
+{
+	cpu->Y = cpu->memory[addr];
+	set_zero_flag_for_value(cpu->Y, cpu);
+	set_negative_flag_for_value(cpu->Y, cpu);
+}
+
+inline void ldx(uint16_t addr, struct cpu *cpu)
+{
+	cpu->X = cpu->memory[addr];
+	set_zero_flag_for_value(cpu->X, cpu);
+	set_negative_flag_for_value(cpu->X, cpu);
+}
+
+inline void lda(uint16_t addr, struct cpu *cpu)
+{
+	cpu->A = cpu->memory[addr];
+	set_zero_flag_for_value(cpu->A, cpu);
+	set_negative_flag_for_value(cpu->A, cpu);
+}
+
 /* 
  * break: Set the break flag, push PC onto the stack,
  * push the status flags on the stack, then address
@@ -1030,4 +1051,92 @@ void sta_abs_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	sta(addr, cpu);
+}
+
+void ldy_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	ldy(addr, cpu);
+}
+
+void lda_ind_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu);
+	lda(addr, cpu);
+}
+
+void ldx_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	ldx(addr, cpu);
+}
+
+void ldy_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	ldy(addr, cpu);
+}
+
+void lda_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	lda(addr, cpu);
+}
+
+void ldx_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	ldx(addr, cpu);
+}
+
+void tay(struct cpu *cpu)
+{
+	cpu->PC++;
+	cpu->Y = cpu->A;
+
+	set_zero_flag_for_value(cpu->A, cpu);
+	set_negative_flag_for_value(cpu->A, cpu);
+}
+
+void lda_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	lda(addr, cpu);
+}
+
+void tax(struct cpu *cpu)
+{
+	cpu->PC++;
+	cpu->X = cpu->A;
+
+	set_zero_flag_for_value(cpu->A, cpu);
+	set_negative_flag_for_value(cpu->A, cpu);
+}
+
+void ldy_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	ldy(addr, cpu);
+}
+
+void lda_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	lda(addr, cpu);
+}
+
+void ldx_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	ldx(addr, cpu);
 }
