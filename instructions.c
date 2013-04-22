@@ -241,8 +241,30 @@ inline void adc(uint16_t addr, struct cpu *cpu)
 
 	set_zero_flag_for_value(sum, cpu);
 	set_negative_flag_for_value(sum, cpu);
-	set_carry_flag_on_add(a, b, cpu);
+	/*
+	 * TODO: fix overflow.
+	 * See http://forum.6502.org/viewtopic.php?t=62
+	 */
 	set_overflow_flag_for_adc(a, b, cpu);
+	set_carry_flag_on_add(a, b, cpu);
+}
+
+inline void sbc(uibt16_t addr, struct cpu *cpu)
+{
+	uint8_t a = cpu->memory[addr];
+	uint8_t b = cpu->A;
+
+	uint8_t diff = a - b;
+	if(carry_flag_is_set(cpu))
+	{
+		diff--;
+	}
+	cpu->A = diff;
+
+	set_zero_flag_for_value(diff, cpu);
+	set_negative_flag_for_value(diff, cpu);
+	set_overflow_flag_for_sbc(a, b, cpu);
+	set_carry_flag_on_sub(a, b, cpu);
 }
 
 inline void sta(uint16_t addr, struct cpu *cpu)
@@ -298,6 +320,13 @@ inline void compare(uint8_t a, uint8_t b, struct cpu *cpu)
 inline void cpy(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t a = cpu->Y;
+	uint8_t b = cpu->memory[addr];
+	compare(a, b, cpu);
+}
+
+inline void cpx(uint16_t addr, struct cpu *cpu)
+{
+	uint8_t a = cpu->X;
 	uint8_t b = cpu->memory[addr];
 	compare(a, b, cpu);
 }
@@ -1418,3 +1447,12 @@ void dec_abs_x(struct cpu *cpu)
 	uint16_t addr = abs_x(cpu);
 	dec(addr, cpu);
 }
+
+void cpx_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	cpx(addr, cpu);
+}
+
+

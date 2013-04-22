@@ -135,7 +135,7 @@ void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 	/* if carry flag is zero, check if a + b > 0xff.
 	 * Otherwise, check if a + b >= 0xff. */
 	if (carry_flag_is_set(cpu) == 0) {
-		if(a > 0xff - b) {
+		if (a > 0xff - b) {
 			set_carry_flag(cpu);
 		} else {
 			clear_carry_flag(cpu);
@@ -146,6 +146,39 @@ void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 		} else {
 			clear_carry_flag(cpu);
 		}
+	}
+}
+
+int bit_is_set(uint16_t, value, uint8_t pos)
+{
+	if((value & 0x01<<pos) == 0x01<<pos)
+	{
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Manipulate the carry flag based on an SBC operation
+ */
+void set_carry_flag_on_sub(uint8_t a, uint8_t b, struct cpu *cpu)
+{
+	/*
+	 * Check if the resulting subtraction causes bit 7 to overflow into bit 8.
+	 * Use wider numbers to check if this happens.
+	 */
+	uint16_t op1 = (uint16_t)a;
+	uint16_t op2 = (uint16_t)b;
+	uint16_t diff = op1 - op2;
+	if(carry_flag_is_set(cpu) == 1)
+	{
+		diff--;
+	}
+
+	if (bit_is_set(diff, 8) == 1) {
+		set_carry_flag(cpu);
+	} else {
+		clear_carry_flag(cpu);
 	}
 }
 
@@ -167,6 +200,7 @@ void clear_overflow_flag(struct cpu *cpu)
 
 /*
  * Manipulate the overflow flag for an ADC operation
+ * TODO: fix this
  */
 void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
 {
@@ -188,8 +222,12 @@ void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
 	int16_t op1 = (int16_t)a;
 	int16_t op2 = (int16_t)b;
 	int16_t sum = op1 + op2;
+	if(carry_flag_is_set(cpu))
+	{
+		sum++;
+	}
 
-	if ((sum < 127) | (sum < -128))
+	if ((sum > 127) | (sum < -128))
 	{
 		set_overflow_flag(cpu);
 	}
@@ -201,6 +239,7 @@ void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
 
 /*
  * Manipulate the overflow flag for an SBC operation
+ * TODO: fix this
  */
 void set_overflow_flag_for_sbc(uint8_t a, uint8_t b, struct cpu *cpu)
 {
