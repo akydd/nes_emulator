@@ -242,7 +242,7 @@ inline void adc(uint16_t addr, struct cpu *cpu)
 	set_zero_flag_for_value(sum, cpu);
 	set_negative_flag_for_value(sum, cpu);
 	set_carry_flag_on_add(a, b, cpu);
-	set_overflow_flag_for_adc(a, b, cpu);
+	set_overflow_flag_for_adc(a, b, sum, cpu);
 }
 
 inline void sbc(uint16_t addr, struct cpu *cpu)
@@ -260,7 +260,7 @@ inline void sbc(uint16_t addr, struct cpu *cpu)
 	set_zero_flag_for_value(diff, cpu);
 	set_negative_flag_for_value(diff, cpu);
 	set_carry_flag_on_sub(a, b, cpu);
-	set_overflow_flag_for_sbc(a, b, cpu);
+	set_overflow_flag_for_sbc(a, b, diff, cpu);
 }
 
 inline void sta(uint16_t addr, struct cpu *cpu)
@@ -338,6 +338,15 @@ inline void dec(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t val = cpu->memory[addr];
 	uint8_t result = val - 1;
+	cpu->memory[addr] = result;
+	set_zero_flag_for_value(result, cpu);
+	set_negative_flag_for_value(result, cpu);
+}
+
+inline void inc(uint16_t addr. struct cpu *cpu)
+{
+	uint8_t val = cpu->memory[addr];
+	uint8_t result = val + 1;
 	cpu->memory[addr] = result;
 	set_zero_flag_for_value(result, cpu);
 	set_negative_flag_for_value(result, cpu);
@@ -1451,4 +1460,139 @@ void cpx_imm(struct cpu *cpu)
 	cpx(addr, cpu);
 }
 
+void sbc_ind_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu);
+	sbc(addr, cpu);
+}
 
+void cpx_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	cpx(addr, cpu);
+}
+
+void sbc_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	sbc(addr, cpu);
+}
+
+void inc_zero_pg(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu);
+	inc(addr, cpu);
+}
+
+void inx(struct cpu *cpu)
+{
+	cpu->PC++;
+	cpu->X++;
+	set_zero_flag_for_value(cpu->X, cpu);
+	set_negative_flag_for_value(cpu->X, cpu);
+}
+
+void sbc_imm(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	sbc(addr, cpu);
+}
+
+void nop(struct cpu *cpu)
+{
+	cpu->PC++;
+}
+
+void cpx_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	cpx(addr, cpu);
+}
+
+void sbc_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	sbc(addr, cpu);
+}
+
+void inc_abs(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_(cpu);
+	inc(addr, cpu);
+}
+
+void beq_r(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint8_t offset = pop8_mem(cpu);
+
+	if(zero_flag_is_set(cpu) == 1) {
+		if(offset >= 0x80) { 
+			/* 
+			   Need special conversion when unsigned
+			   int would be converted to a negative
+			   signed int.
+			   */
+			offset = 0xFF - offset + 1;
+			cpu->PC -= offset;
+		} else {
+			cpu->PC += offset;
+		}
+	}
+}
+
+void sbc_ind_y(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu);
+	sbc(addr, cpu);
+}
+
+void sbc_zero_pg_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu);
+	sbc(addr, cpu);
+}
+
+void inc_zero_pg_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu);
+	inc(addr, cpu);
+}
+
+void sed(struct cpu *cpu)
+{
+	cpu->PC++;
+	set_decimal_flag(cpu);
+}
+
+void sbc_abs_y(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu);
+	sbc(addr, cpu);
+}
+
+void sbc_abs_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu);
+	sbc(addr, cpu);
+}
+
+void inc_abs_x(struct cpu *cpu)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu);
+	inc(addr, cpu);
+}

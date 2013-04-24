@@ -189,27 +189,27 @@ void clear_overflow_flag(struct cpu *cpu)
 }
 
 /*
- * Manipulate the overflow flag for an ADC operation
+ * Manipulate the overflow flag for an ADC operation.
+ * Formula found @ http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
  */
-void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
+void set_overflow_flag_for_adc(uint8_t a, uint8_t b, uint8_t result, struct cpu *cpu)
 {
-	uint8_t sum = a + b;
-	int overflow = 0;
-	if((((a|b) ^ sum) & 0x80) == 0x80) {
-		overflow = 1;
-	}
-
-	if((overflow == 1) ^ (carry_flag_is_set(cpu) == 1)) {
+	if ((a^result) & (b^result) & 0x80 != 0)
+	{
 		set_overflow_flag(cpu);
 	}
 }
 
 /*
- * Manipulate the overflow flag for an SBC operation
- * TODO: fix this
+ * Manipulate the overflow flag for an SBC operation.
+ * Formula found @ http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
  */
-void set_overflow_flag_for_sbc(uint8_t a, uint8_t b, struct cpu *cpu)
+void set_overflow_flag_for_sbc(uint8_t a, uint8_t b, uint8_t result, struct cpu *cpu)
 {
+	if ((a^result) & ((0xff-b)^result) & 0x80 != 0)
+	{
+		set_overflow_flag(cpu);
+	}
 }
 
 void set_overflow_flag_for_value(uint8_t a, struct cpu *cpu)
