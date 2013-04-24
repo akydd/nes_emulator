@@ -343,7 +343,7 @@ inline void dec(uint16_t addr, struct cpu *cpu)
 	set_negative_flag_for_value(result, cpu);
 }
 
-inline void inc(uint16_t addr. struct cpu *cpu)
+inline void inc(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t val = cpu->memory[addr];
 	uint8_t result = val + 1;

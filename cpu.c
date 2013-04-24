@@ -194,7 +194,7 @@ void clear_overflow_flag(struct cpu *cpu)
  */
 void set_overflow_flag_for_adc(uint8_t a, uint8_t b, uint8_t result, struct cpu *cpu)
 {
-	if ((a^result) & (b^result) & 0x80 != 0)
+	if (((a^result) & (b^result) & 0x80) != 0)
 	{
 		set_overflow_flag(cpu);
 	}
@@ -206,7 +206,7 @@ void set_overflow_flag_for_adc(uint8_t a, uint8_t b, uint8_t result, struct cpu 
  */
 void set_overflow_flag_for_sbc(uint8_t a, uint8_t b, uint8_t result, struct cpu *cpu)
 {
-	if ((a^result) & ((0xff-b)^result) & 0x80 != 0)
+	if (((a^result) & ((0xff-b)^result) & 0x80) != 0)
 	{
 		set_overflow_flag(cpu);
 	}

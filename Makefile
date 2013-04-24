@@ -15,3 +15,6 @@ instructions.o: cpu.h instructions.h instructions.c
 
 test.o:cpu.h instructions.h test.c
 test_cpu.o:cpu.h test_cpu.c
+
+clean:
+	rm -rf *.o
