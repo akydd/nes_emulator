@@ -149,36 +149,26 @@ void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *cpu)
 	}
 }
 
-int bit_is_set(uint16_t, value, uint8_t pos)
-{
-	if((value & 0x01<<pos) == 0x01<<pos)
-	{
-		return 1;
-	}
-	return 0;
-}
-
 /*
  * Manipulate the carry flag based on an SBC operation
  */
 void set_carry_flag_on_sub(uint8_t a, uint8_t b, struct cpu *cpu)
 {
-	/*
-	 * Check if the resulting subtraction causes bit 7 to overflow into bit 8.
-	 * Use wider numbers to check if this happens.
+	/* If carry flag is set:
+	 * 	If a >= b, set the carry flag.
+	 *	Otherwise clear the carry flag.
+	 * If carry flag is not set:
+	 * 	If a > b, set the carry flag.
+	 * 	Otherwise clear the carry flag.
 	 */
-	uint16_t op1 = (uint16_t)a;
-	uint16_t op2 = (uint16_t)b;
-	uint16_t diff = op1 - op2;
-	if(carry_flag_is_set(cpu) == 1)
-	{
-		diff--;
-	}
-
-	if (bit_is_set(diff, 8) == 1) {
-		set_carry_flag(cpu);
+	if (carry_flag_is_set(cpu) == 1) {
+		if (a < b) {
+			clear_carry_flag(cpu);
+		}
 	} else {
-		clear_carry_flag(cpu);
+		if (a > b) {
+			set_carry_flag(cpu);
+		}
 	}
 }
 
@@ -200,11 +190,10 @@ void clear_overflow_flag(struct cpu *cpu)
 
 /*
  * Manipulate the overflow flag for an ADC operation
- * TODO: fix this
  */
 void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
 {
-	/*
+	uint8_t sum = a + b;
 	int overflow = 0;
 	if((((a|b) ^ sum) & 0x80) == 0x80) {
 		overflow = 1;
@@ -212,28 +201,6 @@ void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
 
 	if((overflow == 1) ^ (carry_flag_is_set(cpu) == 1)) {
 		set_overflow_flag(cpu);
-	}*/
-
-	/*
-	 * Convert operands to signed 16 bit, sum and check if signed two's
-	 * complement result is less than -128 or greater than 127.  If it is,
-	 * then set the overflow flag.  Clear it otherwise.
-	 */
-	int16_t op1 = (int16_t)a;
-	int16_t op2 = (int16_t)b;
-	int16_t sum = op1 + op2;
-	if(carry_flag_is_set(cpu))
-	{
-		sum++;
-	}
-
-	if ((sum > 127) | (sum < -128))
-	{
-		set_overflow_flag(cpu);
-	}
-	else
-	{
-		clear_overflow_flag(cpu);
 	}
 }
 
@@ -243,23 +210,6 @@ void set_overflow_flag_for_adc(uint8_t a, uint8_t b, struct cpu *cpu)
  */
 void set_overflow_flag_for_sbc(uint8_t a, uint8_t b, struct cpu *cpu)
 {
-	/*
-	 * Convert operands to signed 16 bit, subtract and check if signed two's
-	 * complement result is less than -128 or greater than 127.  If it is,
-	 * then set the overflow flag.  Clear it otherwise.
-	 */
-	int16_t op1 = (int16_t)a;
-	int16_t op2 = (int16_t)b;
-	int16_t diff = op1 - op2;
-
-	if ((diff < 127) | (diff < -128))
-	{
-		set_overflow_flag(cpu);
-	}
-	else
-	{
-		clear_overflow_flag(cpu);
-	}
 }
 
 void set_overflow_flag_for_value(uint8_t a, struct cpu *cpu)

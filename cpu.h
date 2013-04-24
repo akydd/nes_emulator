@@ -79,7 +79,10 @@ void clear_carry_flag(struct cpu *);
  * Determine if the carry flag should be set when adding a and b.
  */
 void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *);
-
+/*
+ * Determine if the carry flag should be set when subtracting a and b.
+ */
+void set_carry_flag_on_sub(uint8_t a, uint8_t b, struct cpu *);
 uint8_t overflow_flag_is_set(struct cpu *);
 void set_overflow_flag(struct cpu *);
 void clear_overflow_flag(struct cpu *);

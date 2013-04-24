@@ -241,15 +241,11 @@ inline void adc(uint16_t addr, struct cpu *cpu)
 
 	set_zero_flag_for_value(sum, cpu);
 	set_negative_flag_for_value(sum, cpu);
-	/*
-	 * TODO: fix overflow.
-	 * See http://forum.6502.org/viewtopic.php?t=62
-	 */
-	set_overflow_flag_for_adc(a, b, cpu);
 	set_carry_flag_on_add(a, b, cpu);
+	set_overflow_flag_for_adc(a, b, cpu);
 }
 
-inline void sbc(uibt16_t addr, struct cpu *cpu)
+inline void sbc(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t a = cpu->memory[addr];
 	uint8_t b = cpu->A;
@@ -263,8 +259,8 @@ inline void sbc(uibt16_t addr, struct cpu *cpu)
 
 	set_zero_flag_for_value(diff, cpu);
 	set_negative_flag_for_value(diff, cpu);
-	set_overflow_flag_for_sbc(a, b, cpu);
 	set_carry_flag_on_sub(a, b, cpu);
+	set_overflow_flag_for_sbc(a, b, cpu);
 }
 
 inline void sta(uint16_t addr, struct cpu *cpu)
