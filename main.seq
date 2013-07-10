@@ -1,0 +1,20 @@
+# For use with www.websequencediagrams.com
+title Main execution loop
+CPU->Memory: Fetch next instruction
+
+CPU->+CPU: execute instruction
+CPU->+Memory: Write
+Memory->-CPU: Read
+CPU->-CPU: update registers
+
+loop for 3 x # clock cycles
+    note right of PPU
+       341 PPU cycles per scanline,
+       262 scanlines per frame.
+    end note
+    PPU->PPU: execute
+end
+
+loop for # clock cycles / 2
+    APU->APU: execute
+end
