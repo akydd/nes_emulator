@@ -65,56 +65,56 @@ uint16_t CPU_pop16_stack(struct cpu *);
  * Values aren't really "popped", as they are still accessible if you know
  * the address.
  */
-uint16_t pop16_mem(struct cpu *);
-uint8_t pop8_mem(struct cpu *);
+uint16_t CPU_pop16_mem(struct cpu *);
+uint8_t CPU_pop8_mem(struct cpu *);
 
 
 
 /* Status flag manipulation */
 
-uint8_t carry_flag_is_set(struct cpu *);
-void set_carry_flag(struct cpu *);
-void clear_carry_flag(struct cpu *);
+uint8_t CPU_carry_flag_is_set(const struct cpu *);
+void CPU_set_carry_flag(struct cpu *);
+void CPU_clear_carry_flag(struct cpu *);
 /*
  * Determine if the carry flag should be set when adding a and b.
  */
-void set_carry_flag_on_add(uint8_t a, uint8_t b, struct cpu *);
+void CPU_set_carry_flag_on_add(struct cpu *, const uint8_t a, const uint8_t b);
 /*
  * Determine if the carry flag should be set when subtracting a and b.
  */
-void set_carry_flag_on_sub(uint8_t a, uint8_t b, struct cpu *);
-uint8_t overflow_flag_is_set(struct cpu *);
-void set_overflow_flag(struct cpu *);
-void clear_overflow_flag(struct cpu *);
+void CPU_set_carry_flag_on_sub(struct cpu *, const uint8_t a, const uint8_t b);
+uint8_t CPU_overflow_flag_is_set(const struct cpu *);
+void CPU_set_overflow_flag(struct cpu *);
+void CPU_clear_overflow_flag(struct cpu *);
 /*
  * Manipulate the overflow flag for an ADC operation.
  */
-void set_overflow_flag_for_adc(uint8_t, uint8_t, uint8_t, struct cpu *);
+void CPU_set_overflow_flag_for_adc(struct cpu *, const uint8_t, const uint8_t, const uint8_t);
 /*
  * Manipulate the overflow flag for a SBC operation.
  */
-void set_overflow_flag_for_sbc(uint8_t, uint8_t, uint8_t, struct cpu *);
-void set_overflow_flag_for_value(uint8_t, struct cpu *);
+void CPU_set_overflow_flag_for_sbc(struct cpu *, const uint8_t, const uint8_t, const uint8_t);
+void CPU_set_overflow_flag_for_value(struct cpu *, const uint8_t);
 
-uint8_t zero_flag_is_set(struct cpu *);
-void set_zero_flag(struct cpu *);
-void clear_zero_flag(struct cpu *);
-void set_zero_flag_for_value(uint8_t, struct cpu *);
+uint8_t CPU_zero_flag_is_set(const struct cpu *);
+void CPU_set_zero_flag(struct cpu *);
+void CPU_clear_zero_flag(struct cpu *);
+void CPU_set_zero_flag_for_value(struct cpu *, const uint8_t);
 
-uint8_t negative_flag_is_set(struct cpu *);
-void set_negative_flag(struct cpu *);
-void clear_negative_flag(struct cpu *);
-void set_negative_flag_for_value(uint8_t, struct cpu *);
+uint8_t CPU_negative_flag_is_set(const struct cpu *);
+void CPU_set_negative_flag(struct cpu *);
+void CPU_clear_negative_flag(struct cpu *);
+void CPU_set_negative_flag_for_value(struct cpu *, const uint8_t);
 
-uint8_t break_flag_is_set(struct cpu *);
-void set_break_flag(struct cpu *);
-void clear_break_flag(struct cpu *);
+uint8_t CPU_break_flag_is_set(const struct cpu *);
+void CPU_set_break_flag(struct cpu *);
+void CPU_clear_break_flag(struct cpu *);
 
-uint8_t interrupt_flag_is_set(struct cpu *);
-void set_interrupt_flag(struct cpu *);
-void clear_interrupt_flag(struct cpu *);
+uint8_t CPU_interrupt_flag_is_set(const struct cpu *);
+void CPU_set_interrupt_flag(struct cpu *);
+void CPU_clear_interrupt_flag(struct cpu *);
 
-void set_decimal_flag(struct cpu *);
-void clear_decimal_flag(struct cpu *);
+void CPU_set_decimal_flag(struct cpu *);
+void CPU_clear_decimal_flag(struct cpu *);
 
 #endif
