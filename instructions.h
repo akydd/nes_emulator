@@ -16,6 +16,11 @@
  * =============================================================================
  */
 
+#ifndef INSTRUCTIONS_H
+#define INSTRUCTIONS_H
+
+#include <stdlib.h>
+#include "cpu.h"
 
 /* Opcodes are endoded in one of the following bit sequences:
  *
@@ -230,3 +235,5 @@ static void (* const pf[]) (struct cpu *) = {
 	&cpx_imm, &sbc_ind_x, NULL, NULL, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, NULL, &inx, &sbc_imm, &nop, NULL, &cpx_abs, &sbc_abs, &inc_abs, NULL,
 	&beq_r, &sbc_ind_y, NULL, NULL, NULL, &sbc_zero_pg_x, &inc_zero_pg_x, NULL, &sed, &sbc_abs_y, NULL, NULL, NULL, &sbc_abs_x, &inc_abs_x, NULL
 };
+
+#endif

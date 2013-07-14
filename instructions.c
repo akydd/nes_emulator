@@ -24,7 +24,7 @@
 
 
 /* helpers */
-inline uint8_t bit_is_set(uint8_t value, uint8_t pos)
+inline uint8_t bit_is_set(const uint8_t value, const uint8_t pos)
 {
 	if((value & 0x01<<pos) == 0x01<<pos)
 	{
@@ -33,12 +33,12 @@ inline uint8_t bit_is_set(uint8_t value, uint8_t pos)
 	return 0;
 }
 
-inline uint8_t high_bit_is_set(uint8_t value)
+inline uint8_t high_bit_is_set(const uint8_t value)
 {
 	return bit_is_set(value, 7);
 }
 
-inline uint8_t low_bit_is_set(uint8_t value)
+inline uint8_t low_bit_is_set(const uint8_t value)
 {
 	return bit_is_set(value, 0);
 }
@@ -53,93 +53,93 @@ inline uint16_t imm(struct cpu *cpu)
 
 inline uint16_t zero_pg(struct cpu *cpu)
 {
-	return (uint16_t)pop8_mem(cpu);
+	return (uint16_t)CPU_pop8_mem(cpu);
 }
 
 inline uint16_t abs_(struct cpu *cpu)
 {
-	return pop16_mem(cpu);
+	return CPU_pop16_mem(cpu);
 }
 
 inline uint16_t ind_x(struct cpu *cpu)
 {
-	uint8_t addr_of_low = pop8_mem(cpu) + cpu->X;
-	uint16_t low = memory[addr_of_low];
-	uint16_t high = memory[addr_of_low + 1]<<8;
+	uint8_t addr_of_low = CPU_pop8_mem(cpu) + cpu->X;
+	uint16_t low = MEM_read(cpu->mem, addr_of_low);
+	uint16_t high = MEM_read(cpu->mem, addr_of_low + 1)<<8;
 	return (high | low);
 }
 
 inline uint16_t ind_y(struct cpu *cpu)
 {
-	uint8_t addr_of_low = pop8_mem(cpu);
-	uint16_t low = cpu->memory[addr_of_low];
-	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	uint8_t addr_of_low = CPU_pop8_mem(cpu);
+	uint16_t low = MEM_read(cpu->mem, addr_of_low);
+	uint16_t high = MEM_read(cpu->mem, addr_of_low + 1)<<8;
 	return (high|low) + cpu->Y;
 }
 
 inline uint16_t ind(struct cpu *cpu)
 {
-	uint16_t addr_of_low = pop16_mem(cpu);
-	uint16_t low = cpu->memory[addr_of_low];
-	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	uint16_t addr_of_low = CPU_pop16_mem(cpu);
+	uint16_t low = MEM_read(cpu->mem, addr_of_low);
+	uint16_t high = MEM_read(cpu->mem, addr_of_low + 1)<<8;
 	return (high | low);
 }
 
 inline uint16_t abs_y(struct cpu *cpu)
 {
-	return pop16_mem(cpu) + cpu->Y;
+	return CPU_pop16_mem(cpu) + cpu->Y;
 }
 
 inline uint16_t abs_x(struct cpu *cpu)
 {
-	return pop16_mem(cpu) + cpu->X;
+	return CPU_pop16_mem(cpu) + cpu->X;
 }
 
 inline uint16_t zero_pg_x(struct cpu *cpu)
 {
-	uint16_t addr = (uint16_t)pop8_mem(cpu);
+	uint16_t addr = (uint16_t)CPU_pop8_mem(cpu);
 	return addr + cpu->X;
 }
 
 inline uint16_t zero_pg_y(struct cpu *cpu)
 {
-	uint16_t addr = (uint16_t)pop8_mem(cpu);
+	uint16_t addr = (uint16_t)CPU_pop8_mem(cpu);
 	return addr + cpu->Y;
 }
 
 /* Common functions for executing instructions */
 inline void ora(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	cpu->A |= val;
-	set_negative_flag_for_value(cpu->A, cpu);
-	set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
 }
 
 inline void and(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	cpu->A &= val;
-	set_negative_flag_for_value(cpu->A, cpu);
-	set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
 }
 
 inline void eor(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	cpu->A ^= val;
-	set_negative_flag_for_value(cpu->A, cpu);
-	set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
 }
 
 inline void asl(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t new_val = val<<1;
-	cpu->memory[addr] = new_val;
+	MEM_write(cpu->mem, addr, new_val);
 
-	set_zero_flag_for_value(new_val, cpu);
-	set_negative_flag_for_value(new_val, cpu);
+	CPU_set_zero_flag_for_value(cpu, new_val);
+	CPU_set_negative_flag_for_value(cpu, new_val);
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
 	}
@@ -147,20 +147,20 @@ inline void asl(uint16_t addr, struct cpu *cpu)
 
 inline void bit(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t result = cpu->A & val;
-	set_zero_flag_for_value(result, cpu);
+	CPU_set_zero_flag_for_value(cpu, result);
 	cpu->P |= (val & N_FLAG);
 	cpu->P |= (val & V_FLAG);
 }
 
 inline void rol(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t result = val<<1;
 
 	/* shift carry bit into low bit */
-	if (carry_flag_is_set(cpu))
+	if (CPU_carry_flag_is_set(cpu))
 	{
 		result |= 0x01;
 	}
@@ -168,23 +168,23 @@ inline void rol(uint16_t addr, struct cpu *cpu)
 	/* shift bit 7 into carry flag */
 	if (high_bit_is_set(val))
 	{
-		set_carry_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else {
-		clear_carry_flag(cpu);
+		CPU_clear_carry_flag(cpu);
 	}
 
-	cpu->memory[addr] = result;
-	set_negative_flag_for_value(result, cpu);
-	set_zero_flag_for_value(result, cpu);
+	MEM_write(cpu->mem, addr, result);
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
 }
 
 inline void ror(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t result = val>>1;
 
 	/* shift carry bit into high bit */
-	if (carry_flag_is_set(cpu))
+	if (CPU_carry_flag_is_set(cpu))
 	{
 		result |= 0x80;
 	}
@@ -192,32 +192,32 @@ inline void ror(uint16_t addr, struct cpu *cpu)
 	/* shift bit 0 into carry flag */
 	if (low_bit_is_set(val))
 	{
-		set_carry_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else {
-		clear_carry_flag(cpu);
+		CPU_clear_carry_flag(cpu);
 	}
 
-	cpu->memory[addr] = result;
-	set_negative_flag_for_value(result, cpu);
-	set_zero_flag_for_value(result, cpu);
+	MEM_write(cpu->mem, addr, result);
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
 }
 
 inline void lsr(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t result = val>>1;
 
 	/* shift old bit 0 into the carry flag */
 	if(low_bit_is_set(val))
 	{
-		set_carry_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else {
-		clear_carry_flag(cpu);
+		CPU_clear_carry_flag(cpu);
 	}
 
-	cpu->memory[addr] = result;
-	set_negative_flag_for_value(result, cpu);
-	set_zero_flag_for_value(result, cpu);
+	MEM_write(cpu->mem, addr, result);
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
 }
 
 inline void jmp(uint16_t addr, struct cpu *cpu)
@@ -230,108 +230,108 @@ inline void jmp(uint16_t addr, struct cpu *cpu)
  */
 inline void adc(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t a = cpu->memory[addr];
+	uint8_t a = MEM_read(cpu->mem, addr);
 	uint8_t b = cpu->A;
 
 	uint8_t sum = a + b;
-	if(carry_flag_is_set(cpu))
+	if(CPU_carry_flag_is_set(cpu))
 	{
 		sum++;
 	}
 	cpu->A = sum;
 
-	set_zero_flag_for_value(sum, cpu);
-	set_negative_flag_for_value(sum, cpu);
-	set_carry_flag_on_add(a, b, cpu);
-	set_overflow_flag_for_adc(a, b, sum, cpu);
+	CPU_set_zero_flag_for_value(cpu, sum);
+	CPU_set_negative_flag_for_value(cpu, sum);
+	CPU_set_carry_flag_on_add(cpu, a, b);
+	CPU_set_overflow_flag_for_adc(cpu, a, b, sum);
 }
 
 inline void sbc(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t a = cpu->memory[addr];
+	uint8_t a = MEM_read(cpu->mem, addr);
 	uint8_t b = cpu->A;
 
 	uint8_t diff = a - b;
-	if(carry_flag_is_set(cpu))
+	if(CPU_carry_flag_is_set(cpu))
 	{
 		diff--;
 	}
 	cpu->A = diff;
 
-	set_zero_flag_for_value(diff, cpu);
-	set_negative_flag_for_value(diff, cpu);
-	set_carry_flag_on_sub(a, b, cpu);
-	set_overflow_flag_for_sbc(a, b, diff, cpu);
+	CPU_set_zero_flag_for_value(cpu, diff);
+	CPU_set_negative_flag_for_value(cpu, diff);
+	CPU_set_carry_flag_on_sub(cpu, a, b);
+	CPU_set_overflow_flag_for_sbc(cpu, a, b, diff);
 }
 
 inline void sta(uint16_t addr, struct cpu *cpu)
 {
-	cpu->memory[addr] = cpu->A;
+	MEM_write(cpu->mem, addr, cpu->A);
 }
 
 inline void sty(uint16_t addr, struct cpu *cpu)
 {
-	cpu->memory[addr] = cpu->Y;
+	MEM_write(cpu->mem, addr, cpu->Y);
 }
 
 inline void stx(uint16_t addr, struct cpu *cpu)
 {
-	cpu->memory[addr] = cpu->X;
+	MEM_write(cpu->mem, addr, cpu->X);
 }
 
 inline void ldy(uint16_t addr, struct cpu *cpu)
 {
-	cpu->Y = cpu->memory[addr];
-	set_zero_flag_for_value(cpu->Y, cpu);
-	set_negative_flag_for_value(cpu->Y, cpu);
+	cpu->Y = MEM_read(cpu->mem, addr);
+	CPU_set_zero_flag_for_value(cpu->Y, cpu);
+	CPU_set_negative_flag_for_value(cpu->Y, cpu);
 }
 
 inline void ldx(uint16_t addr, struct cpu *cpu)
 {
-	cpu->X = cpu->memory[addr];
-	set_zero_flag_for_value(cpu->X, cpu);
-	set_negative_flag_for_value(cpu->X, cpu);
+	cpu->X = MEM_read(cpu->mem, addr);
+	CPU_set_zero_flag_for_value(cpu->X, cpu);
+	CPU_set_negative_flag_for_value(cpu->X, cpu);
 }
 
 inline void lda(uint16_t addr, struct cpu *cpu)
 {
-	cpu->A = cpu->memory[addr];
-	set_zero_flag_for_value(cpu->A, cpu);
-	set_negative_flag_for_value(cpu->A, cpu);
+	cpu->A = MEM_read(cpu->mem, addr);
+	CPU_set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu->A, cpu);
 }
 
 inline void compare(uint8_t a, uint8_t b, struct cpu *cpu)
 {
 	if(a == b) {
-		set_zero_flag(cpu);
-		set_carry_flag(cpu);
+		CPU_set_zero_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else if(a > b) {
-		set_carry_flag(cpu);
-		set_negative_flag_for_value(a-b, cpu);
+		CPU_set_carry_flag(cpu);
+		CPU_set_negative_flag_for_value(a-b, cpu);
 	} else {
-		clear_carry_flag(cpu);
-		set_negative_flag_for_value(a-b, cpu);
+		CPU_clear_carry_flag(cpu);
+		CPU_set_negative_flag_for_value(a-b, cpu);
 	}
 }
 
 inline void cpy(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t a = cpu->Y;
-	uint8_t b = cpu->memory[addr];
+	uint8_t b = MEM_read(cpu->mem, addr);
 	compare(a, b, cpu);
 }
 
 inline void cpx(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t a = cpu->X;
-	uint8_t b = cpu->memory[addr];
+	uint8_t b = MEM_read(cpu->mem, addr);
 	compare(a, b, cpu);
 }
 
 inline void cmp(uint16_t addr, struct cpu *cpu)
 {
 	uint8_t a = cpu->A;
-	uint8_t b = cpu->memory[addr];
+	uint8_t b = MEM_read(cpu->mem, addr);
 	compare(a, b, cpu);
 }
 
@@ -340,8 +340,8 @@ inline void dec(uint16_t addr, struct cpu *cpu)
 	uint8_t val = cpu->memory[addr];
 	uint8_t result = val - 1;
 	cpu->memory[addr] = result;
-	set_zero_flag_for_value(result, cpu);
-	set_negative_flag_for_value(result, cpu);
+	CPU_set_zero_flag_for_value(result, cpu);
+	CPU_set_negative_flag_for_value(result, cpu);
 }
 
 inline void inc(uint16_t addr, struct cpu *cpu)
@@ -349,8 +349,8 @@ inline void inc(uint16_t addr, struct cpu *cpu)
 	uint8_t val = cpu->memory[addr];
 	uint8_t result = val + 1;
 	cpu->memory[addr] = result;
-	set_zero_flag_for_value(result, cpu);
-	set_negative_flag_for_value(result, cpu);
+	CPU_set_zero_flag_for_value(result, cpu);
+	CPU_set_negative_flag_for_value(result, cpu);
 }
 
 /* 
@@ -361,9 +361,9 @@ inline void inc(uint16_t addr, struct cpu *cpu)
 void brk(struct cpu *cpu)
 {
 	cpu->PC += 2;
-	set_break_flag(cpu);
-	push16_stack(cpu->PC, cpu);
-	push8_stack(cpu->P, cpu);
+	CPU_set_break_flag(cpu);
+	CPU_push16_stack(cpu->PC, cpu);
+	CPU_push8_stack(cpu->P, cpu);
 }
 
 /*
@@ -399,7 +399,7 @@ void asl_zero_pg(struct cpu *cpu)
 void php(struct cpu *cpu)
 {
 	cpu->PC++;
-	push8_stack(cpu->P, cpu);
+	CPU_push8_stack(cpu->P, cpu);
 }
 
 void ora_imm(struct cpu *cpu)
@@ -417,8 +417,8 @@ void asl_acc(struct cpu *cpu)
 	uint8_t new_val = val<<1;
 	cpu->A = new_val;
 
-	set_zero_flag_for_value(new_val, cpu);
-	set_negative_flag_for_value(new_val, cpu);
+	CPU_set_zero_flag_for_value(new_val, cpu);
+	CPU_set_negative_flag_for_value(new_val, cpu);
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
 	}
@@ -444,7 +444,7 @@ void asl_abs(struct cpu *cpu)
 void bpl_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
 	if(negative_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
@@ -517,7 +517,7 @@ void jsr_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t transfer_addr = abs_(cpu);
 	uint16_t next_op_addr = cpu->PC-1;
-	push16_stack(next_op_addr, cpu);
+	CPU_push16_stack(next_op_addr, cpu);
 	cpu->PC = transfer_addr;
 }
 
@@ -552,7 +552,7 @@ void rol_zero_pg(struct cpu *cpu)
 void plp(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t val = pop8_stack(cpu);
+	uint8_t val = CPU_pop8_stack(cpu);
 	cpu->P = val;
 }
 
@@ -571,7 +571,7 @@ void rol_acc(struct cpu *cpu)
 	uint8_t result = val<<1;
 
 	/* shift carry bit into low bit */
-	if (carry_flag_is_set(cpu))
+	if (CPU_carry_flag_is_set(cpu))
 	{
 		result |= 0x01;
 	}
@@ -579,9 +579,9 @@ void rol_acc(struct cpu *cpu)
 	/* shift bit 7 into carry flag */
 	if (high_bit_is_set(val))
 	{
-		set_carry_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else {
-		clear_carry_flag(cpu);
+		CPU_clear_carry_flag(cpu);
 	}
 
 	cpu->A = result;
@@ -616,7 +616,7 @@ void bmi_r(struct cpu *cpu)
 	cpu->PC++;
 	uint8_t offset = pop8_mem(cpu);
 
-	if(negative_flag_is_set(cpu) == 1) {
+	if(CPU_negative_flag_is_set(cpu) == 1) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -655,7 +655,7 @@ void rol_zero_pg_x(struct cpu *cpu)
 void sec(struct cpu *cpu)
 {
 	cpu->PC++;
-	set_carry_flag(cpu);
+	CPU_set_carry_flag(cpu);
 }
 
 void and_abs_y(struct cpu *cpu)
@@ -682,8 +682,8 @@ void rol_abs_x(struct cpu *cpu)
 void rti(struct cpu *cpu)
 {
 	cpu->PC++;
-	cpu->P = pop8_stack(cpu);
-	cpu->PC = pop16_stack(cpu);
+	cpu->P = CPU_pop8_stack(cpu);
+	cpu->PC = CPU_pop16_stack(cpu);
 }
 
 void eor_ind_x(struct cpu *cpu)
@@ -711,7 +711,7 @@ void lsr_zero_pg(struct cpu *cpu)
 void pha(struct cpu *cpu)
 {
 	cpu->PC++;
-	push8_stack(cpu->A, cpu);
+	CPU_push8_stack(cpu->A, cpu);
 }
 
 void eor_imm(struct cpu *cpu)
@@ -730,9 +730,9 @@ void lsr_acc(struct cpu *cpu)
 	/* shift old bit 0 into the carry flag */
 	if(low_bit_is_set(val))
 	{
-		set_carry_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else {
-		clear_carry_flag(cpu);
+		CPU_clear_carry_flag(cpu);
 	}
 
 	cpu->A = result;
@@ -765,9 +765,9 @@ void lsr_abs(struct cpu *cpu)
 void bvc_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
-	if(overflow_flag_is_set(cpu) == 0) {
+	if(CPU_overflow_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -806,7 +806,7 @@ void lsr_zero_pg_x(struct cpu *cpu)
 void cli(struct cpu *cpu)
 {
 	cpu->PC++;
-	clear_interrupt_flag(cpu);
+	CPU_clear_interrupt_flag(cpu);
 }
 
 void eor_abs_y(struct cpu *cpu)
@@ -832,7 +832,7 @@ void lsr_abs_x(struct cpu *cpu)
 
 void rts(struct cpu *cpu)
 {
-	cpu->PC = pop16_stack(cpu);
+	cpu->PC = CPU_pop16_stack(cpu);
 }
 
 void adc_ind_x(struct cpu *cpu)
@@ -859,11 +859,11 @@ void ror_zero_pg(struct cpu *cpu)
 void pla(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t val = pop8_stack(cpu);
+	uint8_t val = CPU_pop8_stack(cpu);
 	cpu->A = val;
 
-	set_zero_flag_for_value(val, cpu);
-	set_negative_flag_for_value(val, cpu);
+	CPU_set_zero_flag_for_value(val, cpu);
+	CPU_set_negative_flag_for_value(val, cpu);
 }
 
 void adc_imm(struct cpu *cpu)
@@ -880,7 +880,7 @@ void ror_acc(struct cpu *cpu)
 	uint8_t result = val>>1;
 
 	/* shift carry bit into high bit */
-	if (carry_flag_is_set(cpu))
+	if (CPU_carry_flag_is_set(cpu))
 	{
 		result |= 0x80;
 	}
@@ -888,14 +888,14 @@ void ror_acc(struct cpu *cpu)
 	/* shift bit 0 into carry flag */
 	if (low_bit_is_set(val))
 	{
-		set_carry_flag(cpu);
+		CPU_set_carry_flag(cpu);
 	} else {
-		clear_carry_flag(cpu);
+		CPU_clear_carry_flag(cpu);
 	}
 
 	cpu->A = result;
-	set_negative_flag_for_value(result, cpu);
-	set_zero_flag_for_value(result, cpu);
+	CPU_set_negative_flag_for_value(result, cpu);
+	CPU_set_zero_flag_for_value(result, cpu);
 }
 
 void jmp_ind(struct cpu *cpu)
@@ -922,9 +922,9 @@ void ror_abs(struct cpu *cpu)
 void bvs_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
-	if(overflow_flag_is_set(cpu) == 1) {
+	if(CPU_overflow_flag_is_set(cpu) == 1) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -963,7 +963,7 @@ void ror_zero_pg_x(struct cpu *cpu)
 void sei(struct cpu *cpu)
 {
 	cpu->PC++;
-	set_interrupt_flag(cpu);
+	CPU_set_interrupt_flag(cpu);
 }
 
 void adc_abs_y(struct cpu *cpu)
@@ -1020,8 +1020,8 @@ void dey(struct cpu *cpu)
 	cpu->PC++;
 	cpu->Y--;
 
-	set_zero_flag_for_value(cpu->Y, cpu);
-	set_negative_flag_for_value(cpu->Y, cpu);
+	CPU_set_zero_flag_for_value(cpu->Y, cpu);
+	CPU_set_negative_flag_for_value(cpu->Y, cpu);
 }
 
 void txa(struct cpu *cpu)
@@ -1029,8 +1029,8 @@ void txa(struct cpu *cpu)
 	cpu->PC++;
 	cpu->A = cpu->X;
 
-	set_zero_flag_for_value(cpu->A, cpu);
-	set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu->A, cpu);
 }
 
 void sty_abs(struct cpu *cpu)
@@ -1057,9 +1057,9 @@ void stx_abs(struct cpu * cpu)
 void bcc_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
-	if(carry_flag_is_set(cpu) == 0) {
+	if(CPU_carry_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -1107,8 +1107,8 @@ void tya(struct cpu *cpu)
 	cpu->PC++;
 	cpu->A = cpu->Y;
 
-	set_zero_flag_for_value(cpu->A, cpu);
-	set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu->A, cpu);
 }
 
 void sta_abs_y(struct cpu *cpu)
@@ -1178,8 +1178,8 @@ void tay(struct cpu *cpu)
 	cpu->PC++;
 	cpu->Y = cpu->A;
 
-	set_zero_flag_for_value(cpu->A, cpu);
-	set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu->A, cpu);
 }
 
 void lda_imm(struct cpu *cpu)
@@ -1194,8 +1194,8 @@ void tax(struct cpu *cpu)
 	cpu->PC++;
 	cpu->X = cpu->A;
 
-	set_zero_flag_for_value(cpu->A, cpu);
-	set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu->A, cpu);
+	CPU_set_negative_flag_for_value(cpu->A, cpu);
 }
 
 void ldy_abs(struct cpu *cpu)
@@ -1222,9 +1222,9 @@ void ldx_abs(struct cpu *cpu)
 void bcs_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
-	if(carry_flag_is_set(cpu) == 1) {
+	if(CPU_carry_flag_is_set(cpu) == 1) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -1270,7 +1270,7 @@ void ldx_zero_pg_y(struct cpu *cpu)
 void clv(struct cpu *cpu)
 {
 	cpu->PC++;
-	clear_overflow_flag(cpu);
+	CPU_clear_overflow_flag(cpu);
 }
 
 void lda_abs_y(struct cpu *cpu)
@@ -1346,8 +1346,8 @@ void iny(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->Y++;
-	set_zero_flag_for_value(cpu->Y, cpu);
-	set_negative_flag_for_value(cpu->Y, cpu);
+	CPU_set_zero_flag_for_value(cpu->Y, cpu);
+	CPU_set_negative_flag_for_value(cpu->Y, cpu);
 }
 
 void cmp_imm(struct cpu *cpu)
@@ -1361,8 +1361,8 @@ void dex(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X--;
-	set_zero_flag_for_value(cpu->X, cpu);
-	set_negative_flag_for_value(cpu->X, cpu);
+	CPU_set_zero_flag_for_value(cpu->X, cpu);
+	CPU_set_negative_flag_for_value(cpu->X, cpu);
 }
 
 void cpy_abs(struct cpu *cpu)
@@ -1391,7 +1391,7 @@ void bne_r(struct cpu *cpu)
 	cpu->PC++;
 	uint8_t offset = pop8_mem(cpu);
 
-	if(zero_flag_is_set(cpu) == 0) {
+	if(CPU_zero_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -1430,7 +1430,7 @@ void dec_zero_pg_x(struct cpu *cpu)
 void cld(struct cpu *cpu)
 {
 	cpu->PC++;
-	clear_decimal_flag(cpu);
+	CPU_clear_decimal_flag(cpu);
 }
 
 void cmp_abs_y(struct cpu *cpu)
@@ -1493,8 +1493,8 @@ void inx(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X++;
-	set_zero_flag_for_value(cpu->X, cpu);
-	set_negative_flag_for_value(cpu->X, cpu);
+	CPU_set_zero_flag_for_value(cpu->X, cpu);
+	CPU_set_negative_flag_for_value(cpu->X, cpu);
 }
 
 void sbc_imm(struct cpu *cpu)
@@ -1535,7 +1535,7 @@ void beq_r(struct cpu *cpu)
 	cpu->PC++;
 	uint8_t offset = pop8_mem(cpu);
 
-	if(zero_flag_is_set(cpu) == 1) {
+	if(CPU_zero_flag_is_set(cpu) == 1) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -1574,7 +1574,7 @@ void inc_zero_pg_x(struct cpu *cpu)
 void sed(struct cpu *cpu)
 {
 	cpu->PC++;
-	set_decimal_flag(cpu);
+	CPU_set_decimal_flag(cpu);
 }
 
 void sbc_abs_y(struct cpu *cpu)
