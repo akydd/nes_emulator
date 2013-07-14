@@ -17,6 +17,7 @@
  */
 #include <stdlib.h>
 #include <stdint.h>
+#include "memory.h"
 #include "cpu.h"
 #include "instructions.h"
 
@@ -63,8 +64,8 @@ inline uint16_t abs_(struct cpu *cpu)
 inline uint16_t ind_x(struct cpu *cpu)
 {
 	uint8_t addr_of_low = pop8_mem(cpu) + cpu->X;
-	uint16_t low = cpu->memory[addr_of_low];
-	uint16_t high = cpu->memory[addr_of_low + 1]<<8;
+	uint16_t low = memory[addr_of_low];
+	uint16_t high = memory[addr_of_low + 1]<<8;
 	return (high | low);
 }
 

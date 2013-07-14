@@ -21,7 +21,10 @@
 
 #include <stdint.h>
 #define MEM_SIZE 0xFFFF
-#define STACK_START 511
+#define MEM_STACK_START 511
+#define MIRROR_ADDR 0x0800
+#define VRAM_REG_START 0x2000
+#define VRAM_REG_SIZE 8
 
 struct memory {
 	/*
@@ -84,13 +87,13 @@ struct memory {
 	 *
 	 * Registers	Channel		Units
 	 * ------------------------------------------------------------
-	 * $4000-$4003	Pulse 1		Timer, length counter, envelope, sweep
-	 * $4004-$4007	Pulse 2		Timer, length counter, envelope, sweep
-	 * $4008-$400B	Triangle	Timer, length counter, linear counter
-	 * $400C-$400F	Noise		Timer, length counter, envelope, linear feedback shift register
-	 * $4010-$4013	DMC		Timer, memory reader, sample buffer, output unit
-	 * $4015	All		Channel enable and length counter status
 	 * $4017	All		Frame counter
+	 * $4015	All		Channel enable and length counter status
+	 * $4010-$4013	DMC		Timer, memory reader, sample buffer, output unit
+	 * $400C-$400F	Noise		Timer, length counter, envelope, linear feedback shift register
+	 * $4008-$400B	Triangle	Timer, length counter, linear counter
+	 * $4004-$4007	Pulse 2		Timer, length counter, envelope, sweep
+	 * $4000-$4003	Pulse 1		Timer, length counter, envelope, sweep
 	 *
 	 * Notes:
 	 * - For details, see apu.h.
@@ -106,9 +109,20 @@ struct memory {
 	 *
 	 * Notes:
 	 * - For details, see ppu.h.
+	 * - The PPU has its own internal memory as well
 	 *
 	 */
 	uint8_t memory[MEM_SIZE];
 };
+
+void MEM_init(struct memory *);
+
+uint8_t MEM_read(struct memory *, const uint16_t);
+
+/* 
+ * All write to memory should be delegated to this function
+ * for proper mirroring.
+ */
+void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
 #endif

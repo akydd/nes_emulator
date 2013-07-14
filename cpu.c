@@ -19,53 +19,48 @@
 #include <stdlib.h>
 #include "cpu.h"
 
-void init(struct cpu *cpu)
+
+void init(struct cpu *cpu, struct memory *mem)
 {
 	cpu->PC = 0;
-	cpu->S = STACK_START;	/* stack grows down from 0x1FF, or 511 */
+	cpu->S = MEM_STACK_START;	/* stack grows down from 0x1FF, or 511 */
 	cpu->A = 0;
 	cpu->X = 0;
 	cpu->Y = 0;
 	cpu->P = 0;
-
-	/* clear the cpu mem */
-	uint8_t *mem_ptr = NULL;
-	for(mem_ptr = cpu->memory; mem_ptr < cpu->memory + MEM_SIZE; mem_ptr++)
-	{
-		*mem_ptr = 0;
-	}
+	cpu->mem = mem;
 }
 
 
 
 /* Stack manipulation */
-void push16_stack(uint16_t val, struct cpu *cpu)
+void CPU_push16_stack(struct cpu *cpu, uint16_t val)
 {
 	/* push high byte, then low */
-	cpu->memory[cpu->S] = val>>8;
+	MEM_write(cpu->mem, cpu->S, val>>8);
 	cpu->S--;
-	cpu->memory[cpu->S] = val;
-	cpu->S--;
-}
-
-void push8_stack(uint8_t val, struct cpu *cpu)
-{
-	cpu->memory[cpu->S] = val;
+	MEM_write(cpu->mem, cpu->S, val);
 	cpu->S--;
 }
 
-uint8_t pop8_stack(struct cpu *cpu)
+void CPU_push8_stack(struct cpu *cpu, uint8_t val)
 {
-	cpu->S++;
-	return cpu->memory[cpu->S];
+	MEM_write(cpu->mem, cpu->S, val);
+	cpu->S--;
 }
 
-uint16_t pop16_stack(struct cpu *cpu)
+uint8_t CPU_pop8_stack(struct cpu *cpu)
 {
 	cpu->S++;
-	uint16_t low = cpu->memory[cpu->S];
+	return MEM_read(cpu->mem, cpu->S);
+}
+
+uint16_t CPU_pop16_stack(struct cpu *cpu)
+{
 	cpu->S++;
-	uint16_t high = cpu->memory[cpu->S];
+	uint16_t low = MEM_read(cpu->mem, cpu->S);
+	cpu->S++;
+	uint16_t high = MEM_read(cpu->mem , cpu->S);
 	return (high<<8) | low;
 }
 
