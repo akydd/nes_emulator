@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+
 #include "cpu.h"
 #include "instructions.h"
 
@@ -27,568 +28,604 @@
 
 int tests_run = 0;
 
-struct cpu cpu;
+struct memory *memory;
+struct cpu *cpu;
 
 static char *test_brk()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 	/* setup some state */
-	cpu.PC = 0x07D0 - 2; /* 1998 */
-	cpu.P = 5;
+	cpu->PC = 0x07D0 - 2; /* 1998 */
+	cpu->P = 5;
 
-	brk(&cpu);
+	brk(cpu);
 
-	mu_assert("BRK - PC not set", cpu.PC == 0x07D0);
-	mu_assert("BRK - S not set", cpu.S == STACK_START - 3);
-	mu_assert("BRK - flag not set", (cpu.P & B_FLAG) == B_FLAG);
-	mu_assert("BRK - high byte not on S", cpu.memory[STACK_START] == 0x07);
-	mu_assert("BRK - low byte not on S", cpu.memory[STACK_START-1] == 0xD0);
-	mu_assert("BRK - flags not on S", cpu.memory[STACK_START-2] == (5|B_FLAG));
+	mu_assert("BRK - PC not set", cpu->PC == 0x07D0);
+	mu_assert("BRK - S not set", cpu->S == MEM_STACK_START - 3);
+	mu_assert("BRK - flag not set", (cpu->P & B_FLAG) == B_FLAG);
+	mu_assert("BRK - high byte not on S", MEM_read(cpu->mem, MEM_STACK_START) == 0x07);
+	mu_assert("BRK - low byte not on S", MEM_read(cpu->mem, MEM_STACK_START-1) == 0xD0);
+	mu_assert("BRK - flags not on S", MEM_read(cpu->mem, MEM_STACK_START-2) == (5|B_FLAG));
 
 	return 0;
 }
 
 static char *test_ora_ind_x()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.X = 6;
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xBA] = 0x12;
-	cpu.memory[0xBB] = 0x0E;
-	cpu.memory[0x0E12] = 11;
+	cpu->X = 6;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xBA, 0x12);
+	MEM_write(memory, 0xBB, 0x0E);
+	MEM_write(memory, 0x0E12, 11);
 
-	ora_ind_x(&cpu);
+	ora_ind_x(cpu);
 
-	mu_assert("ora_ind_x - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_ind_x - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_ind_x - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_ind_x - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_ora_zero_pg()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 11;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4, 11);
 
-	ora_zero_pg(&cpu);
+	ora_zero_pg(cpu);
 
-	mu_assert("ora_zero_pg - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_zero_pg - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_zero_pg - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_zero_pg - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_asl_zero_pg()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 10;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4, 10);
 
-	asl_zero_pg(&cpu);
+	asl_zero_pg(cpu);
 
-	mu_assert("asl_zero_pg - fail.", cpu.memory[0xB4] == 20);
-	mu_assert("asl_zero_pg - PC not incremented", cpu.PC == 2);
+	mu_assert("asl_zero_pg - fail.", cpu->memory[0xB4] == 20);
+	mu_assert("asl_zero_pg - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_php()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.P = 17;
+	cpu->P = 17;
 
-	php(&cpu);
+	php(cpu);
 
-	mu_assert("PHP - PC not incr", cpu.PC == 1);
-	mu_assert("PHP - S not incr", cpu.S == STACK_START - 1);
-	mu_assert("PHP - flags not set", cpu.memory[STACK_START] == 17);
+	mu_assert("PHP - PC not incr", cpu->PC == 1);
+	mu_assert("PHP - S not incr", cpu->S == MEM_STACK_START - 1);
+	mu_assert("PHP - flags not set", cpu->memory[MEM_STACK_START] == 17);
 
 	return 0;
 }
 
 static char *test_ora_imm()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 5;
-	cpu.memory[1] = 11;
+	cpu->A = 5;
+	MEM_write(memory, 1, 11);
 
-	ora_imm(&cpu);
+	ora_imm(cpu);
 
-	mu_assert("ora_imm - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_imm - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_imm - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_imm - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_asl_acc()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 10;
+	cpu->A = 10;
 
-	asl_acc(&cpu);
+	asl_acc(cpu);
 
-	mu_assert("asl_acc - fail.", cpu.A == 20);
-	mu_assert("asl_acc - PC not incremented", cpu.PC == 1);
+	mu_assert("asl_acc - fail.", cpu->A == 20);
+	mu_assert("asl_acc - PC not incremented", cpu->PC == 1);
 
 	return 0;
 }
 
 static char *test_ora_abs()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 5;
-	cpu.memory[1] = 0x12; /* low byte is stored first */
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0E12] = 11;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0x12); /* low byte is stored first */
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0E12, 11);
 
-	ora_abs(&cpu);
+	ora_abs(cpu);
 
-	mu_assert("ora_abs- fail.", cpu.A == (5|11));
-	mu_assert("ora_abs - PC not incremented", cpu.PC == 3);
+	mu_assert("ora_abs- fail.", cpu->A == (5|11));
+	mu_assert("ora_abs - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_asl_abs()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.memory[1] = 0x12; /* low byte is stored first */
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0E12] = 10;
+	MEM_write(memory, 1, 0x12); /* low byte is stored first */
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0E12, 10);
 
-	asl_abs(&cpu);
+	asl_abs(cpu);
 
-	mu_assert("asl_abs - fail.", cpu.memory[0x0E12] == 20);
-	mu_assert("asl_abs - PC not incremented", cpu.PC == 3);
+	mu_assert("asl_abs - fail.", cpu->memory[0x0E12] == 20);
+	mu_assert("asl_abs - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_bpl_r_clear_neg()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.PC = 10;
-	cpu.memory[11] = 0xF9; /* -7, when signed */
+	cpu->PC = 10;
+	MEM_write(memory, 11, 0xF9); /* -7, when signed */
 
-	bpl_r(&cpu);
+	bpl_r(cpu);
 
-	mu_assert("bpl_r - fail when clear", cpu.PC == 5);
+	mu_assert("bpl_r - fail when clear", cpu->PC == 5);
 
 	return 0;
 }
 
 static char *test_bpl_r_clear_pos()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.PC = 10;
-	cpu.memory[11] = 0x07; /* 7, when signed */
+	cpu->PC = 10;
+	MEM_write(memory, 11, 0x07); /* 7, when signed */
 
-	bpl_r(&cpu);
+	bpl_r(cpu);
 
-	mu_assert("bpl_r - fail when clear", cpu.PC == 19);
+	mu_assert("bpl_r - fail when clear", cpu->PC == 19);
 
 	return 0;
 }
 
 static char *test_bpl_r_set()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.PC = 10;
-	cpu.P |= N_FLAG;
-	cpu.memory[11] = 0xF9; /* -7, when signed */
+	cpu->PC = 10;
+	cpu->P |= N_FLAG;
+	MEM_write(memory, 11, 0xF9); /* -7, when signed */
 
-	bpl_r(&cpu);
+	bpl_r(cpu);
 
-	mu_assert("bpl_r - fail when set", cpu.PC == 12);
+	mu_assert("bpl_r - fail when set", cpu->PC == 12);
 
 	return 0;
 }
 
 static char *test_ora_ind_y()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.Y = 6;
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 0x12;
-	cpu.memory[0xB5] = 0x0E;
-	cpu.memory[0x0E12 + 6] = 11;
+	cpu->Y = 6;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4, 0x12);
+	MEM_write(memory, 0xB5, 0x0E);
+	MEM_write(memory, 0x0E12 + 6, 11);
 
-	ora_ind_y(&cpu);
+	ora_ind_y(cpu);
 
-	mu_assert("ora_ind_y - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_ind_y - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_ind_y - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_ind_y - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_ora_zero_pg_x()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.X = 6;
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4 + cpu.X] = 11;
+	cpu->X = 6;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4 + cpu->X, 11);
 
-	ora_zero_pg_x(&cpu);
+	ora_zero_pg_x(cpu);
 
-	mu_assert("ora_aero_pg_x - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_zero_pg_x - PC not incremented", cpu.PC == 2);
+	mu_assert("ora_aero_pg_x - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_zero_pg_x - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_asl_zero_pg_x()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.X = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4 + cpu.X] = 10;
+	cpu->X = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4 + cpu->X, 10);
 
-	asl_zero_pg_x(&cpu);
+	asl_zero_pg_x(cpu);
 
-	mu_assert("asl_zero_pg_x - fail.", cpu.memory[0xB4 + cpu.X] == 20);
-	mu_assert("asl_zero_pg_x - PC not incremented", cpu.PC == 2);
+	mu_assert("asl_zero_pg_x - fail.", cpu.memory[0xB4 + cpu->X] == 20);
+	mu_assert("asl_zero_pg_x - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_clc()
 {
-	init(&cpu);
-	cpu.P |= C_FLAG;
+	MEM_init(memory);
+	CPU_init(cpu, memory);
+	cpu->P |= C_FLAG;
 
-	clc(&cpu);
+	clc(cpu);
 
-	mu_assert("clc - fail.", (cpu.P & C_FLAG) == 0);
-	mu_assert("clc - PC not incremented", cpu.PC == 1);
+	mu_assert("clc - fail.", (cpu->P & C_FLAG) == 0);
+	mu_assert("clc - PC not incremented", cpu->PC == 1);
 
 	return 0;
 }
 
 static char *test_ora_abs_y()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.Y = 6;
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0EB4 + cpu.Y] = 11;
+	cpu->Y = 6;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0EB4 + cpu->Y, 11);
 
-	ora_abs_y(&cpu);
+	ora_abs_y(cpu);
 
-	mu_assert("ora_abs_y - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_abs_y - PC not incremented", cpu.PC == 3);
+	mu_assert("ora_abs_y - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_abs_y - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_ora_abs_x()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.X = 6;
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0EB4 + cpu.X] = 11;
+	cpu->X = 6;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0EB4 + cpu->X, 11);
 
-	ora_abs_x(&cpu);
+	ora_abs_x(cpu);
 
-	mu_assert("ora_abs_x - Wrong val for A", cpu.A == (5|11));
-	mu_assert("ora_abs_x - PC not incremented", cpu.PC == 3);
+	mu_assert("ora_abs_x - Wrong val for A", cpu->A == (5|11));
+	mu_assert("ora_abs_x - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_asl_abs_x()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.X = 6;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0EB4 + cpu.X] = 10;
+	cpu->X = 6;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0EB4 + cpu->X, 10);
 
-	asl_abs_x(&cpu);
+	asl_abs_x(cpu);
 
-	mu_assert("asl_abs_x - fail.", cpu.memory[0x0EB4 + cpu.X] == 20);
-	mu_assert("asl_abs_x - PC not incremented", cpu.PC == 3);
+	mu_assert("asl_abs_x - fail.", cpu->memory[0x0EB4 + cpu->X] == 20);
+	mu_assert("asl_abs_x - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_jsr_abs()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.memory[1] = 0xB4;
-	cpu.memory[2] = 0x0E;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 2, 0x0E);
 
-	jsr_abs(&cpu);
+	jsr_abs(cpu);
 
-	mu_assert("jsr_abs - PC not set", cpu.PC == 0x0EB4);
-	mu_assert("jsr_abs - stack high byte wrong", cpu.memory[cpu.S+2] == 0);
-	mu_assert("jsr_abs - stack low byte wrong", cpu.memory[cpu.S+1] == 2);
+	mu_assert("jsr_abs - PC not set", cpu->PC == 0x0EB4);
+	mu_assert("jsr_abs - stack high byte wrong", cpu->memory[cpu.S+2] == 0);
+	mu_assert("jsr_abs - stack low byte wrong", cpu->memory[cpu.S+1] == 2);
 
 	return 0;
 }
 
 static char *test_and_ind_x()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.X = 6;
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xBA] = 0x12;
-	cpu.memory[0xBB] = 0x0E;
-	cpu.memory[0x0E12] = 11;
+	cpu->X = 6;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xBA, 0x12);
+	MEM_write(memory, 0xBB, 0x0E);
+	MEM_write(memory, 0x0E12, 11);
 
-	and_ind_x(&cpu);
+	and_ind_x(cpu);
 
-	mu_assert("and_ind_x - Wrong val for A", cpu.A == (5&11));
-	mu_assert("and_ind_x - PC not incremented", cpu.PC == 2);
+	mu_assert("and_ind_x - Wrong val for A", cpu->A == (5&11));
+	mu_assert("and_ind_x - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_bit_zero_pg()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.memory[1] = 0xB4;
-	cpu.A = 0x0F; /* 00001111 */
-	cpu.memory[0xB4] = 0xF0; /* 11110000 */
+	MEM_write(memory, 1, 0xB4);
+	cpu->A = 0x0F; /* 00001111 */
+	MEM_write(memory, 0xB4, 0xF0); /* 11110000 */
 	/* P should be 11000010 = 0xC2 */
 
-	bit_zero_pg(&cpu);
+	bit_zero_pg(cpu);
 
-	mu_assert("bit_zero_pg - Wrong Z_FLAG", (cpu.P & Z_FLAG) == Z_FLAG);
-	mu_assert("bit_zero_pg - Wrong N_FLAG", (cpu.P & N_FLAG) == N_FLAG);
-	mu_assert("bit_zero_pg - Wrong V_FLAG", (cpu.P & V_FLAG) == V_FLAG);
-	mu_assert("bit_zero_pg - Wrong P", cpu.P = 0xC2);
-	mu_assert("bit_zero_pg - PC not incremented", cpu.PC == 2);
+	mu_assert("bit_zero_pg - Wrong Z_FLAG", (cpu->P & Z_FLAG) == Z_FLAG);
+	mu_assert("bit_zero_pg - Wrong N_FLAG", (cpu->P & N_FLAG) == N_FLAG);
+	mu_assert("bit_zero_pg - Wrong V_FLAG", (cpu->P & V_FLAG) == V_FLAG);
+	mu_assert("bit_zero_pg - Wrong P", cpu->P = 0xC2);
+	mu_assert("bit_zero_pg - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_and_zero_pg()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 5;
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 11;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4, 11);
 
-	and_zero_pg(&cpu);
+	and_zero_pg(cpu);
 
-	mu_assert("and_zero_pg - Wrong val for A", cpu.A == (5&11));
-	mu_assert("and_zero_pg - PC not incremented", cpu.PC == 2);
+	mu_assert("and_zero_pg - Wrong val for A", cpu->A == (5&11));
+	mu_assert("and_zero_pg - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_rol_zero_pg_carry_flag_set()
 {
-	init(&cpu);
-	set_carry_flag(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
+	set_carry_flag(cpu);
 
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 6;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4, 6);
 
-	rol_zero_pg(&cpu);
+	rol_zero_pg(cpu);
 
-	mu_assert("rol_zero_pg - Wrong result", cpu.memory[0xB4] == 6*2 + 1);
-	mu_assert("rol_zero_pg - PC not incremented", cpu.PC == 2);
-	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(&cpu) == 0);
+	mu_assert("rol_zero_pg - Wrong result", cpu->memory[0xB4] == 6*2 + 1);
+	mu_assert("rol_zero_pg - PC not incremented", cpu->PC == 2);
+	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(cpu) == 0);
 
 	return 0;
 }
 
 static char *test_rol_zero_pg_high_bit_set()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.memory[1] = 0xB4;
-	cpu.memory[0xB4] = 0x86;
+	MEM_write(memory, 1, 0xB4);
+	MEM_write(memory, 0xB4, 0x86);
 
-	rol_zero_pg(&cpu);
+	rol_zero_pg(cpu);
 
-	mu_assert("rol_zero_pg - Wrong result", cpu.memory[0xB4] == 6*2);
-	mu_assert("rol_zero_pg - PC not incremented", cpu.PC == 2);
-	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(&cpu) == 1);
+	mu_assert("rol_zero_pg - Wrong result", cpu->memory[0xB4] == 6*2);
+	mu_assert("rol_zero_pg - PC not incremented", cpu->PC == 2);
+	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(cpu) == 1);
 
 	return 0;
 }
 
 static char *test_plp()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	push8_stack(0xA5, &cpu);
+	push8_stack(0xA5, cpu);
 
-	plp(&cpu);
+	plp(cpu);
 
-	mu_assert("plp - PC not incremented", cpu.PC == 1);
-	mu_assert("plp - Wrong flags", cpu.P == 0xA5);
+	mu_assert("plp - PC not incremented", cpu->PC == 1);
+	mu_assert("plp - Wrong flags", cpu->P == 0xA5);
 
 	return 0;
 }
 
 static char *test_and_imm()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 5;
-	cpu.memory[1] = 11;
+	cpu->A = 5;
+	MEM_write(memory, 1, 11);
 
-	and_imm(&cpu);
+	and_imm(cpu);
 
-	mu_assert("and_imm - Wrong val for A", cpu.A == (5&11));
-	mu_assert("and_imm - PC not incremented", cpu.PC == 2);
+	mu_assert("and_imm - Wrong val for A", cpu->A == (5&11));
+	mu_assert("and_imm - PC not incremented", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_rol_acc()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 6;
+	cpu->A = 6;
 
-	rol_acc(&cpu);
+	rol_acc(cpu);
 
-	mu_assert("rol_acc- Wrong result", cpu.A == 6*2);
-	mu_assert("rol_acc - PC not incremented", cpu.PC == 1);
-	mu_assert("rol_acc - Wrong C_FLAG", carry_flag_is_set(&cpu) == 0);
+	mu_assert("rol_acc- Wrong result", cpu->A == 6*2);
+	mu_assert("rol_acc - PC not incremented", cpu->PC == 1);
+	mu_assert("rol_acc - Wrong C_FLAG", carry_flag_is_set(cpu) == 0);
 
 	return 0;
 }
 
 static char *test_bit_abs()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.memory[1] = 0x12; /* low byte is stored first */
-	cpu.memory[2] = 0x0E;
-	cpu.A = 0x0F; /* 00001111 */
-	cpu.memory[0x0E12] = 0xF0; /* 11110000 */
+	MEM_write(memory, 1, 0x12); /* low byte is stored first */
+	MEM_write(memory, 2, 0x0E);
+	cpu->A = 0x0F; /* 00001111 */
+	MEM_write(memory, 0x0E12, 0xF0); /* 11110000 */
 	/* P should be 11000010 = 0xC2 */
 
-	bit_abs(&cpu);
+	bit_abs(cpu);
 
-	mu_assert("bit_abs - Wrong Z_FLAG", (cpu.P & Z_FLAG) == Z_FLAG);
-	mu_assert("bit_abs - Wrong N_FLAG", (cpu.P & N_FLAG) == N_FLAG);
-	mu_assert("bit_abs - Wrong V_FLAG", (cpu.P & V_FLAG) == V_FLAG);
-	mu_assert("bit_abs - Wrong P", cpu.P = 0xC2);
-	mu_assert("bit_abs - PC not incremented", cpu.PC == 3);
+	mu_assert("bit_abs - Wrong Z_FLAG", (cpu->P & Z_FLAG) == Z_FLAG);
+	mu_assert("bit_abs - Wrong N_FLAG", (cpu->P & N_FLAG) == N_FLAG);
+	mu_assert("bit_abs - Wrong V_FLAG", (cpu->P & V_FLAG) == V_FLAG);
+	mu_assert("bit_abs - Wrong P", cpu->P = 0xC2);
+	mu_assert("bit_abs - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_and_abs()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	cpu.A = 5;
-	cpu.memory[1] = 0x12; /* low byte is stored first */
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0E12] = 11;
+	cpu->A = 5;
+	MEM_write(memory, 1, 0x12); /* low byte is stored first */
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0E12, 11);
 
-	and_abs(&cpu);
+	and_abs(cpu);
 
-	mu_assert("and_abs- fail.", cpu.A == (5&11));
-	mu_assert("and_abs - PC not incremented", cpu.PC == 3);
+	mu_assert("and_abs- fail.", cpu->A == (5&11));
+	mu_assert("and_abs - PC not incremented", cpu->PC == 3);
 
 	return 0;
 }
 
 static char *test_rol_abs_carry_flag_set()
 {
-	init(&cpu);
-	set_carry_flag(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
+	set_carry_flag(cpu);
 
-	cpu.memory[1] = 0x12;
-	cpu.memory[2] = 0x0E;
-	cpu.memory[0x0E12] = 6;
+	MEM_write(memory, 1, 0x12);
+	MEM_write(memory, 2, 0x0E);
+	MEM_write(memory, 0x0E12, 6);
 
-	rol_abs(&cpu);
+	rol_abs(cpu);
 
-	mu_assert("rol_abs - Wrong result", cpu.memory[0x0E12] == 6*2 + 1);
-	mu_assert("rol_abs - PC not incremented", cpu.PC == 3);
-	mu_assert("rol_abs - Wrong C_FLAG", carry_flag_is_set(&cpu) == 0);
+	mu_assert("rol_abs - Wrong result", cpu->memory[0x0E12] == 6*2 + 1);
+	mu_assert("rol_abs - PC not incremented", cpu->PC == 3);
+	mu_assert("rol_abs - Wrong C_FLAG", carry_flag_is_set(cpu) == 0);
 
 	return 0;
 }
 
 static char *test_bmi_r_clear()
 {
-	init(&cpu);
-	cpu.memory[1] = 0xF9; /* -7, when signed */
+	MEM_init(memory);
+	CPU_init(cpu, memory);
+	MEM_write(memory, 1, 0xF9); /* -7, when signed */
 
-	bmi_r(&cpu);
+	bmi_r(cpu);
 
-	mu_assert("bmi_r - fail when clear", cpu.PC == 2);
+	mu_assert("bmi_r - fail when clear", cpu->PC == 2);
 
 	return 0;
 }
 
 static char *test_bmi_r_set()
 {
-	init(&cpu);
-	cpu.P |= N_FLAG;
-	cpu.PC = 10;
-	cpu.memory[11] = 0xF9; /* -7, when signed */
+	MEM_init(memory);
+	CPU_init(cpu, memory);
+	cpu->P |= N_FLAG;
+	cpu->PC = 10;
+	MEM_write(memory, 11, 0xF9); /* -7, when signed */
 
-	bmi_r(&cpu);
+	bmi_r(cpu);
 
-	mu_assert("bmi_r - fail when set", cpu.PC == 5);
+	mu_assert("bmi_r - fail when set", cpu->PC == 5);
 
 	return 0;
 }
 
 static char *test_sec()
 {
-	init(&cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
 
-	sec(&cpu);
+	sec(cpu);
 
-	mu_assert("sec - C_FLAG not set", (cpu.P & C_FLAG) == C_FLAG);
-	mu_assert("sec - PC not incremented", cpu.PC == 1);
+	mu_assert("sec - C_FLAG not set", (cpu->P & C_FLAG) == C_FLAG);
+	mu_assert("sec - PC not incremented", cpu->PC == 1);
 
 	return 0;
 }
 
 static char *test_rti()
 {
-	init(&cpu);
-	push8_stack(0x0A, &cpu);
-	push8_stack(0xB4, &cpu);
-	push8_stack(0x16, &cpu);
+	MEM_init(memory);
+	CPU_init(cpu, memory);
+	push8_stack(0x0A, cpu);
+	push8_stack(0xB4, cpu);
+	push8_stack(0x16, cpu);
 
-	rti(&cpu);
+	rti(cpu);
 
-	mu_assert("rti - PC wrong", cpu.PC == 0x0AB4);
-	mu_assert("rti - status flags wrong", cpu.P == 0x16);
+	mu_assert("rti - PC wrong", cpu->PC == 0x0AB4);
+	mu_assert("rti - status flags wrong", cpu->P == 0x16);
 
 	return 0;
 }
