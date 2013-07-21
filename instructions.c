@@ -17,6 +17,7 @@
  */
 #include <stdlib.h>
 #include <stdint.h>
+
 #include "memory.h"
 #include "cpu.h"
 #include "instructions.h"
@@ -282,22 +283,22 @@ inline void stx(uint16_t addr, struct cpu *cpu)
 inline void ldy(uint16_t addr, struct cpu *cpu)
 {
 	cpu->Y = MEM_read(cpu->mem, addr);
-	CPU_set_zero_flag_for_value(cpu->Y, cpu);
-	CPU_set_negative_flag_for_value(cpu->Y, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->Y);
+	CPU_set_negative_flag_for_value(cpu, cpu->Y);
 }
 
 inline void ldx(uint16_t addr, struct cpu *cpu)
 {
 	cpu->X = MEM_read(cpu->mem, addr);
-	CPU_set_zero_flag_for_value(cpu->X, cpu);
-	CPU_set_negative_flag_for_value(cpu->X, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->X);
+	CPU_set_negative_flag_for_value(cpu, cpu->X);
 }
 
 inline void lda(uint16_t addr, struct cpu *cpu)
 {
 	cpu->A = MEM_read(cpu->mem, addr);
-	CPU_set_zero_flag_for_value(cpu->A, cpu);
-	CPU_set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
 }
 
 inline void compare(uint8_t a, uint8_t b, struct cpu *cpu)
@@ -307,10 +308,10 @@ inline void compare(uint8_t a, uint8_t b, struct cpu *cpu)
 		CPU_set_carry_flag(cpu);
 	} else if(a > b) {
 		CPU_set_carry_flag(cpu);
-		CPU_set_negative_flag_for_value(a-b, cpu);
+		CPU_set_negative_flag_for_value(cpu, a-b);
 	} else {
 		CPU_clear_carry_flag(cpu);
-		CPU_set_negative_flag_for_value(a-b, cpu);
+		CPU_set_negative_flag_for_value(cpu, a-b);
 	}
 }
 
@@ -337,20 +338,20 @@ inline void cmp(uint16_t addr, struct cpu *cpu)
 
 inline void dec(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t result = val - 1;
-	cpu->memory[addr] = result;
-	CPU_set_zero_flag_for_value(result, cpu);
-	CPU_set_negative_flag_for_value(result, cpu);
+	MEM_write(cpu->mem, addr, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+	CPU_set_negative_flag_for_value(cpu, result);
 }
 
 inline void inc(uint16_t addr, struct cpu *cpu)
 {
-	uint8_t val = cpu->memory[addr];
+	uint8_t val = MEM_read(cpu->mem, addr);
 	uint8_t result = val + 1;
-	cpu->memory[addr] = result;
-	CPU_set_zero_flag_for_value(result, cpu);
-	CPU_set_negative_flag_for_value(result, cpu);
+	MEM_write(cpu->mem, addr, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+	CPU_set_negative_flag_for_value(cpu, result);
 }
 
 /* 
@@ -362,8 +363,8 @@ void brk(struct cpu *cpu)
 {
 	cpu->PC += 2;
 	CPU_set_break_flag(cpu);
-	CPU_push16_stack(cpu->PC, cpu);
-	CPU_push8_stack(cpu->P, cpu);
+	CPU_push16_stack(cpu, cpu->PC);
+	CPU_push8_stack(cpu, cpu->P);
 }
 
 /*
@@ -399,7 +400,7 @@ void asl_zero_pg(struct cpu *cpu)
 void php(struct cpu *cpu)
 {
 	cpu->PC++;
-	CPU_push8_stack(cpu->P, cpu);
+	CPU_push8_stack(cpu, cpu->P);
 }
 
 void ora_imm(struct cpu *cpu)
@@ -417,8 +418,8 @@ void asl_acc(struct cpu *cpu)
 	uint8_t new_val = val<<1;
 	cpu->A = new_val;
 
-	CPU_set_zero_flag_for_value(new_val, cpu);
-	CPU_set_negative_flag_for_value(new_val, cpu);
+	CPU_set_zero_flag_for_value(cpu, new_val);
+	CPU_set_negative_flag_for_value(cpu, new_val);
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
 	}
@@ -446,7 +447,7 @@ void bpl_r(struct cpu *cpu)
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
 
-	if(negative_flag_is_set(cpu) == 0) {
+	if(CPU_negative_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
 			/* 
 			   Need special conversion when unsigned
@@ -517,7 +518,7 @@ void jsr_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t transfer_addr = abs_(cpu);
 	uint16_t next_op_addr = cpu->PC-1;
-	CPU_push16_stack(next_op_addr, cpu);
+	CPU_push16_stack(cpu, next_op_addr);
 	cpu->PC = transfer_addr;
 }
 
@@ -614,7 +615,7 @@ void rol_abs(struct cpu *cpu)
 void bmi_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
 	if(CPU_negative_flag_is_set(cpu) == 1) {
 		if(offset >= 0x80) { 
@@ -711,7 +712,7 @@ void lsr_zero_pg(struct cpu *cpu)
 void pha(struct cpu *cpu)
 {
 	cpu->PC++;
-	CPU_push8_stack(cpu->A, cpu);
+	CPU_push8_stack(cpu, cpu->A);
 }
 
 void eor_imm(struct cpu *cpu)
@@ -862,8 +863,8 @@ void pla(struct cpu *cpu)
 	uint8_t val = CPU_pop8_stack(cpu);
 	cpu->A = val;
 
-	CPU_set_zero_flag_for_value(val, cpu);
-	CPU_set_negative_flag_for_value(val, cpu);
+	CPU_set_zero_flag_for_value(cpu, val);
+	CPU_set_negative_flag_for_value(cpu, val);
 }
 
 void adc_imm(struct cpu *cpu)
@@ -894,8 +895,8 @@ void ror_acc(struct cpu *cpu)
 	}
 
 	cpu->A = result;
-	CPU_set_negative_flag_for_value(result, cpu);
-	CPU_set_zero_flag_for_value(result, cpu);
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
 }
 
 void jmp_ind(struct cpu *cpu)
@@ -1020,8 +1021,8 @@ void dey(struct cpu *cpu)
 	cpu->PC++;
 	cpu->Y--;
 
-	CPU_set_zero_flag_for_value(cpu->Y, cpu);
-	CPU_set_negative_flag_for_value(cpu->Y, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->Y);
+	CPU_set_negative_flag_for_value(cpu, cpu->Y);
 }
 
 void txa(struct cpu *cpu)
@@ -1029,8 +1030,8 @@ void txa(struct cpu *cpu)
 	cpu->PC++;
 	cpu->A = cpu->X;
 
-	CPU_set_zero_flag_for_value(cpu->A, cpu);
-	CPU_set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
 }
 
 void sty_abs(struct cpu *cpu)
@@ -1107,8 +1108,8 @@ void tya(struct cpu *cpu)
 	cpu->PC++;
 	cpu->A = cpu->Y;
 
-	CPU_set_zero_flag_for_value(cpu->A, cpu);
-	CPU_set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
 }
 
 void sta_abs_y(struct cpu *cpu)
@@ -1178,8 +1179,8 @@ void tay(struct cpu *cpu)
 	cpu->PC++;
 	cpu->Y = cpu->A;
 
-	CPU_set_zero_flag_for_value(cpu->A, cpu);
-	CPU_set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
 }
 
 void lda_imm(struct cpu *cpu)
@@ -1194,8 +1195,8 @@ void tax(struct cpu *cpu)
 	cpu->PC++;
 	cpu->X = cpu->A;
 
-	CPU_set_zero_flag_for_value(cpu->A, cpu);
-	CPU_set_negative_flag_for_value(cpu->A, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
 }
 
 void ldy_abs(struct cpu *cpu)
@@ -1346,8 +1347,8 @@ void iny(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->Y++;
-	CPU_set_zero_flag_for_value(cpu->Y, cpu);
-	CPU_set_negative_flag_for_value(cpu->Y, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->Y);
+	CPU_set_negative_flag_for_value(cpu, cpu->Y);
 }
 
 void cmp_imm(struct cpu *cpu)
@@ -1361,8 +1362,8 @@ void dex(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X--;
-	CPU_set_zero_flag_for_value(cpu->X, cpu);
-	CPU_set_negative_flag_for_value(cpu->X, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->X);
+	CPU_set_negative_flag_for_value(cpu, cpu->X);
 }
 
 void cpy_abs(struct cpu *cpu)
@@ -1389,7 +1390,7 @@ void dec_abs(struct cpu *cpu)
 void bne_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
 	if(CPU_zero_flag_is_set(cpu) == 0) {
 		if(offset >= 0x80) { 
@@ -1493,8 +1494,8 @@ void inx(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X++;
-	CPU_set_zero_flag_for_value(cpu->X, cpu);
-	CPU_set_negative_flag_for_value(cpu->X, cpu);
+	CPU_set_zero_flag_for_value(cpu, cpu->X);
+	CPU_set_negative_flag_for_value(cpu, cpu->X);
 }
 
 void sbc_imm(struct cpu *cpu)
@@ -1533,7 +1534,7 @@ void inc_abs(struct cpu *cpu)
 void beq_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = pop8_mem(cpu);
+	uint8_t offset = CPU_pop8_mem(cpu);
 
 	if(CPU_zero_flag_is_set(cpu) == 1) {
 		if(offset >= 0x80) { 
