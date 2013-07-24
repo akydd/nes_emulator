@@ -17,13 +17,14 @@
  */
 #include <stdint.h>
 #include <stdlib.h>
+
 #include "cpu.h"
 
-
-void init(struct cpu *cpu, struct memory *mem)
+void CPU_init(struct cpu *cpu, struct memory *mem)
 {
 	cpu->PC = 0;
-	cpu->S = MEM_STACK_START;	/* stack grows down from 0x1FF, or 511 */
+	/* Stack grows down from 0x1FF, or 511 */
+	cpu->S = MEM_STACK_START;
 	cpu->A = 0;
 	cpu->X = 0;
 	cpu->Y = 0;
@@ -185,7 +186,8 @@ void CPU_clear_overflow_flag(struct cpu *cpu)
 
 /*
  * Manipulate the overflow flag for an ADC operation.
- * Formula found @ http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+ * Formula found at
+ * http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
  */
 void CPU_set_overflow_flag_for_adc(struct cpu *cpu, const uint8_t a, const uint8_t b, const uint8_t result)
 {
@@ -197,7 +199,8 @@ void CPU_set_overflow_flag_for_adc(struct cpu *cpu, const uint8_t a, const uint8
 
 /*
  * Manipulate the overflow flag for an SBC operation.
- * Formula found @ http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
+ * Formula found at
+ * http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
  */
 void CPU_set_overflow_flag_for_sbc(struct cpu *cpu, const uint8_t a, const uint8_t b, const uint8_t result)
 {

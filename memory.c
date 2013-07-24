@@ -18,6 +18,14 @@
 #include <stdlib.h>
 #include "memory.h"
 
+#define MIRROR_ADDR 0x0800
+#define VRAM_REG_START 0x2000
+#define VRAM_REG_SIZE 8
+
+struct memory {
+	uint8_t memory[MEM_SIZE];
+};
+
 void MEM_init(struct memory *mem)
 {
 	/* clear the cpu mem */

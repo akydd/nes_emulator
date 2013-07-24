@@ -35,6 +35,12 @@
 #define Z_FLAG 1<<1
 #define C_FLAG 1<<0
 
+/*
+ * Internals of the CPU structure are exposed for ease of access in
+ * implementation of the instruction set.  This avoid having to use function
+ * calls to get access memory and registers, so it should make for faster
+ * operation.
+ */
 struct cpu {
 	/* registers, all unsigned */
 	uint16_t PC;	/* program counter */
