@@ -111,7 +111,15 @@ struct memory;
  *
  */
 
-void MEM_init(struct memory *);
+/*
+ * Create a new memory struct.
+ */
+struct memory *MEM_init();
+
+/*
+ * Delete a memory struct
+ */
+void MEM_delete(struct memory *);
 
 uint8_t MEM_read(struct memory *, const uint16_t);
 

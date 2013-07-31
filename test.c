@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "memory.h"
 #include "cpu.h"
 #include "instructions.h"
 
@@ -98,7 +99,7 @@ static char *test_asl_zero_pg()
 
 	asl_zero_pg(cpu);
 
-	mu_assert("asl_zero_pg - fail.", cpu->memory[0xB4] == 20);
+	mu_assert("asl_zero_pg - fail.", MEM_read(memory, 0xB4) == 20);
 	mu_assert("asl_zero_pg - PC not incremented", cpu->PC == 2);
 
 	return 0;
@@ -115,7 +116,7 @@ static char *test_php()
 
 	mu_assert("PHP - PC not incr", cpu->PC == 1);
 	mu_assert("PHP - S not incr", cpu->S == MEM_STACK_START - 1);
-	mu_assert("PHP - flags not set", cpu->memory[MEM_STACK_START] == 17);
+	mu_assert("PHP - flags not set", MEM_read(memory, MEM_STACK_START) == 17);
 
 	return 0;
 }
@@ -180,7 +181,7 @@ static char *test_asl_abs()
 
 	asl_abs(cpu);
 
-	mu_assert("asl_abs - fail.", cpu->memory[0x0E12] == 20);
+	mu_assert("asl_abs - fail.", MEM_read(memory, 0x0E12) == 20);
 	mu_assert("asl_abs - PC not incremented", cpu->PC == 3);
 
 	return 0;
@@ -281,7 +282,7 @@ static char *test_asl_zero_pg_x()
 
 	asl_zero_pg_x(cpu);
 
-	mu_assert("asl_zero_pg_x - fail.", cpu.memory[0xB4 + cpu->X] == 20);
+	mu_assert("asl_zero_pg_x - fail.", MEM_read(memory, 0xB4 + cpu->X) == 20);
 	mu_assert("asl_zero_pg_x - PC not incremented", cpu->PC == 2);
 
 	return 0;
@@ -351,7 +352,7 @@ static char *test_asl_abs_x()
 
 	asl_abs_x(cpu);
 
-	mu_assert("asl_abs_x - fail.", cpu->memory[0x0EB4 + cpu->X] == 20);
+	mu_assert("asl_abs_x - fail.", MEM_read(memory, 0x0EB4 + cpu->X) == 20);
 	mu_assert("asl_abs_x - PC not incremented", cpu->PC == 3);
 
 	return 0;
@@ -368,8 +369,8 @@ static char *test_jsr_abs()
 	jsr_abs(cpu);
 
 	mu_assert("jsr_abs - PC not set", cpu->PC == 0x0EB4);
-	mu_assert("jsr_abs - stack high byte wrong", cpu->memory[cpu.S+2] == 0);
-	mu_assert("jsr_abs - stack low byte wrong", cpu->memory[cpu.S+1] == 2);
+	mu_assert("jsr_abs - stack high byte wrong", MEM_read(memory, cpu->S+2) == 0);
+	mu_assert("jsr_abs - stack low byte wrong", MEM_read(memory, cpu->S+1) == 2);
 
 	return 0;
 }
@@ -436,16 +437,16 @@ static char *test_rol_zero_pg_carry_flag_set()
 {
 	MEM_init(memory);
 	CPU_init(cpu, memory);
-	set_carry_flag(cpu);
+	CPU_set_carry_flag(cpu);
 
 	MEM_write(memory, 1, 0xB4);
 	MEM_write(memory, 0xB4, 6);
 
 	rol_zero_pg(cpu);
 
-	mu_assert("rol_zero_pg - Wrong result", cpu->memory[0xB4] == 6*2 + 1);
+	mu_assert("rol_zero_pg - Wrong result", MEM_read(memory, 0xB4) == 6*2 + 1);
 	mu_assert("rol_zero_pg - PC not incremented", cpu->PC == 2);
-	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(cpu) == 0);
+	mu_assert("rol_zero_pg - Wrong C_FLAG", CPU_carry_flag_is_set(cpu) == 0);
 
 	return 0;
 }
@@ -460,9 +461,9 @@ static char *test_rol_zero_pg_high_bit_set()
 
 	rol_zero_pg(cpu);
 
-	mu_assert("rol_zero_pg - Wrong result", cpu->memory[0xB4] == 6*2);
+	mu_assert("rol_zero_pg - Wrong result", MEM_read(memory, 0xB4) == 6*2);
 	mu_assert("rol_zero_pg - PC not incremented", cpu->PC == 2);
-	mu_assert("rol_zero_pg - Wrong C_FLAG", carry_flag_is_set(cpu) == 1);
+	mu_assert("rol_zero_pg - Wrong C_FLAG", CPU_carry_flag_is_set(cpu) == 1);
 
 	return 0;
 }
@@ -472,7 +473,7 @@ static char *test_plp()
 	MEM_init(memory);
 	CPU_init(cpu, memory);
 
-	push8_stack(0xA5, cpu);
+	CPU_push8_stack(cpu, 0xA5);
 
 	plp(cpu);
 
@@ -509,7 +510,7 @@ static char *test_rol_acc()
 
 	mu_assert("rol_acc- Wrong result", cpu->A == 6*2);
 	mu_assert("rol_acc - PC not incremented", cpu->PC == 1);
-	mu_assert("rol_acc - Wrong C_FLAG", carry_flag_is_set(cpu) == 0);
+	mu_assert("rol_acc - Wrong C_FLAG", CPU_carry_flag_is_set(cpu) == 0);
 
 	return 0;
 }
@@ -558,7 +559,7 @@ static char *test_rol_abs_carry_flag_set()
 {
 	MEM_init(memory);
 	CPU_init(cpu, memory);
-	set_carry_flag(cpu);
+	CPU_set_carry_flag(cpu);
 
 	MEM_write(memory, 1, 0x12);
 	MEM_write(memory, 2, 0x0E);
@@ -566,9 +567,9 @@ static char *test_rol_abs_carry_flag_set()
 
 	rol_abs(cpu);
 
-	mu_assert("rol_abs - Wrong result", cpu->memory[0x0E12] == 6*2 + 1);
+	mu_assert("rol_abs - Wrong result", MEM_read(memory, 0x0E12) == 6*2 + 1);
 	mu_assert("rol_abs - PC not incremented", cpu->PC == 3);
-	mu_assert("rol_abs - Wrong C_FLAG", carry_flag_is_set(cpu) == 0);
+	mu_assert("rol_abs - Wrong C_FLAG", CPU_carry_flag_is_set(cpu) == 0);
 
 	return 0;
 }
@@ -618,9 +619,9 @@ static char *test_rti()
 {
 	MEM_init(memory);
 	CPU_init(cpu, memory);
-	push8_stack(0x0A, cpu);
-	push8_stack(0xB4, cpu);
-	push8_stack(0x16, cpu);
+	CPU_push8_stack(cpu, 0x0A);
+	CPU_push8_stack(cpu, 0xB4);
+	CPU_push8_stack(cpu, 0x16);
 
 	rti(cpu);
 

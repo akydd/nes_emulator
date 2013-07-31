@@ -15,6 +15,7 @@
  *
  * =====================================================================================
  */
+#include <stdio.h>
 #include <stdlib.h>
 #include "memory.h"
 
@@ -26,14 +27,23 @@ struct memory {
 	uint8_t memory[MEM_SIZE];
 };
 
-void MEM_init(struct memory *mem)
+struct memory *MEM_init()
 {
-	/* clear the cpu mem */
+	/* Allocate memory */
+	struct memory *mem = malloc(sizeof(struct memory));
+
+	/* clear the allocated memory */
 	uint8_t *mem_ptr = NULL;
 	for(mem_ptr = mem->memory; mem_ptr < mem->memory + MEM_SIZE; mem_ptr++)
 	{
 		*mem_ptr = 0;
 	}
+	return mem;
+}
+
+void MEM_delete(struct memory *mem)
+{
+	free(mem);
 }
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
