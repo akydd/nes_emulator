@@ -20,8 +20,10 @@
 
 #include "cpu.h"
 
-void CPU_init(struct cpu *cpu, struct memory *mem)
+struct cpu *CPU_init(struct memory *mem)
 {
+	struct cpu *cpu = malloc(sizeof(struct cpu));
+
 	cpu->PC = 0;
 	/* Stack grows down from 0x1FF, or 511 */
 	cpu->S = MEM_STACK_START;
@@ -30,8 +32,16 @@ void CPU_init(struct cpu *cpu, struct memory *mem)
 	cpu->Y = 0;
 	cpu->P = 0;
 	cpu->mem = mem;
+
+	return cpu;
 }
 
+void CPU_delete(struct cpu **cpu)
+{
+	MEM_delete(&((*cpu)->mem));
+	free(*cpu);
+	*cpu = NULL;
+}
 
 
 /* Stack manipulation */

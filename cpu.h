@@ -55,8 +55,12 @@ struct cpu {
 /*
  * Initialize the cpu with starting values
  */
-void CPU_init(struct cpu *, struct memory *);
+struct cpu *CPU_init(struct memory *);
 
+/*
+ * Delete cpu
+ */
+void CPU_delete(struct cpu **);
 
 
 /* Stack manipulation */
