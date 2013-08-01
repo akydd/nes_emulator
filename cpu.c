@@ -24,7 +24,11 @@ struct cpu *CPU_init(struct memory *mem)
 {
 	struct cpu *cpu = malloc(sizeof(struct cpu));
 
-	cpu->PC = 0;
+	/* initialize PC to byte at the reset vector */
+	uint16_t low = MEM_read(mem, MEM_RESET_VECTOR);
+	uint16_t high = MEM_read(mem, MEM_RESET_VECTOR + 1);
+	cpu->PC = (high<<8) | low;
+
 	/* Stack grows down from 0x1FF, or 511 */
 	cpu->S = MEM_STACK_START;
 	cpu->A = 0;

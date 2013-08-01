@@ -47,6 +47,22 @@ static char *test_cpu_init()
 	return 0;
 }
 
+static char *test_pc_at_reset_vector_on_init()
+{
+	memory = MEM_init();
+
+	/* Put something into the reset vector */
+	MEM_write(memory, MEM_RESET_VECTOR, 0x0F);
+	MEM_write(memory, MEM_RESET_VECTOR + 1, 0x33);
+
+	cpu = CPU_init(memory);
+
+	mu_assert("PC not set to addr in reset vector", cpu->PC == 0x330F);
+
+	CPU_delete(&cpu);
+	return 0;
+}
+
 static char *test_push8_stack()
 {
 	memory = MEM_init();
@@ -112,6 +128,7 @@ static char *test_pop16_mem()
 static char *all_tests()
 {
 	mu_run_test(test_cpu_init);
+	mu_run_test(test_pc_at_reset_vector_on_init);
 	mu_run_test(test_push8_stack);
 	mu_run_test(test_push16_stack);
 	mu_run_test(test_pop8_mem);
