@@ -32,14 +32,46 @@ struct memory *memory;
 static char *test_MEM_init()
 {
 	memory = MEM_init();
-	MEM_delete(memory);
+	mu_assert("memory is NULL!", memory != NULL);
+	MEM_delete(&memory);
+	mu_assert("memory is not NULL!", memory == NULL);
 
+	return 0;
+}
+
+static char *test_MEM_write_non_mirrored()
+{
+	memory = MEM_init();
+
+	MEM_write(memory, 0x6000, 123);
+	MEM_write(memory, 0x7FFF, 99);
+
+	mu_assert("Wrong value at 0x6000", MEM_read(memory, 0x6000) == 123);
+	mu_assert("Wrong value at 0x7FFF", MEM_read(memory, 0x7FFF) == 99);
+
+	MEM_delete(&memory);
+	return 0;
+}
+
+static char *test_MEM_write_mirrored()
+{
+	memory = MEM_init();
+
+	MEM_write(memory, 0x0200, 123);
+
+	mu_assert("No mirrow at 0x0200 + 1*0x0800", MEM_read(memory, 0x0200 + 0x0800) == 123);
+	mu_assert("No mirrow at 0x0200 + 2*0x0800", MEM_read(memory, 0x0200 + 2*0x0800) == 123);
+	mu_assert("No mirrow at 0x0200 + 3*0x0800", MEM_read(memory, 0x0200 + 3*0x0800) == 123);
+
+	MEM_delete(&memory);
 	return 0;
 }
 
 static char *all_tests()
 {
 	mu_run_test(test_MEM_init);
+	mu_run_test(test_MEM_write_mirrored);
+	mu_run_test(test_MEM_write_non_mirrored);
 	return 0;
 }
 

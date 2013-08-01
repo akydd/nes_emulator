@@ -23,6 +23,9 @@
 
 #define MEM_SIZE 0xFFFF
 #define MEM_STACK_START 511
+#define MIRROR_ADDR 0x0800
+#define VRAM_REG_START 0x2000
+#define VRAM_REG_SIZE 8
 
 struct memory;
 /*
@@ -119,7 +122,7 @@ struct memory *MEM_init();
 /*
  * Delete a memory struct
  */
-void MEM_delete(struct memory *);
+void MEM_delete(struct memory **);
 
 uint8_t MEM_read(struct memory *, const uint16_t);
 

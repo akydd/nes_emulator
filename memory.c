@@ -19,10 +19,6 @@
 #include <stdlib.h>
 #include "memory.h"
 
-#define MIRROR_ADDR 0x0800
-#define VRAM_REG_START 0x2000
-#define VRAM_REG_SIZE 8
-
 struct memory {
 	uint8_t memory[MEM_SIZE];
 };
@@ -41,9 +37,10 @@ struct memory *MEM_init()
 	return mem;
 }
 
-void MEM_delete(struct memory *mem)
+void MEM_delete(struct memory **mem)
 {
-	free(mem);
+	free(*mem);
+	*mem = NULL;
 }
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
