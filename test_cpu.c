@@ -18,7 +18,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+
 #include "cpu.h"
+#include "memory.h"
 
 #define mu_assert(message, test) do { if (!(test)) return message; } while (0)
 #define mu_run_test(test) do { char *message = test(); tests_run++; \
@@ -26,77 +28,84 @@
 
 int tests_run = 0;
 
-struct cpu cpu;
+struct cpu *cpu;
+struct memory *memory;
 
 static char *test_cpu_init()
 {
-	init(&cpu);
+	memory = MEM_init();
+	cpu = CPU_init(memory);
 
-	/* check that mem is all cleared */
-	int clear = 1;
-	uint8_t *mem = NULL;
-	for(mem = cpu.memory; mem < cpu.memory + MEM_SIZE; mem++)
-	{
-		if (*mem != 0)
-		{
-			clear = 0;
-			break;
-		}
-	}
-	mu_assert("Mem not cleared", clear == 1);
+	mu_assert("PC not init", cpu->PC == 0);
+	mu_assert("S not init", cpu->S == MEM_STACK_START);
+	mu_assert("A not init", cpu->A == 0);
+	mu_assert("X not init", cpu->X == 0);
+	mu_assert("Y not init", cpu->Y == 0);
+	mu_assert("P not init", cpu->P == 0);
 
-	mu_assert("PC not init", cpu.PC == 0);
-	mu_assert("S not init", cpu.S == STACK_START);
-	mu_assert("A not init", cpu.A == 0);
-	mu_assert("X not init", cpu.X == 0);
-	mu_assert("Y not init", cpu.Y == 0);
-	mu_assert("P not init", cpu.P == 0);
+	CPU_delete(&cpu);
 	return 0;
 }
 
 static char *test_push8_stack()
 {
-	init(&cpu);
-	push8_stack(10, &cpu);
+	memory = MEM_init();
+	cpu = CPU_init(memory);
 
-	mu_assert("push8_stack - S not moved", cpu.S == STACK_START - 1);
-	mu_assert("push8_stack - not pushed", cpu.memory[cpu.S + 1] == 10);
+	CPU_push8_stack(cpu, 10);
+
+	mu_assert("push8_stack - S not moved", cpu->S == MEM_STACK_START - 1);
+	mu_assert("push8_stack - not pushed", MEM_read(cpu->mem, cpu->S + 1) == 10);
+
+	CPU_delete(&cpu);
 	return 0;
 }
 
 static char *test_push16_stack()
 {
-	init(&cpu);
-	push16_stack(0x0EF4, &cpu);
+	memory = MEM_init();
+	cpu = CPU_init(memory);
 
-	mu_assert("push16_stack - S not moved", cpu.S == STACK_START - 2);
-	mu_assert("push16_stack - low not pushed", cpu.memory[cpu.S+1] == 0xF4);
-	mu_assert("push16_stack - high not pushed", cpu.memory[cpu.S+2] == 0x0E);
+	CPU_push16_stack(cpu, 0x0EF4);
+
+	mu_assert("push16_stack - S not moved", cpu->S == MEM_STACK_START - 2);
+	mu_assert("push16_stack - low not pushed", MEM_read(cpu->mem, cpu->S+1) == 0xF4);
+	mu_assert("push16_stack - high not pushed", MEM_read(cpu->mem, cpu->S+2) == 0x0E);
+
+	CPU_delete(&cpu);
 	return 0;
 }
 
 static char *test_pop8_mem()
 {
-	init(&cpu);
-	cpu.memory[0] = 0xF4;
+	memory = MEM_init();
+	cpu = CPU_init(memory);
 
-	uint8_t val = pop8_mem(&cpu);
+	MEM_write(cpu->mem, 0, 0xF4);
 
-	mu_assert("pop8_mem - PC not moved", cpu.PC == 1);
+	uint8_t val = CPU_pop8_mem(cpu);
+
+	mu_assert("pop8_mem - PC not moved", cpu->PC == 1);
 	mu_assert("pop8_mem - wrong value", val == 0xF4);
+
+	CPU_delete(&cpu);
 	return 0;
 }
 
 static char *test_pop16_mem()
 {
-	init(&cpu);
-	cpu.memory[0] = 0xF4;
-	cpu.memory[1] = 0x0E;
+	memory = MEM_init();
+	cpu = CPU_init(memory);
 
-	uint16_t val = pop16_mem(&cpu);
+	MEM_write(cpu->mem, 0, 0xF4);
+	MEM_write(cpu->mem, 1, 0x0E);
 
-	mu_assert("pop16_mem - PC not moved", cpu.PC == 2);
+	uint16_t val = CPU_pop16_mem(cpu);
+
+	mu_assert("pop16_mem - PC not moved", cpu->PC == 2);
 	mu_assert("pop16_mem - wrong value", val == 0x0EF4);
+
+	CPU_delete(&cpu);
 	return 0;
 }
 
