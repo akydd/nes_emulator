@@ -67,11 +67,43 @@ static char *test_MEM_write_mirrored()
 	return 0;
 }
 
+static char *test_VRAM_registers_are_mirrored()
+{
+	memory = MEM_init();
+
+	/* write to PPU IO, mapped in main memory */
+	MEM_write(memory, VRAM_REG_START + 0, 8);
+	MEM_write(memory, VRAM_REG_START + 1, 7);
+	MEM_write(memory, VRAM_REG_START + 2, 6);
+	MEM_write(memory, VRAM_REG_START + 3, 5);
+	MEM_write(memory, VRAM_REG_START + 4, 4);
+	MEM_write(memory, VRAM_REG_START + 5, 3);
+	MEM_write(memory, VRAM_REG_START + 6, 2);
+	MEM_write(memory, VRAM_REG_START + 7, 1);
+
+	/* Ensure writes are mapped another 1023 times */
+	int i;
+	for(i = 1; i < 1024; i++) {
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 0 + i * VRAM_REG_SIZE) == 8);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 1 + i * VRAM_REG_SIZE) == 7);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 2 + i * VRAM_REG_SIZE) == 6);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 3 + i * VRAM_REG_SIZE) == 5);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 4 + i * VRAM_REG_SIZE) == 4);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 5 + i * VRAM_REG_SIZE) == 3);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 6 + i * VRAM_REG_SIZE) == 2);
+		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_START + 7 + i * VRAM_REG_SIZE) == 1);
+	}
+
+	MEM_delete(&memory);
+	return 0;
+}
+
 static char *all_tests()
 {
 	mu_run_test(test_MEM_init);
 	mu_run_test(test_MEM_write_mirrored);
 	mu_run_test(test_MEM_write_non_mirrored);
+	mu_run_test(test_VRAM_registers_are_mirrored);
 	return 0;
 }
 
