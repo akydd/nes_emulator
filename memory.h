@@ -20,6 +20,7 @@
 #define MEMORY_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #define MEM_SIZE 0xFFFF
 #define MEM_STACK_START 511
@@ -132,5 +133,10 @@ uint8_t MEM_read(struct memory *, const uint16_t);
  * for proper mirroring.
  */
 void MEM_write(struct memory *, const uint16_t, const uint8_t);
+
+/*
+ * Load the specified file into memory.
+ */
+int MEM_load_file(struct memory *, char *filename);
 
 #endif

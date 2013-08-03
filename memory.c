@@ -68,3 +68,22 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 		}
 	}
 }
+
+int MEM_load_file(struct memory *mem, char *filename)
+{
+	FILE *nes_file = fopen(filename, "r");
+
+	if (nes_file == NULL) {
+		(void)printf("Input file not found!\n");
+		return 0;
+	}
+
+	/* Read file as sequence of unsigned 8 bit ints */
+	uint8_t data;
+	while (fread(&data, sizeof(uint8_t), 1, nes_file) != 0) {
+		(void)printf("%#x\n", data);
+	}
+
+	(void)fclose(nes_file);
+	return 1;
+}

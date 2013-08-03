@@ -67,6 +67,26 @@ static char *test_MEM_write_mirrored()
 	return 0;
 }
 
+static char *test_MEM_load_file()
+{
+	memory = MEM_init();
+
+	mu_assert("File did not load", MEM_load_file(memory, "mario.nes") == 1);
+
+	MEM_delete(&memory);
+	return 0;
+}
+
+static char *test_MEM_load_file_fail()
+{
+	memory = MEM_init();
+
+	mu_assert("File load did not report failure", MEM_load_file(memory, "not a file") == 0);
+
+	MEM_delete(&memory);
+	return 0;
+}
+
 static char *test_VRAM_registers_are_mirrored()
 {
 	memory = MEM_init();
@@ -104,6 +124,9 @@ static char *all_tests()
 	mu_run_test(test_MEM_write_mirrored);
 	mu_run_test(test_MEM_write_non_mirrored);
 	mu_run_test(test_VRAM_registers_are_mirrored);
+	mu_run_test(test_MEM_load_file);
+	mu_run_test(test_MEM_load_file_fail);
+
 	return 0;
 }
 
