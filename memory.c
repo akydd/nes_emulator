@@ -17,6 +17,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "memory.h"
 
 struct memory {
@@ -52,19 +53,21 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
 	mem->memory[addr] = val;
 
-	/* write to RAM plus 3 mirrors */
+	/* write to mirrored RAM */
 	if (addr < MIRROR_ADDR) {
-		mem->memory[addr + MIRROR_ADDR] = val;
-		mem->memory[addr + 2 * MIRROR_ADDR] = val;
-		mem->memory[addr + 3 * MIRROR_ADDR] = val;
+		uint16_t base_addr = addr % MIRROR_SIZE; 
+		mem->memory[base_addr] = val;
+		mem->memory[base_addr + 1 * MIRROR_SIZE] = val;
+		mem->memory[base_addr + 2 * MIRROR_SIZE] = val;
+		mem->memory[base_addr + 3 * MIRROR_SIZE] = val;
 	}
 
-	/* write to VRAM plus 1023 mirrors */
-	if ((addr >= VRAM_REG_START) &&
-			(addr < ((VRAM_REG_START) + (VRAM_REG_SIZE)))) {
+	/* write to mirrored VRAM */
+	if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR)) {
+		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
 		int i;
-		for(i = 1; i < 1024; i++) {
-			mem->memory[addr + i * VRAM_REG_SIZE] = val;
+		for(i = 0; i < 1024; i++) {
+			mem->memory[base_addr + i * VRAM_REG_MIRROR_SIZE] = val;
 		}
 	}
 }
@@ -78,10 +81,38 @@ int MEM_load_file(struct memory *mem, char *filename)
 		return 0;
 	}
 
+	/* Get the file header */
+	uint8_t header[16];
+	if (fread(header, sizeof(uint8_t), 16, nes_file) != 16) {
+		(void)printf("Could not read header!\n");
+		(void)fclose(nes_file);
+		return 0;
+	}
+	
+	/* Ensure proper file format */
+	if(strncmp((char *)header, "NES", 3) != 0) {
+		(void)printf("File is not an NES file!\n");	
+		(void)fclose(nes_file);
+		return 0;
+	}
+
+	/* Number of memory banks */
+	uint8_t num_16kb_rom_banks = header[4];
+	uint8_t num_8kb_vrom_banks = header[5];
+	uint8_t num_8kb_vram_banks = header[8];
+
+	(void)printf("Number of 16 kb rom banks: %d\n", num_16kb_rom_banks);
+	(void)printf("Number of 8 kb vrom banks: %d\n", num_8kb_vrom_banks);
+	(void)printf("Number of 8 kb vram banks: %d\n", num_8kb_vram_banks);
+
+	/* memory mapper type */
+	uint8_t mapper = (header[7] &= ~15) | (header[6]>>4);
+	(void)printf("Memory mapper type: %d\n", mapper);
+
 	/* Read file as sequence of unsigned 8 bit ints */
 	uint8_t data;
 	while (fread(&data, sizeof(uint8_t), 1, nes_file) != 0) {
-		(void)printf("%#x\n", data);
+		/* (void)printf("%#x\n", data); */
 	}
 
 	(void)fclose(nes_file);

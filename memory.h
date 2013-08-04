@@ -25,9 +25,11 @@
 #define MEM_SIZE 0xFFFF
 #define MEM_STACK_START 511
 #define MEM_RESET_VECTOR 0xFFFC
-#define MIRROR_ADDR 0x0800
-#define VRAM_REG_START 0x2000
-#define VRAM_REG_SIZE 8
+#define MIRROR_ADDR 0x2000
+#define MIRROR_SIZE 0x0800
+#define IO_REG_ADDR 0x4000
+#define VRAM_REG_ADDR 0x2000
+#define VRAM_REG_MIRROR_SIZE 8
 
 struct memory;
 /*
@@ -136,6 +138,8 @@ void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
 /*
  * Load the specified file into memory.
+ * This function may move into a separate module, or take another argument for
+ * loading data into the PPU.
  */
 int MEM_load_file(struct memory *, char *filename);
 
