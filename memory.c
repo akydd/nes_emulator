@@ -105,15 +105,42 @@ int MEM_load_file(struct memory *mem, char *filename)
 	(void)printf("Number of 8 kb vrom banks: %d\n", num_8kb_vrom_banks);
 	(void)printf("Number of 8 kb vram banks: %d\n", num_8kb_vram_banks);
 
+	/* Battery backed RAM? */
+	uint8_t battery_backed_ram_present = ((header[6] & (1<<1)) != 0);
+	(void)printf("Battery backed ram present: %d\n", battery_backed_ram_present);
+
+	/* Trainer present? */
+	uint8_t trainer_present = ((header[6] & (1<<2)) != 0);
+	(void)printf("Trainer present: %d\n", trainer_present);
+
 	/* memory mapper type */
 	uint8_t mapper = (header[7] &= ~15) | (header[6]>>4);
 	(void)printf("Memory mapper type: %d\n", mapper);
 
-	/* Read file as sequence of unsigned 8 bit ints */
+	/* File read and load operations begin.  File is read as a sequence of unsigned 8 bit ints */
 	uint8_t data;
-	while (fread(&data, sizeof(uint8_t), 1, nes_file) != 0) {
-		/* (void)printf("%#x\n", data); */
+	uint32_t mem_addr;
+
+	/* Load 512 byte trainer into memory 0x7000 - 0x71ff, if present in file */
+	if(trainer_present != 0) {
+		mem_addr = 0x7000;
+		while((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr < 0x7200)) {
+			MEM_write(mem, mem_addr, data);
+			mem_addr++;
+		}
 	}
+
+	/* Load 2*16 kb ROM banks into shared memory*/
+	mem_addr = MEM_ROM_LOW_BANK_ADDR;
+	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
+		MEM_write(mem, mem_addr, data);
+		if(mem_addr % 1024 == 0) {
+			(void)printf("Loading data into %#x\n", mem_addr);
+		}
+		mem_addr++;
+	}
+
+	/* Load 8 kb VROM banks into PPU memory */
 
 	(void)fclose(nes_file);
 	return 1;
