@@ -74,7 +74,8 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 
 int MEM_load_file(struct memory *mem, char *filename)
 {
-	FILE *nes_file = fopen(filename, "r");
+	/* Open file in binary mode (needed for Windows) */
+	FILE *nes_file = fopen(filename, "rb");
 
 	if (nes_file == NULL) {
 		(void)printf("Input file not found!\n");
@@ -83,8 +84,9 @@ int MEM_load_file(struct memory *mem, char *filename)
 
 	/* Get the file header */
 	uint8_t header[16];
-	if (fread(header, sizeof(uint8_t), 16, nes_file) != 16) {
-		(void)printf("Could not read header!\n");
+	int bytes_read;
+	if ((bytes_read = fread(header, sizeof(uint8_t), 16, nes_file)) != 16) {
+		(void)printf("Only read %d bytes from file header!\n", bytes_read);
 		(void)fclose(nes_file);
 		return 0;
 	}

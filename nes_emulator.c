@@ -18,40 +18,51 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+
 #include "cpu.h"
 #include "instructions.h"
 #include "memory.h"
 
-/* func declarations */
 
-int main(void)
+int main(int argc, char **argv)
 {
-	/*
-	 * Load file into memory
-	 */
+	/* Check for input file */
+	if (argc !=2) {
+		(void)printf("You must enter a filename!\n");
+		return 1;
+	}
 
-	/*
-	 * Initialize CPU with cpu->PC and cpu->S pointing to memory.
-	 */
-	
+	/* initialize memory and CPU */
+	struct memory *mem = MEM_init();
+	struct cpu *cpu = CPU_init(mem);
+
+	/* Load input file into memory, or exit with error */
+	if(MEM_load_file(mem, *++argv) == 0) {
+		(void)printf("Could not load file '%s'.  Exiting main program.\n", *argv);
+		CPU_delete(&cpu);
+		return 1;
+	}
+
 	/*
 	 * Initialize PPU with registers set to 0x2000 to 0x2007 in main mem.
 	 */
 
-	/* Execution:
-	 * for(;;)
-	 * {
-	 *	int op_code = &(cpu->PC);
-	 *	int cpu_cycles = cycles[op_code];
+	/* Execution: */
+	 for(;;) {
+	 
+	 /*
+	 int ppu_cycles = 3 * cpu_cycles;
+	 while(ppu_cycles > 0)
+	 {
+	 	ppu_execute();
 	 *
-	 *	op[op_code]();
-	 *
-	 *	int ppu_cycles = 3 * cpu_cycles;
-	 *	while(ppu_cycles > 0)
-	 *	{
-	 *		ppu_execute();
-	 *	}
-	 * }
+	 }
 	 */
+	 }
+	
+	/*
+	 * Shutdown
+	 */
+	CPU_delete(&cpu);
 	return 0;
 }

@@ -53,15 +53,20 @@ struct cpu {
 };
 
 /*
- * Initialize the cpu with starting values
+ * Initialize the cpu with starting values.
+ * Memory must be initialized before passing into this function.
  */
 struct cpu *CPU_init(struct memory *);
 
 /*
- * Delete cpu
+ * Delete cpu and internal memory.
  */
 void CPU_delete(struct cpu **);
 
+/*
+ * Perform the next instruction.
+ */
+void CPU_step(struct cpu *);
 
 /* Stack manipulation */
 void CPU_push16_stack(struct cpu *, uint16_t);
