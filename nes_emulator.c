@@ -48,18 +48,20 @@ int main(int argc, char **argv)
 	 */
 
 	/* Execution: */
-	 for(;;) {
-	 
-	 /*
-	 int ppu_cycles = 3 * cpu_cycles;
-	 while(ppu_cycles > 0)
-	 {
-	 	ppu_execute();
-	 *
-	 }
-	 */
-	 }
-	
+	int cpu_cycles = 0;
+	for(;;) {
+		cpu_cycles = CPU_step(cpu);
+
+		/*
+		   int ppu_cycles = 3 * cpu_cycles;
+		   while(ppu_cycles > 0)
+		   {
+		   ppu_execute();
+		 *
+		 }
+		 */
+	}
+
 	/*
 	 * Shutdown
 	 */

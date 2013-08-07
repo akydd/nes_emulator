@@ -359,58 +359,70 @@ inline void inc(uint16_t addr, struct cpu *cpu)
  * push the status flags on the stack, then address
  * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
-void brk(struct cpu *cpu)
+uint8_t brk(struct cpu *cpu)
 {
 	cpu->PC += 2;
 	CPU_set_break_flag(cpu);
 	CPU_push16_stack(cpu, cpu->PC);
 	CPU_push8_stack(cpu, cpu->P);
+
+	return 7;
 }
 
 /*
  * bitwise or of operand and the accumulator, stored in accumulator
  */
-void ora_ind_x(struct cpu *cpu)
+uint8_t ora_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	ora(addr, cpu);
+
+	return 6;
 }
 
-void ora_zero_pg(struct cpu *cpu)
+uint8_t ora_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	ora(addr, cpu);
+
+	return 3;
 }
 
 /*
  * shift bits to the left, pushing in 0.
  */
-void asl_zero_pg(struct cpu *cpu)
+uint8_t asl_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	asl(addr, cpu);
+
+	return 5;
 }
 
 /*
  * Push processor status flags onto the stack
  */
-void php(struct cpu *cpu)
+uint8_t php(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_push8_stack(cpu, cpu->P);
+
+	return 3;
 }
 
-void ora_imm(struct cpu *cpu)
+uint8_t ora_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	ora(addr, cpu);
+
+	return 2;
 }
 
-void asl_acc(struct cpu *cpu)
+uint8_t asl_acc(struct cpu *cpu)
 {
 	cpu->PC++;
 
@@ -423,26 +435,32 @@ void asl_acc(struct cpu *cpu)
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
 	}
+
+	return 2;
 }
 
-void ora_abs(struct cpu *cpu)
+uint8_t ora_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	ora(addr, cpu);
+
+	return 4;
 }
 
-void asl_abs(struct cpu *cpu)
+uint8_t asl_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	asl(addr, cpu);
+
+	return 6;
 }
 
 /*
  * If negative flag is clear, add relative displacement to cpu->PC
  */
-void bpl_r(struct cpu *cpu)
+uint8_t bpl_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -459,112 +477,142 @@ void bpl_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
-void ora_ind_y(struct cpu *cpu)
+uint8_t ora_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	ora(addr, cpu);
+
+	return 5;
 }
 
-void ora_zero_pg_x(struct cpu *cpu)
+uint8_t ora_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	ora(addr, cpu);
+
+	return 4;
 }
 
-void asl_zero_pg_x(struct cpu *cpu)
+uint8_t asl_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	asl(addr, cpu);
+
+	return 6;
 }
 
 /*
  * Clear carry flag
  */
-void clc(struct cpu *cpu)
+uint8_t clc(struct cpu *cpu)
 {
 	cpu->P &= ~C_FLAG;
 	cpu->PC++;
+
+	return 2;
 }
 
-void ora_abs_y(struct cpu *cpu)
+uint8_t ora_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	ora(addr, cpu);
+
+	return 4;
 }
 
-void ora_abs_x(struct cpu *cpu)
+uint8_t ora_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	ora(addr, cpu);
+
+	return 4;
 }
 
-void asl_abs_x(struct cpu *cpu)
+uint8_t asl_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	asl(addr, cpu);
+
+	return 7;
 }
 
-void jsr_abs(struct cpu *cpu)
+uint8_t jsr_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t transfer_addr = abs_(cpu);
 	uint16_t next_op_addr = cpu->PC-1;
 	CPU_push16_stack(cpu, next_op_addr);
 	cpu->PC = transfer_addr;
+
+	return 6;
 }
 
-void and_ind_x(struct cpu *cpu)
+uint8_t and_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	and(addr, cpu);
+
+	return 6;
 }
 
-void bit_zero_pg(struct cpu *cpu)
+uint8_t bit_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	bit(addr, cpu);
+
+	return 3;
 }
 
-void and_zero_pg(struct cpu *cpu)
+uint8_t and_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	and(addr, cpu);
+
+	return 3;
 }
 
-void rol_zero_pg(struct cpu *cpu)
+uint8_t rol_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	rol(addr, cpu);
+
+	return 5;
 }
 
-void plp(struct cpu *cpu)
+uint8_t plp(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t val = CPU_pop8_stack(cpu);
 	cpu->P = val;
+
+	return 4;
 }
 
-void and_imm(struct cpu *cpu)
+uint8_t and_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	and(addr, cpu);
+
+	return 2;
 }
 
-void rol_acc(struct cpu *cpu)
+uint8_t rol_acc(struct cpu *cpu)
 {
 	cpu->PC++;
 
@@ -586,33 +634,41 @@ void rol_acc(struct cpu *cpu)
 	}
 
 	cpu->A = result;
+
+	return 2;
 }
 
-void bit_abs(struct cpu *cpu)
+uint8_t bit_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	bit(addr, cpu);
+
+	return 4;
 }
 
-void and_abs(struct cpu *cpu)
+uint8_t and_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	and(addr, cpu);
+
+	return 4;
 }
 
-void rol_abs(struct cpu *cpu)
+uint8_t rol_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	rol(addr, cpu);
+
+	return 6;
 }
 
 /*
  * Branch when negative
  */
-void bmi_r(struct cpu *cpu)
+uint8_t bmi_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -629,100 +685,128 @@ void bmi_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
-void and_ind_y(struct cpu *cpu)
+uint8_t and_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	and(addr, cpu);
+
+	return 5;
 }
 
-void and_zero_pg_x(struct cpu *cpu)
+uint8_t and_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	and(addr, cpu);
+
+	return 4;
 }
 
-void rol_zero_pg_x(struct cpu *cpu)
+uint8_t rol_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	rol(addr, cpu);
+
+	return 6;
 }
 
-void sec(struct cpu *cpu)
+uint8_t sec(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_set_carry_flag(cpu);
+
+	return 2;
 }
 
-void and_abs_y(struct cpu *cpu)
+uint8_t and_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	and(addr, cpu);
+
+	return 4;
 }
 
-void and_abs_x(struct cpu *cpu)
+uint8_t and_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	and(addr, cpu);
+
+	return 4;
 }
 
-void rol_abs_x(struct cpu *cpu)
+uint8_t rol_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	rol(addr, cpu);
+
+	return 7;
 }
 
-void rti(struct cpu *cpu)
+uint8_t rti(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->P = CPU_pop8_stack(cpu);
 	cpu->PC = CPU_pop16_stack(cpu);
+
+	return 6;
 }
 
-void eor_ind_x(struct cpu *cpu)
+uint8_t eor_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	eor(addr, cpu);
+
+	return 6;
 }
 
-void eor_zero_pg(struct cpu *cpu)
+uint8_t eor_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	eor(addr, cpu);
+
+	return 3;
 }
 
 
-void lsr_zero_pg(struct cpu *cpu)
+uint8_t lsr_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	lsr(addr, cpu);
+
+	return 5;
 }
 
-void pha(struct cpu *cpu)
+uint8_t pha(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_push8_stack(cpu, cpu->A);
+
+	return 3;
 }
 
-void eor_imm(struct cpu *cpu)
+uint8_t eor_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	eor(addr, cpu);
+
+	return 2;
 }
 
-void lsr_acc(struct cpu *cpu)
+uint8_t lsr_acc(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t val = cpu->A;
@@ -737,27 +821,35 @@ void lsr_acc(struct cpu *cpu)
 	}
 
 	cpu->A = result;
+
+	return 2;
 }
 
-void jmp_abs(struct cpu *cpu)
+uint8_t jmp_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	jmp(addr, cpu);
+
+	return 3;
 }
 
-void eor_abs(struct cpu *cpu)
+uint8_t eor_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	eor(addr, cpu);
+
+	return 4;
 }
 
-void lsr_abs(struct cpu *cpu)
+uint8_t lsr_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	lsr(addr, cpu);
+
+	return 6;
 }
 
 /*

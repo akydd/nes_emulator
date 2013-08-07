@@ -66,7 +66,7 @@ void CPU_delete(struct cpu **);
 /*
  * Perform the next instruction.
  */
-void CPU_step(struct cpu *);
+int CPU_step(struct cpu *);
 
 /* Stack manipulation */
 void CPU_push16_stack(struct cpu *, uint16_t);

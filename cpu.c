@@ -19,6 +19,9 @@
 #include <stdlib.h>
 
 #include "cpu.h"
+#include "instructions.h"
+
+/* Public functions */
 
 struct cpu *CPU_init(struct memory *mem)
 {
@@ -47,6 +50,14 @@ void CPU_delete(struct cpu **cpu)
 	*cpu = NULL;
 }
 
+int CPU_step(struct cpu *cpu)
+{
+	/* Get opcode at PC */
+	uint8_t opcode = MEM_read(cpu->mem, cpu->PC);
+	return pf[opcode](cpu);
+}
+
+/* Private functions */
 
 /* Stack manipulation */
 void CPU_push16_stack(struct cpu *cpu, uint16_t val)
@@ -100,7 +111,7 @@ uint8_t CPU_pop8_mem(struct cpu *cpu)
 
 
 /*
- * Internal functions for setting/clearing/testing status flags
+ * Functions for setting/clearing/testing status flags
  */
 inline uint8_t status_flag_is_set(const struct cpu *cpu, const uint8_t flag)
 {
