@@ -855,7 +855,7 @@ uint8_t lsr_abs(struct cpu *cpu)
 /*
  * If overflow flag is clear, add relative displacement to cpu->PC
  */
-void bvc_r(struct cpu *cpu)
+uint8_t bvc_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -872,84 +872,108 @@ void bvc_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
-void eor_ind_y(struct cpu *cpu)
+uint8_t eor_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t addr = ind_y(cpu);
 	eor(addr, cpu);
+
+	return 5;
 }
 
-void eor_zero_pg_x(struct cpu *cpu)
+uint8_t eor_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t addr = zero_pg_x(cpu);
 	eor(addr, cpu);
+
+	return 4;
 }
 
-void lsr_zero_pg_x(struct cpu *cpu)
+uint8_t lsr_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t addr = zero_pg_x(cpu);
 	lsr(addr, cpu);
+
+	return 6;
 }
 
-void cli(struct cpu *cpu)
+uint8_t cli(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_clear_interrupt_flag(cpu);
+
+	return 2;
 }
 
-void eor_abs_y(struct cpu *cpu)
+uint8_t eor_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	eor(addr, cpu);
+
+	return 4;
 }
 
-void eor_abs_x(struct cpu *cpu)
+uint8_t eor_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	eor(addr, cpu);
+
+	return 4;
 }
 
-void lsr_abs_x(struct cpu *cpu)
+uint8_t lsr_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	lsr(addr, cpu);
+
+	return 7;
 }
 
-void rts(struct cpu *cpu)
+uint8_t rts(struct cpu *cpu)
 {
 	cpu->PC = CPU_pop16_stack(cpu);
+
+	return 6;
 }
 
-void adc_ind_x(struct cpu *cpu)
+uint8_t adc_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	adc(addr, cpu);
+
+	return 6;
 }
 
-void adc_zero_pg(struct cpu *cpu)
+uint8_t adc_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	adc(addr, cpu);
+
+	return 3;
 }
 
-void ror_zero_pg(struct cpu *cpu)
+uint8_t ror_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	ror(addr, cpu);
+
+	return 5;
 }
 
-void pla(struct cpu *cpu)
+uint8_t pla(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t val = CPU_pop8_stack(cpu);
@@ -957,16 +981,20 @@ void pla(struct cpu *cpu)
 
 	CPU_set_zero_flag_for_value(cpu, val);
 	CPU_set_negative_flag_for_value(cpu, val);
+
+	return 4;
 }
 
-void adc_imm(struct cpu *cpu)
+uint8_t adc_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	adc(addr, cpu);
+
+	return 2;
 }
 
-void ror_acc(struct cpu *cpu)
+uint8_t ror_acc(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t val = cpu->A;
@@ -989,30 +1017,38 @@ void ror_acc(struct cpu *cpu)
 	cpu->A = result;
 	CPU_set_negative_flag_for_value(cpu, result);
 	CPU_set_zero_flag_for_value(cpu, result);
+
+	return 2;
 }
 
-void jmp_ind(struct cpu *cpu)
+uint8_t jmp_ind(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind(cpu);
 	jmp(addr, cpu);
+
+	return 5;
 }
 
-void adc_abs(struct cpu *cpu)
+uint8_t adc_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	adc(addr, cpu);
+
+	return 4;
 }
 
-void ror_abs(struct cpu *cpu)
+uint8_t ror_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	ror(addr, cpu);
+
+	return 6;
 }
 
-void bvs_r(struct cpu *cpu)
+uint8_t bvs_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -1030,124 +1066,157 @@ void bvs_r(struct cpu *cpu)
 			cpu->PC += offset;
 		}
 	}
+	return 2;
 }
 
-void adc_ind_y(struct cpu *cpu)
+uint8_t adc_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	adc(addr, cpu);
+
+	return 2;
 }
 
-void adc_zero_pg_x(struct cpu *cpu)
+uint8_t adc_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	adc(addr, cpu);
+
+	return 4;
 }
 
-void ror_zero_pg_x(struct cpu *cpu)
+uint8_t ror_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	ror(addr, cpu);
+
+	return 6;
 }
 
-void sei(struct cpu *cpu)
+uint8_t sei(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_set_interrupt_flag(cpu);
+
+	return 2;
 }
 
-void adc_abs_y(struct cpu *cpu)
+uint8_t adc_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	adc(addr, cpu);
+
+	return 4;
 }
 
-void adc_abs_x(struct cpu *cpu)
+uint8_t adc_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	adc(addr, cpu);
+
+	return 4;
 }
 
-void ror_abs_x(struct cpu *cpu)
+uint8_t ror_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	ror(addr, cpu);
+
+	return 7;
 }
 
-void sta_ind_x(struct cpu *cpu)
+uint8_t sta_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	sta(addr, cpu);
+
+	return 6;
 }
 
-void sty_zero_pg(struct cpu *cpu)
+uint8_t sty_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	sty(addr, cpu);
+
+	return 3;
 }
 
-void sta_zero_pg(struct cpu *cpu)
+uint8_t sta_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	sta(addr, cpu);
+
+	return 3;
 }
 
-void stx_zero_pg(struct cpu *cpu)
+uint8_t stx_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	stx(addr, cpu);
+
+	return 3;
 }
 
-void dey(struct cpu *cpu)
+uint8_t dey(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->Y--;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->Y);
 	CPU_set_negative_flag_for_value(cpu, cpu->Y);
+
+	return 2;
 }
 
-void txa(struct cpu *cpu)
+uint8_t txa(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->A = cpu->X;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
+
+	return 2;
 }
 
-void sty_abs(struct cpu *cpu)
+uint8_t sty_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	sty(addr, cpu);
+
+	return 4;
 }
 
-void sta_abs(struct cpu *cpu)
+uint8_t sta_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	sta(addr, cpu);
+
+	return 4;
 }
 
-void stx_abs(struct cpu * cpu)
+uint8_t stx_abs(struct cpu * cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	stx(addr, cpu);
+
+	return 4;
 }
 
-void bcc_r(struct cpu *cpu)
+uint8_t bcc_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -1164,155 +1233,197 @@ void bcc_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
-void sta_ind_y(struct cpu *cpu)
+uint8_t sta_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	sta(addr, cpu);
+
+	return 6;
 }
 
-void sty_zero_pg_x(struct cpu *cpu)
+uint8_t sty_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	sty(addr, cpu);
+
+	return 4;
 }
 
-void sta_zero_pg_x(struct cpu *cpu)
+uint8_t sta_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	sta(addr, cpu);
+
+	return 4;
 }
 
-void stx_zero_pg_x(struct cpu *cpu)
+uint8_t stx_zero_pg_y(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint16_t addr = zero_pg_x(cpu);
+	uint16_t addr = zero_pg_y(cpu);
 	stx(addr, cpu);
+
+	return 4;
 }
 
-void tya(struct cpu *cpu)
+uint8_t tya(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->A = cpu->Y;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
+
+	return 2;
 }
 
-void sta_abs_y(struct cpu *cpu)
+uint8_t sta_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	sta(addr, cpu);
+
+	return 5;
 }
 
-void txs(struct cpu *cpu)
+uint8_t txs(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->S = cpu->X;
+
+	return 2;
 }
 
-void sta_abs_x(struct cpu *cpu)
+uint8_t sta_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	sta(addr, cpu);
+
+	return 5;
 }
 
-void ldy_imm(struct cpu *cpu)
+uint8_t ldy_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	ldy(addr, cpu);
+
+	return 2;
 }
 
-void lda_ind_x(struct cpu *cpu)
+uint8_t lda_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	lda(addr, cpu);
+
+	return 6;
 }
 
-void ldx_imm(struct cpu *cpu)
+uint8_t ldx_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	ldx(addr, cpu);
+
+	return 2;
 }
 
-void ldy_zero_pg(struct cpu *cpu)
+uint8_t ldy_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	ldy(addr, cpu);
+
+	return 3;
 }
 
-void lda_zero_pg(struct cpu *cpu)
+uint8_t lda_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	lda(addr, cpu);
+
+	return 3;
 }
 
-void ldx_zero_pg(struct cpu *cpu)
+uint8_t ldx_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	ldx(addr, cpu);
+
+	return 3;
 }
 
-void tay(struct cpu *cpu)
+uint8_t tay(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->Y = cpu->A;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
+
+	return 2;
 }
 
-void lda_imm(struct cpu *cpu)
+uint8_t lda_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	lda(addr, cpu);
+
+	return 2;
 }
 
-void tax(struct cpu *cpu)
+uint8_t tax(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X = cpu->A;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
+
+	return 2;
 }
 
-void ldy_abs(struct cpu *cpu)
+uint8_t ldy_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	ldy(addr, cpu);
+
+	return 4;
 }
 
-void lda_abs(struct cpu *cpu)
+uint8_t lda_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	lda(addr, cpu);
+
+	return 4;
 }
 
-void ldx_abs(struct cpu *cpu)
+uint8_t ldx_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	ldx(addr, cpu);
+
+	return 4;
 }
 
-void bcs_r(struct cpu *cpu)
+uint8_t bcs_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -1329,113 +1440,143 @@ void bcs_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
-void lda_ind_y(struct cpu *cpu)
+uint8_t lda_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	lda(addr, cpu);
+
+	return 5;
 }
 
-void ldy_zero_pg_x(struct cpu *cpu)
+uint8_t ldy_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	ldy(addr, cpu);
+
+	return 4;
 }
 
-void lda_zero_pg_x(struct cpu *cpu)
+uint8_t lda_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr =zero_pg_x(cpu);
 	lda(addr, cpu);
+
+	return 4;
 }
 
-void ldx_zero_pg_y(struct cpu *cpu)
+uint8_t ldx_zero_pg_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_y(cpu);
 	ldx(addr, cpu);
+
+	return 4;
 }
 
-void clv(struct cpu *cpu)
+uint8_t clv(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_clear_overflow_flag(cpu);
+
+	return 2;
 }
 
-void lda_abs_y(struct cpu *cpu)
+uint8_t lda_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	lda(addr, cpu);
+
+	return 4;
 }
 
-void tsx(struct cpu *cpu)
+uint8_t tsx(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X = cpu->S;
+
+	return 2;
 }
 
-void ldy_abs_x(struct cpu *cpu)
+uint8_t ldy_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	ldy(addr, cpu);
+
+	return 4;
 }
 
-void lda_abs_x(struct cpu *cpu)
+uint8_t lda_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	lda(addr, cpu);
+
+	return 4;
 }
 
-void ldx_abs_y(struct cpu *cpu)
+uint8_t ldx_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	ldx(addr, cpu);
+
+	return 4;
 }
 
-void cpy_imm(struct cpu *cpu)
+uint8_t cpy_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cpy(addr, cpu);
+
+	return 2;
 }
 
-void cmp_ind_x(struct cpu *cpu)
+uint8_t cmp_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	cmp(addr, cpu);
+
+	return 6;
 }
 
-void cpy_zero_pg(struct cpu *cpu)
+uint8_t cpy_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	cpy(addr, cpu);
+
+	return 3;
 }
 
-void cmp_zero_pg(struct cpu *cpu)
+uint8_t cmp_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	cmp(addr, cpu);
+
+	return 3;
 }
 
-void dec_zero_pg(struct cpu *cpu)
+uint8_t dec_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	dec(addr, cpu);
 }
 
-void iny(struct cpu *cpu)
+uint8_t iny(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->Y++;
@@ -1443,14 +1584,14 @@ void iny(struct cpu *cpu)
 	CPU_set_negative_flag_for_value(cpu, cpu->Y);
 }
 
-void cmp_imm(struct cpu *cpu)
+uint8_t cmp_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cmp(addr, cpu);
 }
 
-void dex(struct cpu *cpu)
+uint8_t dex(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X--;
@@ -1458,28 +1599,28 @@ void dex(struct cpu *cpu)
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
 }
 
-void cpy_abs(struct cpu *cpu)
+uint8_t cpy_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	cpy(addr, cpu);
 }
 
-void cmp_abs(struct cpu *cpu)
+uint8_t cmp_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	cmp(addr, cpu);
 }
 
-void dec_abs(struct cpu *cpu)
+uint8_t dec_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	dec(addr, cpu);
 }
 
-void bne_r(struct cpu *cpu)
+uint8_t bne_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -1499,90 +1640,90 @@ void bne_r(struct cpu *cpu)
 	}
 }
 
-void cmp_ind_y(struct cpu *cpu)
+uint8_t cmp_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	cmp(addr, cpu);
 }
 
-void cmp_zero_pg_x(struct cpu *cpu)
+uint8_t cmp_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	cmp(addr, cpu);
 }
 
-void dec_zero_pg_x(struct cpu *cpu)
+uint8_t dec_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	dec(addr, cpu);
 }
 
-void cld(struct cpu *cpu)
+uint8_t cld(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_clear_decimal_flag(cpu);
 }
 
-void cmp_abs_y(struct cpu *cpu)
+uint8_t cmp_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	cmp(addr, cpu);
 }
 
-void cmp_abs_x(struct cpu *cpu)
+uint8_t cmp_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	cmp(addr, cpu);
 }
 
-void dec_abs_x(struct cpu *cpu)
+uint8_t dec_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	dec(addr, cpu);
 }
 
-void cpx_imm(struct cpu *cpu)
+uint8_t cpx_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cpx(addr, cpu);
 }
 
-void sbc_ind_x(struct cpu *cpu)
+uint8_t sbc_ind_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	sbc(addr, cpu);
 }
 
-void cpx_zero_pg(struct cpu *cpu)
+uint8_t cpx_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	cpx(addr, cpu);
 }
 
-void sbc_zero_pg(struct cpu *cpu)
+uint8_t sbc_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	sbc(addr, cpu);
 }
 
-void inc_zero_pg(struct cpu *cpu)
+uint8_t inc_zero_pg(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	inc(addr, cpu);
 }
 
-void inx(struct cpu *cpu)
+uint8_t inx(struct cpu *cpu)
 {
 	cpu->PC++;
 	cpu->X++;
@@ -1590,40 +1731,40 @@ void inx(struct cpu *cpu)
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
 }
 
-void sbc_imm(struct cpu *cpu)
+uint8_t sbc_imm(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	sbc(addr, cpu);
 }
 
-void nop(struct cpu *cpu)
+uint8_t nop(struct cpu *cpu)
 {
 	cpu->PC++;
 }
 
-void cpx_abs(struct cpu *cpu)
+uint8_t cpx_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	cpx(addr, cpu);
 }
 
-void sbc_abs(struct cpu *cpu)
+uint8_t sbc_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	sbc(addr, cpu);
 }
 
-void inc_abs(struct cpu *cpu)
+uint8_t inc_abs(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	inc(addr, cpu);
 }
 
-void beq_r(struct cpu *cpu)
+uint8_t beq_r(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint8_t offset = CPU_pop8_mem(cpu);
@@ -1643,48 +1784,48 @@ void beq_r(struct cpu *cpu)
 	}
 }
 
-void sbc_ind_y(struct cpu *cpu)
+uint8_t sbc_ind_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	sbc(addr, cpu);
 }
 
-void sbc_zero_pg_x(struct cpu *cpu)
+uint8_t sbc_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	sbc(addr, cpu);
 }
 
-void inc_zero_pg_x(struct cpu *cpu)
+uint8_t inc_zero_pg_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	inc(addr, cpu);
 }
 
-void sed(struct cpu *cpu)
+uint8_t sed(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_set_decimal_flag(cpu);
 }
 
-void sbc_abs_y(struct cpu *cpu)
+uint8_t sbc_abs_y(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	sbc(addr, cpu);
 }
 
-void sbc_abs_x(struct cpu *cpu)
+uint8_t sbc_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	sbc(addr, cpu);
 }
 
-void inc_abs_x(struct cpu *cpu)
+uint8_t inc_abs_x(struct cpu *cpu)
 {
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
