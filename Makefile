@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall
+CFLAGS=-Wall -Wextra
 
 OBJ=memory.o cpu.o instructions.o
 

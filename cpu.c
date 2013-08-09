@@ -17,6 +17,7 @@
  */
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "cpu.h"
 #include "instructions.h"
@@ -30,7 +31,9 @@ struct cpu *CPU_init(struct memory *mem)
 	/* initialize PC to byte at the reset vector */
 	uint16_t low = MEM_read(mem, MEM_RESET_VECTOR);
 	uint16_t high = MEM_read(mem, MEM_RESET_VECTOR + 1);
-	cpu->PC = (high<<8) | low;
+	uint16_t addr = (high<<8) | low;
+	cpu->PC = addr;
+	(void)printf("Initializing cpu->PC to %#x\n", addr);
 
 	/* Stack grows down from 0x1FF, or 511 */
 	cpu->S = MEM_STACK_START;
@@ -54,6 +57,7 @@ int CPU_step(struct cpu *cpu)
 {
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(cpu->mem, cpu->PC);
+	(void)printf("Executing opcode %#x at %#x\n", opcode, cpu->PC);
 	return pf[opcode](cpu);
 }
 

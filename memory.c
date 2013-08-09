@@ -137,7 +137,7 @@ int MEM_load_file(struct memory *mem, char *filename)
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
 		MEM_write(mem, mem_addr, data);
 		if(mem_addr % 1024 == 0) {
-			(void)printf("Loading data into %#x\n", mem_addr);
+			(void)printf("Loading data %#x into %#x\n", data, mem_addr);
 		}
 		mem_addr++;
 	}

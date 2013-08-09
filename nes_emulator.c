@@ -32,16 +32,16 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	/* initialize memory and CPU */
+	/* initialize memory and load data */
 	struct memory *mem = MEM_init();
-	struct cpu *cpu = CPU_init(mem);
-
-	/* Load input file into memory, or exit with error */
 	if(MEM_load_file(mem, *++argv) == 0) {
 		(void)printf("Could not load file '%s'.  Exiting main program.\n", *argv);
-		CPU_delete(&cpu);
+		MEM_delete(&mem);
 		return 1;
 	}
+
+	/* Initialize the CPU */
+	struct cpu *cpu = CPU_init(mem);
 
 	/*
 	 * Initialize PPU with registers set to 0x2000 to 0x2007 in main mem.
