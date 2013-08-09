@@ -1574,6 +1574,8 @@ uint8_t dec_zero_pg(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	dec(addr, cpu);
+
+	return 5;
 }
 
 uint8_t iny(struct cpu *cpu)
@@ -1582,6 +1584,8 @@ uint8_t iny(struct cpu *cpu)
 	cpu->Y++;
 	CPU_set_zero_flag_for_value(cpu, cpu->Y);
 	CPU_set_negative_flag_for_value(cpu, cpu->Y);
+
+	return 2;
 }
 
 uint8_t cmp_imm(struct cpu *cpu)
@@ -1589,6 +1593,8 @@ uint8_t cmp_imm(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cmp(addr, cpu);
+
+	return 2;
 }
 
 uint8_t dex(struct cpu *cpu)
@@ -1597,6 +1603,8 @@ uint8_t dex(struct cpu *cpu)
 	cpu->X--;
 	CPU_set_zero_flag_for_value(cpu, cpu->X);
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
+
+	return 2;
 }
 
 uint8_t cpy_abs(struct cpu *cpu)
@@ -1604,6 +1612,8 @@ uint8_t cpy_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	cpy(addr, cpu);
+
+	return 4;
 }
 
 uint8_t cmp_abs(struct cpu *cpu)
@@ -1611,6 +1621,8 @@ uint8_t cmp_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	cmp(addr, cpu);
+
+	return 4;
 }
 
 uint8_t dec_abs(struct cpu *cpu)
@@ -1618,6 +1630,8 @@ uint8_t dec_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	dec(addr, cpu);
+
+	return 6;
 }
 
 uint8_t bne_r(struct cpu *cpu)
@@ -1637,7 +1651,9 @@ uint8_t bne_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
 uint8_t cmp_ind_y(struct cpu *cpu)
@@ -1645,6 +1661,8 @@ uint8_t cmp_ind_y(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	cmp(addr, cpu);
+
+	return 5;
 }
 
 uint8_t cmp_zero_pg_x(struct cpu *cpu)
@@ -1652,6 +1670,8 @@ uint8_t cmp_zero_pg_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	cmp(addr, cpu);
+
+	return 4;
 }
 
 uint8_t dec_zero_pg_x(struct cpu *cpu)
@@ -1659,12 +1679,16 @@ uint8_t dec_zero_pg_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	dec(addr, cpu);
+
+	return 6;
 }
 
 uint8_t cld(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_clear_decimal_flag(cpu);
+
+	return 2;
 }
 
 uint8_t cmp_abs_y(struct cpu *cpu)
@@ -1672,6 +1696,8 @@ uint8_t cmp_abs_y(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	cmp(addr, cpu);
+
+	return 4;
 }
 
 uint8_t cmp_abs_x(struct cpu *cpu)
@@ -1679,6 +1705,8 @@ uint8_t cmp_abs_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	cmp(addr, cpu);
+
+	return 4;
 }
 
 uint8_t dec_abs_x(struct cpu *cpu)
@@ -1686,6 +1714,8 @@ uint8_t dec_abs_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	dec(addr, cpu);
+
+	return 7;
 }
 
 uint8_t cpx_imm(struct cpu *cpu)
@@ -1693,6 +1723,8 @@ uint8_t cpx_imm(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cpx(addr, cpu);
+
+	return 2;
 }
 
 uint8_t sbc_ind_x(struct cpu *cpu)
@@ -1700,6 +1732,8 @@ uint8_t sbc_ind_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu);
 	sbc(addr, cpu);
+
+	return 6;
 }
 
 uint8_t cpx_zero_pg(struct cpu *cpu)
@@ -1707,6 +1741,8 @@ uint8_t cpx_zero_pg(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	cpx(addr, cpu);
+
+	return 3;
 }
 
 uint8_t sbc_zero_pg(struct cpu *cpu)
@@ -1714,6 +1750,8 @@ uint8_t sbc_zero_pg(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	sbc(addr, cpu);
+
+	return 3;
 }
 
 uint8_t inc_zero_pg(struct cpu *cpu)
@@ -1721,6 +1759,8 @@ uint8_t inc_zero_pg(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu);
 	inc(addr, cpu);
+
+	return 5;
 }
 
 uint8_t inx(struct cpu *cpu)
@@ -1729,6 +1769,8 @@ uint8_t inx(struct cpu *cpu)
 	cpu->X++;
 	CPU_set_zero_flag_for_value(cpu, cpu->X);
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
+
+	return 2;
 }
 
 uint8_t sbc_imm(struct cpu *cpu)
@@ -1736,11 +1778,14 @@ uint8_t sbc_imm(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	sbc(addr, cpu);
+
+	return 2;
 }
 
 uint8_t nop(struct cpu *cpu)
 {
 	cpu->PC++;
+	return 2;
 }
 
 uint8_t cpx_abs(struct cpu *cpu)
@@ -1748,6 +1793,8 @@ uint8_t cpx_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	cpx(addr, cpu);
+
+	return 4;
 }
 
 uint8_t sbc_abs(struct cpu *cpu)
@@ -1755,6 +1802,8 @@ uint8_t sbc_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	sbc(addr, cpu);
+
+	return 4;
 }
 
 uint8_t inc_abs(struct cpu *cpu)
@@ -1762,6 +1811,8 @@ uint8_t inc_abs(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_(cpu);
 	inc(addr, cpu);
+
+	return 6;
 }
 
 uint8_t beq_r(struct cpu *cpu)
@@ -1781,7 +1832,9 @@ uint8_t beq_r(struct cpu *cpu)
 		} else {
 			cpu->PC += offset;
 		}
+		return 3;
 	}
+	return 2;
 }
 
 uint8_t sbc_ind_y(struct cpu *cpu)
@@ -1789,6 +1842,8 @@ uint8_t sbc_ind_y(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu);
 	sbc(addr, cpu);
+
+	return 5;
 }
 
 uint8_t sbc_zero_pg_x(struct cpu *cpu)
@@ -1796,6 +1851,8 @@ uint8_t sbc_zero_pg_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	sbc(addr, cpu);
+
+	return 4;
 }
 
 uint8_t inc_zero_pg_x(struct cpu *cpu)
@@ -1803,12 +1860,16 @@ uint8_t inc_zero_pg_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu);
 	inc(addr, cpu);
+
+	return 6;
 }
 
 uint8_t sed(struct cpu *cpu)
 {
 	cpu->PC++;
 	CPU_set_decimal_flag(cpu);
+
+	return 2;
 }
 
 uint8_t sbc_abs_y(struct cpu *cpu)
@@ -1816,6 +1877,8 @@ uint8_t sbc_abs_y(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu);
 	sbc(addr, cpu);
+
+	return 4;
 }
 
 uint8_t sbc_abs_x(struct cpu *cpu)
@@ -1823,6 +1886,8 @@ uint8_t sbc_abs_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	sbc(addr, cpu);
+
+	return 4;
 }
 
 uint8_t inc_abs_x(struct cpu *cpu)
@@ -1830,4 +1895,6 @@ uint8_t inc_abs_x(struct cpu *cpu)
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu);
 	inc(addr, cpu);
+
+	return 7;
 }
