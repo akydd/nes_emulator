@@ -22,6 +22,7 @@
 #include "cpu.h"
 #include "instructions.h"
 #include "memory.h"
+#include "loader.h"
 
 
 int main(int argc, char **argv)
@@ -34,14 +35,16 @@ int main(int argc, char **argv)
 
 	/* initialize memory and load data */
 	struct memory *mem = MEM_init();
-	if(MEM_load_file(mem, *++argv) == 0) {
+	struct ppu_memory *ppu_mem = PPU_MEM_init();
+	if(LOADER_load_file(mem, ppu_mem, *++argv) == 0) {
 		(void)printf("Could not load file '%s'.  Exiting main program.\n", *argv);
 		MEM_delete(&mem);
 		return 1;
 	}
 
-	/* Initialize the CPU */
+	/* Initialize the CPU and PPU */
 	struct cpu *cpu = CPU_init(mem);
+	struct ppu *ppu = PPU_init(mem, ppu_mem);
 
 	/*
 	 * Initialize PPU with registers set to 0x2000 to 0x2007 in main mem.

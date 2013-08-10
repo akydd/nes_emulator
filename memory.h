@@ -138,11 +138,4 @@ uint8_t MEM_read(struct memory *, const uint16_t);
  */
 void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
-/*
- * Load the specified file into memory.  Returns 1 on success, 0 otherwise.
- * This function may move into a separate module, or take another argument for
- * loading data into the PPU.
- */
-int MEM_load_file(struct memory *, char *filename);
-
 #endif

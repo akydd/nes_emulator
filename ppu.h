@@ -21,14 +21,22 @@
 
 #include <stdint.h>
 
-struct ppu;
+#include "ppu_memory.h"
+#include "memory.h"
+
+struct ppu {
+	struct memory *mem; /*  shared memory */
+	struct ppu_memory *ppu_mem;
+};
 
 /*
  * Create a new ppu struct
  */
-struct ppu *PPU_init(struct memory *);
+struct ppu *PPU_init(struct memory *, struct ppu_memory *);
 
 void PPU_delete(struct ppu **);
+
+void PPU_step();
 
 /* PPUCTRL - Control Register 1 manipulation */
 void PPU_set_nametable_address(struct ppu *, uint8_t);
