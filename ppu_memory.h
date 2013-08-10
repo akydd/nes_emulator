@@ -27,7 +27,44 @@ struct ppu_memory;
  * ==========
  *
  * 16 kilobytes (0x4000 bytes) of memory.  It is organized as:
- * TODO
+ *
+ *  __________________
+ * |                  | 0x3FFF
+ * | Mirrors of       |
+ * | 0x3F00 to 0X3F1F |
+ * |__________________| 0x3F20
+ * |                  | 0x3F1F
+ * | Palette RAM      |
+ * | indexes          |
+ * | [not RGB values] |
+ * |__________________| 0x3F00
+ * |                  | 0x3EFF
+ * | Mirrors of       |
+ * | 0x2000 to ox2EFF |
+ * |__________________| 0x3000
+ * |                  | 0x2FFF
+ * | Name Table #3    |
+ * |__________________| 0x2C00
+ * |                  | 0x2BFF
+ * | Name Table #2    |
+ * |__________________| 0x2800
+ * |                  | 0x27FF
+ * | Name Table #1    |
+ * |__________________| 0x2400
+ * |                  | 0x23FF
+ * | Name Table #0    |
+ * |__________________| 0x2000
+ * |                  | 0x1FFF
+ * | Pattern Table 1  |
+ * | [upper CHR bank] |
+ * |__________________| 0x1000	 
+ * |                  | 0x0FFF
+ * | Pattern Table 0  |
+ * | [lower CHR bank] |
+ * |__________________| 0x0000
+ *
+ *
+ *
  *
  */
 
