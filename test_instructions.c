@@ -39,10 +39,12 @@ static char *test_brk()
 	/* setup some state */
 	cpu->PC = 0x07D0 - 2; /* 1998 */
 	cpu->P = 5;
+	MEM_write(memory, MEM_BRK_VECTOR, 0x10);
+	MEM_write(memory, MEM_BRK_VECTOR + 1, 0x01);
 
 	brk(cpu);
 
-	mu_assert("BRK - PC not set", cpu->PC == 0x07D0);
+	mu_assert("BRK - PC not correct", cpu->PC == 0x0110);
 	mu_assert("BRK - S not set", cpu->S == MEM_STACK_START - 3);
 	mu_assert("BRK - flag not set", (cpu->P & B_FLAG) == B_FLAG);
 	mu_assert("BRK - high byte not on S", MEM_read(cpu->mem, MEM_STACK_START) == 0x07);

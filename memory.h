@@ -24,7 +24,9 @@
 
 #define MEM_SIZE 0xFFFF
 #define MEM_STACK_START 511
+#define MEM_NMI_VECTOR 0xFFFA
 #define MEM_RESET_VECTOR 0xFFFC
+#define MEM_BRK_VECTOR 0xFFFE
 #define MIRROR_ADDR 0x2000
 #define MIRROR_SIZE 0x0800
 #define IO_REG_ADDR 0x4000
@@ -41,10 +43,12 @@ struct memory;
  * 64 kilobytes (0x10000 bytes) of memory.  For the NES, this memory is organized as:
  *
  *  _________________
- * |                 |	0xFFFF		64 kb
- * |                 |
- * | [Reset vector]  |	0xFFFD
- * | [Reset vector]  |	0xFFFC
+ * | IRQ/BRK vector  |	0xFFFF		64 kb
+ * | IRQ/BRK vector  |  0xFFFE
+ * | Reset vector    |	0xFFFD
+ * | Reset vector    |	0xFFFC
+ * | NM Interrupt    |  0xFFFB
+ * | NM Interrupt    |  0xFFFA
  * |                 |
  * | Cartridge ROM   |
  * | High bank, 16kB |
@@ -54,7 +58,7 @@ struct memory;
  * | Low bank, 16kB  |
  * |_________________|	0x8000		32 kb
  * |                 |	0x7FFF
- * | Cartridge RAM   |
+ * | Save RAM        |
  * | 8 kB            |
  * |_________________|	0x6000		24 kb
  * |                 |	0x5FFF

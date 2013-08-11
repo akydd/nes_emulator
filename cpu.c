@@ -28,19 +28,19 @@ struct cpu *CPU_init(struct memory *mem)
 {
 	struct cpu *cpu = malloc(sizeof(struct cpu));
 
-	/* initialize PC to byte at the reset vector */
+	/* initialize PC to 2-byte address at the reset vector */
 	uint16_t low = MEM_read(mem, MEM_RESET_VECTOR);
 	uint16_t high = MEM_read(mem, MEM_RESET_VECTOR + 1);
 	uint16_t addr = (high<<8) | low;
 	cpu->PC = addr;
-	(void)printf("Initializing cpu->PC to %#x\n", addr);
+	(void)printf("Initializing PC to %#x\n", addr);
 
 	/* Stack grows down from 0x1FF, or 511 */
 	cpu->S = MEM_STACK_START;
 	cpu->A = 0;
 	cpu->X = 0;
 	cpu->Y = 0;
-	cpu->P = 0;
+	cpu->P = 0x34;
 	cpu->mem = mem;
 
 	return cpu;

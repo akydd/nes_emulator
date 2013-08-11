@@ -366,6 +366,10 @@ uint8_t brk(struct cpu *cpu)
 	CPU_push16_stack(cpu, cpu->PC);
 	CPU_push8_stack(cpu, cpu->P);
 
+	uint16_t low = MEM_read(cpu->mem, MEM_BRK_VECTOR);
+	uint16_t high = MEM_read(cpu->mem, MEM_BRK_VECTOR + 1)<<8;
+	cpu->PC = (high | low);
+
 	return 7;
 }
 
@@ -463,20 +467,11 @@ uint8_t asl_abs(struct cpu *cpu)
 uint8_t bpl_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be handled as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_negative_flag_is_set(cpu) == 0) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;
@@ -671,20 +666,11 @@ uint8_t rol_abs(struct cpu *cpu)
 uint8_t bmi_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must ba handled as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_negative_flag_is_set(cpu) == 1) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;
@@ -858,20 +844,11 @@ uint8_t lsr_abs(struct cpu *cpu)
 uint8_t bvc_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be handled as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_overflow_flag_is_set(cpu) == 0) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;
@@ -941,7 +918,7 @@ uint8_t lsr_abs_x(struct cpu *cpu)
 
 uint8_t rts(struct cpu *cpu)
 {
-	cpu->PC = CPU_pop16_stack(cpu);
+	cpu->PC = CPU_pop16_stack(cpu) + 1;
 
 	return 6;
 }
@@ -1051,20 +1028,12 @@ uint8_t ror_abs(struct cpu *cpu)
 uint8_t bvs_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be handles as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_overflow_flag_is_set(cpu) == 1) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
+		return 3;
 	}
 	return 2;
 }
@@ -1219,20 +1188,11 @@ uint8_t stx_abs(struct cpu * cpu)
 uint8_t bcc_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be treated as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_carry_flag_is_set(cpu) == 0) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;
@@ -1426,20 +1386,11 @@ uint8_t ldx_abs(struct cpu *cpu)
 uint8_t bcs_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be treated as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_carry_flag_is_set(cpu) == 1) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;
@@ -1637,20 +1588,11 @@ uint8_t dec_abs(struct cpu *cpu)
 uint8_t bne_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be treated as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_zero_flag_is_set(cpu) == 0) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;
@@ -1818,20 +1760,11 @@ uint8_t inc_abs(struct cpu *cpu)
 uint8_t beq_r(struct cpu *cpu)
 {
 	cpu->PC++;
-	uint8_t offset = CPU_pop8_mem(cpu);
+	/* Offset must be treated as a signed number */
+	int8_t offset = (int8_t)CPU_pop8_mem(cpu);
 
 	if(CPU_zero_flag_is_set(cpu) == 1) {
-		if(offset >= 0x80) { 
-			/* 
-			   Need special conversion when unsigned
-			   int would be converted to a negative
-			   signed int.
-			   */
-			offset = 0xFF - offset + 1;
-			cpu->PC -= offset;
-		} else {
-			cpu->PC += offset;
-		}
+		cpu->PC += offset;
 		return 3;
 	}
 	return 2;

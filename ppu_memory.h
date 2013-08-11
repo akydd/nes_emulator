@@ -30,28 +30,45 @@ struct ppu_memory;
  *
  *  __________________
  * |                  | 0x3FFF
- * | Mirrors of       |
- * | 0x3F00 to 0X3F1F |
+ * | Mirror of        |
+ * | 0x3F00 to 0x3F1F |
  * |__________________| 0x3F20
  * |                  | 0x3F1F
- * | Palette RAM      |
- * | indexes          |
- * | [not RGB values] |
+ * | Sprite Palette   |
+ * |__________________| 0x3F10
+ * |                  | 0x3F0F
+ * | Background       |
+ * | Palette          |
  * |__________________| 0x3F00
  * |                  | 0x3EFF
- * | Mirrors of       |
- * | 0x2000 to ox2EFF |
+ * | Mirror of        |
+ * | 0x2000 to 0x2EFF.|
+ * |                  |
+ * | There are 6 ways |
+ * | this is done.    |
  * |__________________| 0x3000
  * |                  | 0x2FFF
+ * | Attr. Table #3   |
+ * |__________________| 0x2FC0
+ * |                  | 0x2FBF
  * | Name Table #3    |
  * |__________________| 0x2C00
  * |                  | 0x2BFF
+ * | Attr. Table #2   |
+ * |__________________| 0x2BC0
+ * |                  | 0x2BBF
  * | Name Table #2    |
  * |__________________| 0x2800
  * |                  | 0x27FF
+ * | Attr. Table #1   |
+ * |__________________| 0x27C0
+ * |                  | 0x27BF
  * | Name Table #1    |
  * |__________________| 0x2400
  * |                  | 0x23FF
+ * | Attr. Table #0   |
+ * |__________________| 0x23C0
+ * |                  | 0x23BF
  * | Name Table #0    |
  * |__________________| 0x2000
  * |                  | 0x1FFF
@@ -64,9 +81,11 @@ struct ppu_memory;
  * |__________________| 0x0000
  *
  *
- *
- *
  */
+
+#define PPU_MEM_SIZE 0x4000
+#define PPU_MEM_PALLETTE_ADDR 0x3F00
+
 
 struct ppu_memory *PPU_MEM_init();
 

@@ -51,23 +51,27 @@ uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
-	mem->memory[addr] = val;
-
 	/* write to mirrored RAM */
-	if (addr < MIRROR_ADDR) {
+	if (addr < MIRROR_ADDR)
+	{
 		uint16_t base_addr = addr % MIRROR_SIZE; 
 		mem->memory[base_addr] = val;
 		mem->memory[base_addr + 1 * MIRROR_SIZE] = val;
 		mem->memory[base_addr + 2 * MIRROR_SIZE] = val;
 		mem->memory[base_addr + 3 * MIRROR_SIZE] = val;
 	}
-
 	/* write to mirrored VRAM */
-	if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR)) {
+	else if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR))
+	{
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
 		int i;
 		for(i = 0; i < 1024; i++) {
 			mem->memory[base_addr + i * VRAM_REG_MIRROR_SIZE] = val;
 		}
+	} 
+	/* all other writes */
+	else
+	{
+		mem->memory[addr] = val;
 	}
 }
