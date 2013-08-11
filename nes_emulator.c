@@ -23,6 +23,7 @@
 #include "instructions.h"
 #include "memory.h"
 #include "ppu_memory.h"
+#include "ppu.h"
 #include "loader.h"
 
 
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
 
 	/* Initialize the CPU and PPU */
 	struct cpu *cpu = CPU_init(mem);
-	//struct ppu *ppu = PPU_init(mem, ppu_mem);
+	struct ppu *ppu = PPU_init(mem, ppu_mem);
 
 
 	/* Execution: */
@@ -68,7 +69,8 @@ int main(int argc, char **argv)
 	 * Shutdown
 	 */
 	CPU_delete(&cpu);
-	//PPU_delete(&ppu);
+	PPU_delete(&ppu);
 	PPU_MEM_delete(&ppu_mem);
+	MEM_delete(&mem);
 	return 0;
 }

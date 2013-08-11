@@ -48,7 +48,6 @@ struct cpu *CPU_init(struct memory *mem)
 
 void CPU_delete(struct cpu **cpu)
 {
-	MEM_delete(&((*cpu)->mem));
 	free(*cpu);
 	*cpu = NULL;
 }
