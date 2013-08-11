@@ -23,7 +23,7 @@
 #include <stdio.h>
 
 #define MEM_SIZE 0xFFFF
-#define MEM_STACK_START 511
+#define MEM_STACK_START 0x01FF
 #define MEM_NMI_VECTOR 0xFFFA
 #define MEM_RESET_VECTOR 0xFFFC
 #define MEM_BRK_VECTOR 0xFFFE

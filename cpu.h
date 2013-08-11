@@ -69,8 +69,8 @@ void CPU_delete(struct cpu **);
 int CPU_step(struct cpu *);
 
 /* Stack manipulation */
-void CPU_push16_stack(struct cpu *, uint16_t);
-void CPU_push8_stack(struct cpu *, uint8_t);
+void CPU_push16_stack(struct cpu *, const uint16_t);
+void CPU_push8_stack(struct cpu *, const uint8_t);
 uint8_t CPU_pop8_stack(struct cpu *);
 uint16_t CPU_pop16_stack(struct cpu *);
 

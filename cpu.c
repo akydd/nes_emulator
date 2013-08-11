@@ -64,7 +64,7 @@ int CPU_step(struct cpu *cpu)
 /* Private functions */
 
 /* Stack manipulation */
-void CPU_push16_stack(struct cpu *cpu, uint16_t val)
+void CPU_push16_stack(struct cpu *cpu, const uint16_t val)
 {
 	/* push high byte, then low */
 	MEM_write(cpu->mem, cpu->S, val>>8);
@@ -73,7 +73,7 @@ void CPU_push16_stack(struct cpu *cpu, uint16_t val)
 	cpu->S--;
 }
 
-void CPU_push8_stack(struct cpu *cpu, uint8_t val)
+void CPU_push8_stack(struct cpu *cpu, const uint8_t val)
 {
 	MEM_write(cpu->mem, cpu->S, val);
 	cpu->S--;

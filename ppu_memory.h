@@ -29,7 +29,7 @@ struct ppu_memory;
  * 16 kilobytes (0x4000 bytes) of memory.  It is organized as:
  *
  *  __________________
- * |                  | 0x3FFF
+ * |                  | 0x3FFF   16 kb
  * | Mirror of        |
  * | 0x3F00 to 0x3F1F |
  * |__________________| 0x3F20
@@ -47,7 +47,7 @@ struct ppu_memory;
  * | There are 6 ways |
  * | this is done.    |
  * |__________________| 0x3000
- * |                  | 0x2FFF
+ * |                  | 0x2FFF   12 kb
  * | Attr. Table #3   |
  * |__________________| 0x2FC0
  * |                  | 0x2FBF
@@ -71,7 +71,7 @@ struct ppu_memory;
  * |                  | 0x23BF
  * | Name Table #0    |
  * |__________________| 0x2000
- * |                  | 0x1FFF
+ * |                  | 0x1FFF   8 kb
  * | Pattern Table 1  |
  * | [upper CHR bank] |
  * |__________________| 0x1000	 

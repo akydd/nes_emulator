@@ -50,11 +50,11 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 	/* Number of memory banks */
 	uint8_t num_16kb_rom_banks = header[4];
 	uint8_t num_8kb_vrom_banks = header[5];
-	uint8_t num_8kb_vram_banks = header[8];
+	uint8_t num_8kb_ram_banks = header[8];
 
 	(void)printf("Number of 16 kb rom banks: %d\n", num_16kb_rom_banks);
 	(void)printf("Number of 8 kb vrom banks: %d\n", num_8kb_vrom_banks);
-	(void)printf("Number of 8 kb vram banks: %d\n", num_8kb_vram_banks);
+	(void)printf("Number of 8 kb ram banks: %d\n", num_8kb_ram_banks);
 
 	/* Battery backed RAM? */
 	uint8_t battery_backed_ram_present = ((header[6] & (1<<1)) != 0);
@@ -81,7 +81,7 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 		}
 	}
 
-	/* Load 2*16 kb ROM banks into shared memory*/
+	/* Load 2*16 kb ROM banks into shared memory */
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
 		MEM_write(mem, mem_addr, data);
@@ -91,7 +91,17 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 		mem_addr++;
 	}
 
-	/* Load 8 kb VROM banks into PPU memory */
+	/* Load 8 kb VROM bank into PPU memory, if present */
+	if(num_8kb_vrom_banks == 1) {
+		mem_addr = 0;
+		while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr < 0x2000)) {
+			PPU_MEM_write(ppu_mem, mem_addr, data);
+			if(mem_addr % 1024 == 0) {
+				(void)printf("Loading data %#x into VROM %#x\n", data, mem_addr);
+			}
+			mem_addr++;
+		}
+	}
 
 	(void)fclose(nes_file);
 	return 1;
