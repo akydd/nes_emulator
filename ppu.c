@@ -39,3 +39,7 @@ void PPU_delete(struct ppu **ppu)
 	free(*ppu);
 }
 
+uint8_t PPU_step(struct ppu *ppu, uint8_t cycle)
+{
+	return 1;
+}

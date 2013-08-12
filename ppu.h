@@ -108,7 +108,7 @@ struct ppu *PPU_init(struct memory *, struct ppu_memory *);
 
 void PPU_delete(struct ppu **);
 
-void PPU_step();
+uint8_t PPU_step(struct ppu *, uint8_t);
 
 /* PPUCTRL - Control Register 1 manipulation */
 void PPU_set_nametable_address(struct ppu *, uint8_t);

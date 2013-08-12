@@ -51,18 +51,16 @@ int main(int argc, char **argv)
 
 
 	/* Execution: */
-	int cpu_cycles = 0;
+	uint8_t cpu_cycles = 0;
+	uint8_t ppu_cycles;
+	uint8_t elapsed_ppu_cycles = 0;
 	for(;;) {
 		cpu_cycles = CPU_step(cpu);
 
-		/*
-		   int ppu_cycles = 3 * cpu_cycles;
-		   while(ppu_cycles > 0)
-		   {
-		   ppu_execute();
-		 *
-		 }
-		 */
+		/* PPU steps 3 times for each CPU step */
+		for(ppu_cycles = 0; ppu_cycles < 4; ppu_cycles++) {
+			elapsed_ppu_cycles += PPU_step(ppu, elapsed_ppu_cycles);
+		}
 	}
 
 	/*
