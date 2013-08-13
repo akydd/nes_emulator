@@ -98,17 +98,30 @@
 
 struct ppu {
 	struct memory *mem; /*  shared memory */
-	struct ppu_memory *ppu_mem;
+	struct ppu_memory *ppu_mem; /* PPU memory */
+	/* 2 registers for generating NMIs */
+	unsigned int NMI_occured;
+	unsigned int NMI_output;
 };
 
 /*
- * Create a new ppu struct
+ * Create a new ppu struct.
+ * Memory must be instantiated before passing into this function.
  */
 struct ppu *PPU_init(struct memory *, struct ppu_memory *);
 
+/*
+ * Destroy the given ppu
+ */
 void PPU_delete(struct ppu **);
 
 uint8_t PPU_step(struct ppu *, uint8_t);
+
+/* 
+ * Memory instructions.
+ * Needed to create these because writes to PPU memory can affect PPU status registers.
+ */
+void PPU_write(struct ppu *, const uint16_t, const uint8_t);
 
 /* PPUCTRL - Control Register 1 manipulation */
 void PPU_set_nametable_address(struct ppu *, uint8_t);

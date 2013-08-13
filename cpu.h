@@ -59,7 +59,7 @@ struct cpu {
 struct cpu *CPU_init(struct memory *);
 
 /*
- * Delete cpu and internal memory.
+ * Delete cpu
  */
 void CPU_delete(struct cpu **);
 

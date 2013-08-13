@@ -43,3 +43,8 @@ uint8_t PPU_step(struct ppu *ppu, uint8_t cycle)
 {
 	return 1;
 }
+
+void PPU_write(struct ppu *ppu, uint16_t addr, const uint8_t val)
+{
+	PPU_MEM_write(ppu->mem, addr, val);
+}
