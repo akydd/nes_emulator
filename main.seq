@@ -13,8 +13,14 @@ loop for 3 x # clock cycles
        262 scanlines per frame.
     end note
     PPU->PPU: execute
+    opt
+       PPU->CPU: Generate NMI
+       CPU->-CPU: Execute NMI
+end
+
 end
 
 loop for # clock cycles / 2
     APU->APU: execute
 end
+
