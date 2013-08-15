@@ -41,6 +41,16 @@ void PPU_delete(struct ppu **ppu)
 
 uint8_t PPU_step(struct ppu *ppu, uint8_t cycle)
 {
+	/* VBLANK flag is set at the 2nd cycle of scanline 241 */
+	if (cycle == 241 * 341 + 1) {
+		//MEM_write(ppu->mem, PPUSTATUS_ADDR, 0xa0);
+	}
+
+	/* VBLANK flag is cleared at the 2nd cycle of scanline 261 */
+	if (cycle == 261 * 341 + 1) {
+		//MEM_write(ppu->mem, PPUSTATUS_ADDR, 0xa0);
+	}
+
 	return 1;
 }
 

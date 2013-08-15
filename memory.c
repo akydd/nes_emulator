@@ -46,6 +46,10 @@ void MEM_delete(struct memory **mem)
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
+	/* Read from 0x2002 unsets the VBLANK flag at bit 7 */
+	if (addr == MEM_PPU_STATUS_REG_ADDR) {
+		mem->memory[addr] &= ~(1<<7);
+	}
 	return mem->memory[addr];
 }
 

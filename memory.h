@@ -34,6 +34,7 @@
 #define VRAM_REG_MIRROR_SIZE 8
 #define MEM_ROM_LOW_BANK_ADDR 0x8000
 #define MEM_ROM_HIGH_BANK_ADDR 0xC000
+#define MEM_PPU_STATUS_REG_ADDR 0x2000
 
 struct memory;
 /*

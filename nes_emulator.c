@@ -52,14 +52,15 @@ int main(int argc, char **argv)
 
 	/* Execution: */
 	uint8_t cpu_cycles = 0;
-	uint8_t ppu_cycles;
-	uint8_t elapsed_ppu_cycles = 0;
+	uint8_t i;
+	uint8_t ppu_cycles = 0;
+	uint8_t ppu_result = 0;
 	for(;;) {
 		cpu_cycles = CPU_step(cpu);
 
 		/* PPU steps 3 times for each CPU step */
-		for(ppu_cycles = 0; ppu_cycles < 4; ppu_cycles++) {
-			elapsed_ppu_cycles += PPU_step(ppu, elapsed_ppu_cycles);
+		for(i = 0; i <= 3 * cpu_cycles; i++) {
+			ppu_result = PPU_step(ppu, ppu_cycles);
 		}
 	}
 
