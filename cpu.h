@@ -132,4 +132,7 @@ void CPU_clear_interrupt_flag(struct cpu *);
 void CPU_set_decimal_flag(struct cpu *);
 void CPU_clear_decimal_flag(struct cpu *);
 
+/* Interrupt handlers */
+void CPU_handle_nmi(struct cpu *);
+
 #endif

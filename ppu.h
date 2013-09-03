@@ -135,6 +135,7 @@ void PPU_set_sprite_size(struct ppu *);
 void PPU_clear_sprite_size(struct ppu *);
 void PPU_set_VBlank_enable(struct ppu *);
 void PPU_clear_VBlank_enable(struct ppu *);
+uint8_t PPU_VBlank_is_enabled(struct ppu *);
 
 /* PPUMASK - Control Register 2 manipulation */
 void PPU_set_greyscale(struct ppu *);

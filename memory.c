@@ -53,6 +53,11 @@ uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 	return mem->memory[addr];
 }
 
+uint8_t MEM_read_no_set(struct memory *mem, const uint16_t addr)
+{
+	return mem->memory[addr];
+}
+
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
 	/* write to mirrored RAM */

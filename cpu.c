@@ -332,3 +332,22 @@ void CPU_clear_decimal_flag(struct cpu *cpu)
 {
 	clear_status_flag(cpu, D_FLAG);
 }
+
+/*
+ * NMI handler does 3 things:
+ * 1. Push CPU status reg onto the stack
+ * 2. Push CPU return addr onto the stack
+ * 3. Set the PC to the NMI handler's address at 0xFFFA - 0XFFFB
+ */
+void CPU_handle_nmi(struct cpu *cpu)
+{
+	/* 1 */
+	CPU_push8_stack(cpu, cpu->S);
+	/* 2 */
+	CPU_push16_stack(cpu, cpu->PC);
+	/* 3 */
+	uint16_t low = MEM_read(cpu->mem, MEM_NMI_VECTOR);
+	uint16_t high = MEM_read(cpu->mem, MEM_NMI_VECTOR + 1);
+	uint16_t addr = (high<<8) | low;
+	cpu->PC = addr;
+}

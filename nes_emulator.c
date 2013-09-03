@@ -51,9 +51,9 @@ int main(int argc, char **argv)
 
 
 	/* Execution: */
-	uint8_t cpu_cycles = 0;
-	uint8_t i;
-	uint8_t ppu_cycles = 0;
+	uint16_t cpu_cycles = 0;
+	uint16_t i;
+	uint16_t ppu_cycles = 0;
 	uint8_t ppu_result = 0;
 	for(;;) {
 		cpu_cycles = CPU_step(cpu);
@@ -61,6 +61,11 @@ int main(int argc, char **argv)
 		/* PPU steps 3 times for each CPU step */
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
 			ppu_result = PPU_step(ppu, ppu_cycles);
+
+			/* Handle non-maskable interrupts */
+			if(ppu_result == 0) {
+				CPU_handle_nmi(cpu);
+			}
 		}
 	}
 
