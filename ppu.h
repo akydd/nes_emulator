@@ -115,7 +115,7 @@ struct ppu *PPU_init(struct memory *, struct ppu_memory *);
  */
 void PPU_delete(struct ppu **);
 
-uint8_t PPU_step(struct ppu *, uint8_t);
+uint8_t PPU_step(struct ppu *, int);
 
 /* 
  * Memory instructions.

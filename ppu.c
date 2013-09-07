@@ -53,9 +53,9 @@ inline void clear_vblank_flag(struct ppu *ppu)
 	MEM_write(ppu->mem, PPUSTATUS_ADDR, status);
 }
 
-uint8_t PPU_step(struct ppu *ppu, uint8_t cycle)
+uint8_t PPU_step(struct ppu *ppu, int cycle)
 {
-	(void)printf("PPU is in cycle %d\n", cycle);
+	//(void)printf("PPU is in cycle %d\n", cycle);
 	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
 	 * start of the VBLANKing interval. */
 	if (cycle == 241 * 341 + 1) {
@@ -63,6 +63,7 @@ uint8_t PPU_step(struct ppu *ppu, uint8_t cycle)
 
 		/* This return indicates an NMI to the CPU */
 		if (PPU_VBlank_is_enabled(ppu) != 0) {
+			(void)printf("VBLANK!\n");
 			return 0;
 		}
 	}

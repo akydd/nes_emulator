@@ -56,7 +56,7 @@ int CPU_step(struct cpu *cpu)
 {
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(cpu->mem, cpu->PC);
-	(void)printf("Executing opcode %#x at %#x\n", opcode, cpu->PC);
+	//(void)printf("Executing opcode %#x at %#x\n", opcode, cpu->PC);
 	return pf[opcode](cpu);
 }
 
@@ -350,4 +350,5 @@ void CPU_handle_nmi(struct cpu *cpu)
 	uint16_t high = MEM_read(cpu->mem, MEM_NMI_VECTOR + 1);
 	uint16_t addr = (high<<8) | low;
 	cpu->PC = addr;
+	(void)printf("NMI set PC to %#x\n", addr);
 }

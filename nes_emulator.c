@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	/* Execution: */
 	uint16_t cpu_cycles = 0;
 	uint16_t i;
-	uint16_t ppu_cycles = 0;
+	int ppu_cycles = 0;
 	uint8_t ppu_result = 0;
 	for(;;) {
 		cpu_cycles = CPU_step(cpu);
@@ -65,6 +65,12 @@ int main(int argc, char **argv)
 			/* Handle non-maskable interrupts */
 			if(ppu_result == 0) {
 				CPU_handle_nmi(cpu);
+			}
+
+			ppu_cycles++;
+			if (ppu_cycles > 262 * 340) {
+				ppu_cycles = 0;
+				//(void)printf("Reset PPU cycles!\n");
 			}
 		}
 	}
