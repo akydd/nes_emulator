@@ -46,10 +46,10 @@ void MEM_delete(struct memory **mem)
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
-	/* Read from 0x2002 unsets the VBLANK flag at bit 7 */
+	/* Read from 0x2002 unsets the VBLANK flag at bit 7.  Direct memory
+	 * write is ok as 0x2002 is not mirrored. */
 	if (addr == MEM_PPU_STATUS_REG_ADDR) {
-		uint8_t val = mem->memory[addr] & ~(1<<7);
-		MEM_write(mem, addr, val);
+		mem->memory[addr] &= ~(1<<7);
 	}
 	return mem->memory[addr];
 }
@@ -59,7 +59,7 @@ uint8_t MEM_read_no_set(struct memory *mem, const uint16_t addr)
 	return mem->memory[addr];
 }
 
-void MEM_write_no_set(struct memory *mem, const uint16_t addr, const uint8_t val)
+void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
 	/* write to mirrored RAM */
 	if (addr < MIRROR_ADDR)
@@ -84,15 +84,10 @@ void MEM_write_no_set(struct memory *mem, const uint16_t addr, const uint8_t val
 	{
 		mem->memory[addr] = val;
 	}
-}
 
-void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
-{
-	MEM_write_no_set(mem, addr, val);
-
-	/* Write to 0x2004 autoincrements 0x2003 by 1 */
+	/* Write to 0x2004 autoincrements 0x2003 by 1.  Direct memory write is
+	 * ok as 0x2004 is not mirrored. */
 	if (addr == MEM_PPU_OAMDATA_REG_ADDR) {
-		uint8_t val = mem->memory[MEM_PPU_OAMADDR_REG_ADDR] + 1;
-		MEM_write_no_set(mem, MEM_PPU_OAMADDR_REG_ADDR, val);
+		mem->memory[MEM_PPU_OAMADDR_REG_ADDR]++;
 	}
 }

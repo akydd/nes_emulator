@@ -156,11 +156,4 @@ uint8_t MEM_read_no_set(struct memory *, const uint16_t);
  */
 void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
-/* 
- * Use this function for initial memory loading.  It handles mirroring, but does
- * not handle CPU execution side effects (such as autoincrementing of certain
- * PPU registers).
- */
-void MEM_write_no_set(struct memory *, const uint16_t, const uint8_t);
-
 #endif
