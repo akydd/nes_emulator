@@ -81,7 +81,14 @@
  *            pre-render line.
  *
  * OAMADDR   - 0x2003
+ * ==================
+ * Destination address in sprite RAM for use with OAMDATA.
+ *
  * OAMDATA   - 0x2004
+ * ==================
+ * Read/write data from/to selected address in OAMADDR.  OAMADDR is incremented
+ * after each write to this register.
+ *
  * PPUSCROLL - 0x2005
  * PPUADDR   - 0x2006
  * PPUDATA   - 0x2007

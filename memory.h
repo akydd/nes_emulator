@@ -35,6 +35,8 @@
 #define MEM_ROM_LOW_BANK_ADDR 0x8000
 #define MEM_ROM_HIGH_BANK_ADDR 0xC000
 #define MEM_PPU_STATUS_REG_ADDR 0x2000
+#define MEM_PPU_OAMADDR_REG_ADDR 0x2003
+#define MEM_PPU_OAMDATA_REG_ADDR 0x2004
 
 struct memory;
 /*
@@ -148,9 +150,17 @@ uint8_t MEM_read(struct memory *, const uint16_t);
 uint8_t MEM_read_no_set(struct memory *, const uint16_t);
 
 /* 
- * Writes to memory should be delegated to this function
- * for proper mirroring.
+ * Writes to memory during CPU execution should be delegated to this function
+ * for proper mirroring and side effect handling (such as autoincrementing of
+ * certain PPU registers).
  */
 void MEM_write(struct memory *, const uint16_t, const uint8_t);
+
+/* 
+ * Use this function for initial memory loading.  It handles mirroring, but does
+ * not handle CPU execution side effects (such as autoincrementing of certain
+ * PPU registers).
+ */
+void MEM_write_no_set(struct memory *, const uint16_t, const uint8_t);
 
 #endif

@@ -76,7 +76,7 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 	if(trainer_present != 0) {
 		mem_addr = 0x7000;
 		while((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr < 0x7200)) {
-			MEM_write(mem, mem_addr, data);
+			MEM_write_no_set(mem, mem_addr, data);
 			mem_addr++;
 		}
 	}
@@ -84,7 +84,7 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 	/* Load 2*16 kb ROM banks into shared memory */
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
-		MEM_write(mem, mem_addr, data);
+		MEM_write_no_set(mem, mem_addr, data);
 		if(mem_addr % 1024 == 0) {
 			(void)printf("Loading data %#x into %#x\n", data, mem_addr);
 		}
