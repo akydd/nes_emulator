@@ -49,7 +49,6 @@ struct cpu {
 	uint8_t X;	/* X index */
 	uint8_t Y;	/* Y index */
 	uint8_t P;	/* processor status flags */
-	struct memory *mem;	/* Shared memory */
 };
 
 /*
@@ -66,23 +65,7 @@ void CPU_delete(struct cpu **);
 /*
  * Perform the next instruction.
  */
-int CPU_step(struct cpu *);
-
-/* Stack manipulation */
-void CPU_push16_stack(struct cpu *, const uint16_t);
-void CPU_push8_stack(struct cpu *, const uint8_t);
-uint8_t CPU_pop8_stack(struct cpu *);
-uint16_t CPU_pop16_stack(struct cpu *);
-
-
-/* 
- * Memory manipulation: read N bits and move the PC to the follow address.
- * Values aren't really "popped", as they are still accessible if you know
- * the address.
- */
-uint16_t CPU_pop16_mem(struct cpu *);
-uint8_t CPU_pop8_mem(struct cpu *);
-
+int CPU_step(struct cpu *, struct memory *);
 
 
 /* Status flag manipulation */
@@ -133,6 +116,6 @@ void CPU_set_decimal_flag(struct cpu *);
 void CPU_clear_decimal_flag(struct cpu *);
 
 /* Interrupt handlers */
-void CPU_handle_nmi(struct cpu *);
+void CPU_handle_nmi(struct cpu *, struct memory *);
 
 #endif

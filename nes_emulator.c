@@ -20,7 +20,6 @@
 #include <stdio.h>
 
 #include "cpu.h"
-#include "instructions.h"
 #include "memory.h"
 #include "ppu_memory.h"
 #include "ppu.h"
@@ -56,7 +55,7 @@ int main(int argc, char **argv)
 	int ppu_cycles = 0;
 	uint8_t ppu_result = 0;
 	for(;;) {
-		cpu_cycles = CPU_step(cpu);
+		cpu_cycles = CPU_step(cpu, mem);
 
 		/* PPU steps 3 times for each CPU step */
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
@@ -64,7 +63,7 @@ int main(int argc, char **argv)
 
 			/* Handle non-maskable interrupts */
 			if(ppu_result == 0) {
-				CPU_handle_nmi(cpu);
+				CPU_handle_nmi(cpu, mem);
 			}
 
 			ppu_cycles++;

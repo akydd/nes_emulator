@@ -68,10 +68,10 @@ static char *test_push8_stack()
 	memory = MEM_init();
 	cpu = CPU_init(memory);
 
-	CPU_push8_stack(cpu, 10);
+	CPU_push8_stack(cpu, memory, 10);
 
 	mu_assert("push8_stack - S not moved", cpu->S == MEM_STACK_START - 1);
-	mu_assert("push8_stack - not pushed", MEM_read(cpu->mem, cpu->S + 1) == 10);
+	mu_assert("push8_stack - not pushed", MEM_read(memory, cpu->S + 1) == 10);
 
 	CPU_delete(&cpu);
 	return 0;
@@ -82,11 +82,11 @@ static char *test_push16_stack()
 	memory = MEM_init();
 	cpu = CPU_init(memory);
 
-	CPU_push16_stack(cpu, 0x0EF4);
+	CPU_push16_stack(cpu, memory, 0x0EF4);
 
 	mu_assert("push16_stack - S not moved", cpu->S == MEM_STACK_START - 2);
-	mu_assert("push16_stack - low not pushed", MEM_read(cpu->mem, cpu->S+1) == 0xF4);
-	mu_assert("push16_stack - high not pushed", MEM_read(cpu->mem, cpu->S+2) == 0x0E);
+	mu_assert("push16_stack - low not pushed", MEM_read(memory, cpu->S+1) == 0xF4);
+	mu_assert("push16_stack - high not pushed", MEM_read(memory, cpu->S+2) == 0x0E);
 
 	CPU_delete(&cpu);
 	return 0;
@@ -97,9 +97,9 @@ static char *test_pop8_mem()
 	memory = MEM_init();
 	cpu = CPU_init(memory);
 
-	MEM_write(cpu->mem, 0, 0xF4);
+	MEM_write(memory, 0, 0xF4);
 
-	uint8_t val = CPU_pop8_mem(cpu);
+	uint8_t val = CPU_pop8_mem(cpu, memory);
 
 	mu_assert("pop8_mem - PC not moved", cpu->PC == 1);
 	mu_assert("pop8_mem - wrong value", val == 0xF4);
@@ -113,10 +113,10 @@ static char *test_pop16_mem()
 	memory = MEM_init();
 	cpu = CPU_init(memory);
 
-	MEM_write(cpu->mem, 0, 0xF4);
-	MEM_write(cpu->mem, 1, 0x0E);
+	MEM_write(memory, 0, 0xF4);
+	MEM_write(memory, 1, 0x0E);
 
-	uint16_t val = CPU_pop16_mem(cpu);
+	uint16_t val = CPU_pop16_mem(cpu, memory);
 
 	mu_assert("pop16_mem - PC not moved", cpu->PC == 2);
 	mu_assert("pop16_mem - wrong value", val == 0x0EF4);

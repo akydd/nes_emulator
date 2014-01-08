@@ -1,4 +1,4 @@
-# nes_emulator
+# nes\_emulator
 
 My attempt at writing a NES emulator
 
