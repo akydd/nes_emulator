@@ -87,12 +87,12 @@ struct ppu_memory;
 #define PPU_MEM_PALLETTE_ADDR 0x3F00
 
 
-struct ppu_memory *PPU_MEM_init();
+extern struct ppu_memory *PPU_MEM_init();
 
-void PPU_MEM_delete(struct ppu_memory **);
+extern void PPU_MEM_delete(struct ppu_memory **);
 
-uint8_t PPU_MEM_read(struct ppu_memory *, const uint16_t);
+extern uint8_t PPU_MEM_read(struct ppu_memory *, const uint16_t);
 
-void PPU_MEM_write(struct ppu_memory *, const uint16_t, uint8_t);
+extern void PPU_MEM_write(struct ppu_memory *, const uint16_t, uint8_t);
 
 #endif
