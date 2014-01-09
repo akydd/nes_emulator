@@ -23,8 +23,8 @@
 #include "ppu_memory.h"
 
 /*
- * Load the specified file into memory.  Returns 1 on success, 0 otherwise.
+ * Load the specified file into CPU and PPU memory.  Returns 1 on success, 0 otherwise.
  */
-int LOADER_load_file(struct memory *, struct ppu_memory *, char *filename);
+extern int LOADER_load_file(struct memory *, struct ppu_memory *, char *filename);
 
 #endif

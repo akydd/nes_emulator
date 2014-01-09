@@ -11,7 +11,6 @@
  *       Compiler:  gcc
  *
  *         Author:  Alan Kydd (), akydd@ualberta.net
- *   Organization:  
  *
  * =====================================================================================
  */

@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "cpu.h"
+#include "cpu.c"
 #include "memory.h"
 
 #define mu_assert(message, test) do { if (!(test)) return message; } while (0)

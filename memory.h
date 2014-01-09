@@ -11,7 +11,6 @@
  *       Compiler:  gcc
  *
  *         Author:  Alan Kydd (), akydd@ualberta.net
- *   Organization:  
  *
  * =============================================================================
  */
@@ -91,7 +90,7 @@ struct memory;
  *  Notes:
  *  - The stack starts at 0X01FF and grows down.
  *  - For cartridges with more than 32 kB ROM or more than 8 kB VRAM (VRAM),
- *    the extra data is pages into the address space using mappers.  TODO.
+ *    the extra data is paged into the address space using mappers.  TODO.
  *
  *
  * APU Memory
@@ -130,30 +129,30 @@ struct memory;
 /*
  * Create a new memory struct.
  */
-struct memory *MEM_init();
+extern struct memory *MEM_init();
 
 /*
  * Delete a memory struct
  */
-void MEM_delete(struct memory **);
+extern void MEM_delete(struct memory **);
 
 /*
  * Return the value at given memory location.  This read operation has possible
  * side effects, such as unsetting the VBLANK flag at addr 0x2002.
  */
-uint8_t MEM_read(struct memory *, const uint16_t);
+extern uint8_t MEM_read(struct memory *, const uint16_t);
 
 /*
  * Return the value at a givem memory location.  This function should not be
  * used for normal memory reads.  Instead, use MEM_read.
  */
-uint8_t MEM_read_no_set(struct memory *, const uint16_t);
+extern uint8_t MEM_read_no_set(struct memory *, const uint16_t);
 
 /* 
  * Writes to memory during CPU execution should be delegated to this function
  * for proper mirroring and side effect handling (such as autoincrementing of
  * certain PPU registers).
  */
-void MEM_write(struct memory *, const uint16_t, const uint8_t);
+extern void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
 #endif
