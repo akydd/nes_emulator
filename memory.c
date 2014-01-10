@@ -14,9 +14,8 @@
  *
  * =====================================================================================
  */
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
 #include "memory.h"
 
 struct memory {
@@ -58,6 +57,14 @@ uint8_t MEM_read_no_set(struct memory *mem, const uint16_t addr)
 	return mem->memory[addr];
 }
 
+void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, const uint8_t val)
+{
+	int i;
+	for(i = 0; i < 1024; i++) {
+		mem->memory[base_addr + i * VRAM_REG_MIRROR_SIZE] = val;
+	}
+}
+
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
 	/* write to mirrored RAM */
@@ -72,21 +79,24 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	/* write to mirrored VRAM */
 	else if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR))
 	{
+		/* Calculate the base PPU register address */
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
-		int i;
-		for(i = 0; i < 1024; i++) {
-			mem->memory[base_addr + i * VRAM_REG_MIRROR_SIZE] = val;
+
+		/* Write to all mirrored addresses for this PPU register */
+		write_mirrored_ppu_registers(mem, base_addr, val);
+
+
+		/* Handle special PPU cases */
+
+		/* Write to 0x2004 autoincrements 0x2003 by 1 */
+		if (base_addr == MEM_PPU_OAMDATA_REG_ADDR) {
+			uint8_t incremented_val = mem->memory[MEM_PPU_OAMADDR_REG_ADDR] + 1;
+			write_mirrored_ppu_registers(mem, MEM_PPU_OAMADDR_REG_ADDR, incremented_val);
 		}
 	} 
 	/* all other writes */
 	else
 	{
 		mem->memory[addr] = val;
-	}
-
-	/* Write to 0x2004 autoincrements 0x2003 by 1.  Direct memory write is
-	 * ok as 0x2004 is not mirrored. */
-	if (addr == MEM_PPU_OAMDATA_REG_ADDR) {
-		mem->memory[MEM_PPU_OAMADDR_REG_ADDR]++;
 	}
 }

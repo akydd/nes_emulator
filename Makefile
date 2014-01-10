@@ -9,8 +9,8 @@ nes_emulator: $(OBJ) nes_emulator.o
 
 
 
-test_mem: memory.o test_mem.o
-	$(CC) $(CFLAGS) -o test_mem memory.o test_mem.o
+test_mem: test_mem.o
+	$(CC) $(CFLAGS) -o test_mem test_mem.o
 
 test_instructions: memory.o test_instructions.o
 	$(CC) $(CFLAGS) -o test_instructions memory.o test_instructions.o
@@ -30,7 +30,7 @@ ppu_memory.o: ppu_memory.h ppu_memory.c
 loader.o: memory.h ppu_memory.h loader.h loader.c
 
 
-test_mem.o:memory.h test_mem.c
+test_mem.o:memory.c test_mem.c
 test_instructions.o:memory.h cpu.c test_instructions.c
 test_cpu.o:memory.h cpu.c test_cpu.c
 

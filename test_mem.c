@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "memory.h"
+#include "memory.c"
 
 
 #define mu_assert(message, test) do { if (!(test)) return message; } while (0)
@@ -45,8 +45,8 @@ static char *test_MEM_write_non_mirrored()
 	MEM_write(memory, 0x6000, 123);
 	MEM_write(memory, 0x7FFF, 99);
 
-	mu_assert("Wrong value at 0x6000", MEM_read(memory, 0x6000) == 123);
-	mu_assert("Wrong value at 0x7FFF", MEM_read(memory, 0x7FFF) == 99);
+	mu_assert("Wrong value at 0x6000", memory->memory[0x6000] == 123);
+	mu_assert("Wrong value at 0x7FFF", memory->memory[0x7FFF] == 99);
 
 	MEM_delete(&memory);
 	return 0;
@@ -58,9 +58,9 @@ static char *test_MEM_write_mirrored()
 
 	MEM_write(memory, 0x0200, 123);
 
-	mu_assert("No mirrow at 0x0200 + 1*0x0800", MEM_read(memory, 0x0200 + 0x0800) == 123);
-	mu_assert("No mirrow at 0x0200 + 2*0x0800", MEM_read(memory, 0x0200 + 2*0x0800) == 123);
-	mu_assert("No mirrow at 0x0200 + 3*0x0800", MEM_read(memory, 0x0200 + 3*0x0800) == 123);
+	mu_assert("No mirrow at 0x0200 + 1*0x0800", memory->memory[0x0200 + 0x0800] == 123);
+	mu_assert("No mirrow at 0x0200 + 2*0x0800", memory->memory[0x0200 + 2*0x0800] == 123);
+	mu_assert("No mirrow at 0x0200 + 3*0x0800", memory->memory[0x0200 + 3*0x0800] == 123);
 
 	MEM_delete(&memory);
 	return 0;
@@ -70,7 +70,7 @@ static char *test_VRAM_registers_are_mirrored()
 {
 	memory = MEM_init();
 
-	/* write to PPU IO, mapped in main memory */
+	/* write to all PPU registers that are mapped into main memory */
 	MEM_write(memory, VRAM_REG_ADDR + 0, 8);
 	MEM_write(memory, VRAM_REG_ADDR + 1, 7);
 	MEM_write(memory, VRAM_REG_ADDR + 2, 6);
@@ -80,17 +80,18 @@ static char *test_VRAM_registers_are_mirrored()
 	MEM_write(memory, VRAM_REG_ADDR + 6, 2);
 	MEM_write(memory, VRAM_REG_ADDR + 7, 1);
 
-	/* Ensure writes are mapped another 1023 times */
+	/* Ensure writes are correct and are mapped another 1023 times */
 	int i;
-	for(i = 1; i < 1024; i++) {
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 0 + i * VRAM_REG_MIRROR_SIZE) == 8);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 1 + i * VRAM_REG_MIRROR_SIZE) == 7);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 2 + i * VRAM_REG_MIRROR_SIZE) == 6);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 3 + i * VRAM_REG_MIRROR_SIZE) == 5);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 4 + i * VRAM_REG_MIRROR_SIZE) == 4);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 5 + i * VRAM_REG_MIRROR_SIZE) == 3);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 6 + i * VRAM_REG_MIRROR_SIZE) == 2);
-		mu_assert("VRAM not mirrored!", MEM_read(memory, VRAM_REG_ADDR + 7 + i * VRAM_REG_MIRROR_SIZE) == 1);
+	for(i = 0; i < 1024; i++) {
+		mu_assert("0x2000 not mirrored!", memory->memory[VRAM_REG_ADDR + 0 + i * VRAM_REG_MIRROR_SIZE] == 8);
+		mu_assert("0x2001 not mirrored!", memory->memory[VRAM_REG_ADDR + 1 + i * VRAM_REG_MIRROR_SIZE] == 7);
+		mu_assert("0x2002 not mirrored!", memory->memory[VRAM_REG_ADDR + 2 + i * VRAM_REG_MIRROR_SIZE] == 6);
+		/* 0x2003 will be incremented due to write to 0x2004 */
+		mu_assert("0x2003 not mirrored!", memory->memory[VRAM_REG_ADDR + 3 + i * VRAM_REG_MIRROR_SIZE] == 6);
+		mu_assert("0x2004 not mirrored!", memory->memory[VRAM_REG_ADDR + 4 + i * VRAM_REG_MIRROR_SIZE] == 4);
+		mu_assert("0x2005 not mirrored!", memory->memory[VRAM_REG_ADDR + 5 + i * VRAM_REG_MIRROR_SIZE] == 3);
+		mu_assert("0x2006 not mirrored!", memory->memory[VRAM_REG_ADDR + 6 + i * VRAM_REG_MIRROR_SIZE] == 2);
+		mu_assert("0x2007 not mirrored!", memory->memory[VRAM_REG_ADDR + 7 + i * VRAM_REG_MIRROR_SIZE] == 1);
 	}
 
 	MEM_delete(&memory);
