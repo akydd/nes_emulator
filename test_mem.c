@@ -90,9 +90,61 @@ static char *test_VRAM_registers_are_mirrored()
 		mu_assert("0x2003 not mirrored!", memory->memory[VRAM_REG_ADDR + 3 + i * VRAM_REG_MIRROR_SIZE] == 6);
 		mu_assert("0x2004 not mirrored!", memory->memory[VRAM_REG_ADDR + 4 + i * VRAM_REG_MIRROR_SIZE] == 4);
 		mu_assert("0x2005 not mirrored!", memory->memory[VRAM_REG_ADDR + 5 + i * VRAM_REG_MIRROR_SIZE] == 3);
-		mu_assert("0x2006 not mirrored!", memory->memory[VRAM_REG_ADDR + 6 + i * VRAM_REG_MIRROR_SIZE] == 2);
+		/* 0x2006 will be incremented due to 0x2000:2 == 0 and previous
+		 * write to ox2007 */
+		mu_assert("0x2006 not mirrored!", memory->memory[VRAM_REG_ADDR + 6 + i * VRAM_REG_MIRROR_SIZE] == 3);
 		mu_assert("0x2007 not mirrored!", memory->memory[VRAM_REG_ADDR + 7 + i * VRAM_REG_MIRROR_SIZE] == 1);
 	}
+
+	MEM_delete(&memory);
+	return 0;
+}
+
+static char *test_write_to_PPU_OAMDATA_REG_increments_PPU_OAMADDR_REG()
+{
+	memory = MEM_init();
+
+	MEM_write(memory,MEM_PPU_OAMADDR_REG_ADDR, 0); 
+	
+	MEM_write(memory,MEM_PPU_OAMDATA_REG_ADDR, 0); 
+	mu_assert("PPU_OAMADDR_REG not incremented!", memory->memory[MEM_PPU_OAMADDR_REG_ADDR] == 1);
+
+	MEM_write(memory,MEM_PPU_OAMDATA_REG_ADDR, 0); 
+	mu_assert("PPU_OAMADDR_REG not incremented!", memory->memory[MEM_PPU_OAMADDR_REG_ADDR] == 2);
+
+	MEM_delete(&memory);
+	return 0;
+}
+
+static char *test_write_to_PPU_DATA_increments_PPU_ADDR_by_1()
+{
+	memory = MEM_init();
+
+	MEM_write(memory, MEM_PPU_STATUS_REG_ADDR, 0);
+	MEM_write(memory, MEM_PPU_ADDR_REG_ADDR, 0);
+
+	MEM_write(memory, MEM_PPU_DATA_REG_ADDR, 0);
+	mu_assert("PPU_ADDR_REG not incremented by 1", memory->memory[MEM_PPU_ADDR_REG_ADDR] == 1);
+
+	MEM_write(memory, MEM_PPU_DATA_REG_ADDR, 0);
+	mu_assert("PPU_ADDR_REG not incremented by 1", memory->memory[MEM_PPU_ADDR_REG_ADDR] == 2);
+
+	MEM_delete(&memory);
+	return 0;
+}
+
+static char *test_write_to_PPU_DATA_increments_PPU_ADDR_by_32()
+{
+	memory = MEM_init();
+
+	MEM_write(memory, MEM_PPU_STATUS_REG_ADDR, 4);
+	MEM_write(memory, MEM_PPU_ADDR_REG_ADDR, 0);
+
+	MEM_write(memory, MEM_PPU_DATA_REG_ADDR, 0);
+	mu_assert("PPU_ADDR_REG not incremented by 32", memory->memory[MEM_PPU_ADDR_REG_ADDR] == 32);
+
+	MEM_write(memory, MEM_PPU_DATA_REG_ADDR, 0);
+	mu_assert("PPU_ADDR_REG not incremented by 32", memory->memory[MEM_PPU_ADDR_REG_ADDR] == 64);
 
 	MEM_delete(&memory);
 	return 0;
@@ -104,6 +156,9 @@ static char *all_tests()
 	mu_run_test(test_MEM_write_mirrored);
 	mu_run_test(test_MEM_write_non_mirrored);
 	mu_run_test(test_VRAM_registers_are_mirrored);
+	mu_run_test(test_write_to_PPU_OAMDATA_REG_increments_PPU_OAMADDR_REG);
+	mu_run_test(test_write_to_PPU_DATA_increments_PPU_ADDR_by_1);
+	mu_run_test(test_write_to_PPU_DATA_increments_PPU_ADDR_by_32);
 
 	return 0;
 }
