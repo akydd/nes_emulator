@@ -157,4 +157,11 @@ extern uint8_t MEM_read_no_set(struct memory *, const uint16_t);
  */
 extern void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
+/*
+ * Load 512 byte trainer into memory at 0x7000 - 0x71FF
+ */
+extern void MEM_load_trainer(struct memory *, uint8_t *);
+
+extern void MEM_load_rom(struct memory *);
+
 #endif

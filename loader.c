@@ -71,13 +71,11 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 	uint8_t data;
 	uint32_t mem_addr;
 
-	/* Load 512 byte trainer into memory 0x7000 - 0x71ff, if present in file */
+	/* Load 512 byte trainer, if present in file */
 	if(trainer_present != 0) {
-		mem_addr = 0x7000;
-		while((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr < 0x7200)) {
-			MEM_write(mem, mem_addr, data);
-			mem_addr++;
-		}
+		uint8_t trainer[512];
+		fread(trainer, sizeof(uint8_t), 512, nes_file);
+		MEM_load_trainer(mem, trainer);
 	}
 
 	/* Load 2*16 kb ROM banks into shared memory */

@@ -106,12 +106,23 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 			} else {
 				write_mirrored_ppu_registers(mem, MEM_PPU_ADDR_REG_ADDR, addr + 32);
 			}
-
 		}
 	} 
 	/* all other writes */
 	else
 	{
 		mem->memory[addr] = val;
+	}
+}
+
+void MEM_load_trainer(struct memory *mem, uint8_t *trainer)
+{
+	uint8_t *mem_ptr = mem->memory + 0x7000;
+	int i;
+
+	for(i = 0; i < 512; i++) {
+		*mem_ptr = *trainer;
+		mem_ptr++;
+		trainer++;
 	}
 }
