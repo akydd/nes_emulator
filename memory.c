@@ -18,6 +18,13 @@
 
 #include "memory.h"
 
+#define MEM_SIZE 0xFFFF
+#define MEM_ROM_LOW_BANK_ADDR 0x8000
+#define MIRROR_ADDR 0x2000
+#define MIRROR_SIZE 0x0800
+#define VRAM_REG_ADDR 0x2000
+#define VRAM_REG_MIRROR_SIZE 8
+
 struct memory {
 	uint8_t memory[MEM_SIZE];
 };
