@@ -115,14 +115,31 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	}
 }
 
-void MEM_load_trainer(struct memory *mem, uint8_t *trainer)
+void MEM_load_trainer(struct memory *mem, FILE *nes_file)
 {
 	uint8_t *mem_ptr = mem->memory + 0x7000;
-	int i;
+	uint8_t data;
 
-	for(i = 0; i < 512; i++) {
-		*mem_ptr = *trainer;
+	int i = 0;
+	while((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (i < 512)) {
+		*mem_ptr = data;
 		mem_ptr++;
-		trainer++;
+		i++;
+	}
+}
+
+void MEM_load_rom(struct memory *mem, FILE *nes_file)
+{
+	uint8_t data;
+	uint32_t mem_addr;
+
+	/* Load 2*16 kb ROM banks into shared memory */
+	mem_addr = MEM_ROM_LOW_BANK_ADDR;
+	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
+		MEM_write(mem, mem_addr, data);
+		if(mem_addr % 1024 == 0) {
+			(void)printf("Loading data %#x into %#x\n", data, mem_addr);
+		}
+		mem_addr++;
 	}
 }

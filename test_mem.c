@@ -153,12 +153,10 @@ static char *test_write_to_PPU_DATA_increments_PPU_ADDR_by_32()
 static char *test_MEM_load_trainer()
 {
 	memory = MEM_init();
-	uint8_t *trainer_data = malloc(512 * sizeof(uint8_t));
-	uint8_t test_data = 0xAA;
-	int j;
-	for(j = 0; j < 512; j++) {
-		*(trainer_data + j) = test_data;
-	}
+
+	// create a test file
+	FILE *trainer_data = fopen("trainer_data", "rb");
+	uint8_t test_data = 0x31;
 
 	MEM_load_trainer(memory, trainer_data);
 
@@ -166,11 +164,12 @@ static char *test_MEM_load_trainer()
 	for(i = 0x7000; i < 0x7200; i++) {
 		mu_assert("MEM_load_trainer failed", memory->memory[i] == test_data);
 	}
+
 	/* test just outside endpoints */
 	mu_assert("MEM_load_trainer passed low boundary", memory->memory[0x6FFF] != test_data);
 	mu_assert("MEM_load_trainer passed high boundary", memory->memory[0x7200] != test_data);
 
-	free(trainer_data);
+	(void)fclose(trainer_data);
 	return 0;
 }
 

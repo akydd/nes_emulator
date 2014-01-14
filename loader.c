@@ -67,37 +67,17 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 	uint8_t mapper = (header[7] &= ~15) | (header[6]>>4);
 	(void)printf("Memory mapper type: %d\n", mapper);
 
-	/* File read and load operations begin.  File is read as a sequence of unsigned 8 bit ints */
-	uint8_t data;
-	uint32_t mem_addr;
-
 	/* Load 512 byte trainer, if present in file */
 	if(trainer_present != 0) {
-		uint8_t trainer[512];
-		fread(trainer, sizeof(uint8_t), 512, nes_file);
-		MEM_load_trainer(mem, trainer);
+		MEM_load_trainer(mem, nes_file);
 	}
 
 	/* Load 2*16 kb ROM banks into shared memory */
-	mem_addr = MEM_ROM_LOW_BANK_ADDR;
-	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
-		MEM_write(mem, mem_addr, data);
-		if(mem_addr % 1024 == 0) {
-			(void)printf("Loading data %#x into %#x\n", data, mem_addr);
-		}
-		mem_addr++;
-	}
+	MEM_load_rom(mem, nes_file);
 
 	/* Load 8 kb VROM bank into PPU memory, if present */
 	if(num_8kb_vrom_banks == 1) {
-		mem_addr = 0;
-		while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr < 0x2000)) {
-			PPU_MEM_write(ppu_mem, mem_addr, data);
-			if(mem_addr % 1024 == 0) {
-				(void)printf("Loading data %#x into VROM %#x\n", data, mem_addr);
-			}
-			mem_addr++;
-		}
+		PPU_MEM_load_vrom(ppu_mem, nes_file);
 	}
 
 	(void)fclose(nes_file);

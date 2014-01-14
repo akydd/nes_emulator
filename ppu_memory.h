@@ -20,6 +20,7 @@
 #define PPU_MEMORY_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 struct ppu_memory;
 /*
@@ -94,5 +95,7 @@ extern void PPU_MEM_delete(struct ppu_memory **);
 extern uint8_t PPU_MEM_read(struct ppu_memory *, const uint16_t);
 
 extern void PPU_MEM_write(struct ppu_memory *, const uint16_t, uint8_t);
+
+extern void PPU_MEM_load_vrom(struct ppu_memory *, FILE *);
 
 #endif
