@@ -66,6 +66,7 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 	/* memory mapper type */
 	uint8_t mapper = (header[7] &= ~15) | (header[6]>>4);
 	(void)printf("Memory mapper type: %d\n", mapper);
+	PPU_MEM_set_mirroring(ppu_mem, mapper);
 
 	/* Load 512 byte trainer, if present in file */
 	if(trainer_present != 0) {

@@ -18,8 +18,14 @@
 
 #include "ppu_memory.h"
 
+#define PALETTE_RAM_ADDR 0x3F00
+#define PALETTE_RAM_SIZE 0x20
+#define NAME_TABLE_0_ADDR 0x2000
+#define ALL_TABLE_MIRROR_ADDR 0x3000
+
 struct ppu_memory {
 	uint8_t memory[PPU_MEM_SIZE];
+	uint8_t mirror_type; // 0 = horizontal mirroring, 1 = vertical mirroring
 };
 
 struct ppu_memory *PPU_MEM_init()
@@ -43,9 +49,49 @@ void PPU_MEM_delete(struct ppu_memory **ppu_mem)
 	*ppu_mem = NULL;
 }
 
+void write_mirrored_palette(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
+{
+	/* These four addresses are mirrored within 0x3F00 - 0x3F1F */
+	if (addr == 0x3F00) {
+		write_mirrored_palette(ppu_mem, 0x3F10, val);
+	}
+	if (addr == 0x3F04) {
+		write_mirrored_palette(ppu_mem, 0x3F14, val);
+	}
+	if (addr == 0x3F08) {
+		write_mirrored_palette(ppu_mem, 0x3F18, val);
+	}
+	if (addr == 0x3F0C) {
+		write_mirrored_palette(ppu_mem, 0x3F1C, val);
+	}
+
+	/* All values are written 5 times, starting at PALETTE_RAM_ADDR */
+	uint16_t base_addr = (addr % PALETTE_RAM_SIZE) + PALETTE_RAM_ADDR;
+	int i;
+	for(i = 0; i < 5; i++) {
+		ppu_mem->memory[base_addr + i * PALETTE_RAM_SIZE] = val;
+	}
+}
+
+void write_with_horizontal_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
+{
+		// TODO
+}
+
+void write_with_vertical_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
+{
+		// TODO
+}
+
 void PPU_MEM_write(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
 {
-	ppu_mem->memory[addr] = val;
+	if (addr >= PALETTE_RAM_ADDR) {
+		write_mirrored_palette(ppu_mem, addr, val);
+	} else if ((addr >= NAME_TABLE_0_ADDR) && (addr < ALL_TABLE_MIRROR_ADDR)) {
+		// TODO
+	} else {
+		ppu_mem->memory[addr] = val;
+	}
 }
 
 void PPU_MEM_load_vrom(struct ppu_memory *ppu_mem, FILE *nes_file)
@@ -54,10 +100,15 @@ void PPU_MEM_load_vrom(struct ppu_memory *ppu_mem, FILE *nes_file)
 	uint32_t mem_addr = 0;
 
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr < 0x2000)) {
-		ppu_mem->memory[mem_addr] =  data;
+		ppu_mem->memory[mem_addr] = data;
 		if(mem_addr % 1024 == 0) {
 			(void)printf("Loading data %#x into VROM %#x\n", data, mem_addr);
 		}
 		mem_addr++;
 	}
+}
+
+void PPU_MEM_set_mirroring(struct ppu_memory *ppu_mem, uint8_t mirror_type)
+{
+	ppu_mem->mirror_type = mirror_type;
 }

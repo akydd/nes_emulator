@@ -44,9 +44,6 @@ struct ppu_memory;
  * |                  | 0x3EFF
  * | Mirror of        |
  * | 0x2000 to 0x2EFF.|
- * |                  |
- * | There are 6 ways |
- * | this is done.    |
  * |__________________| 0x3000
  * |                  | 0x2FFF   12 kb
  * | Attr. Table #3   |
@@ -85,7 +82,6 @@ struct ppu_memory;
  */
 
 #define PPU_MEM_SIZE 0x4000
-#define PPU_MEM_PALLETTE_ADDR 0x3F00
 
 
 extern struct ppu_memory *PPU_MEM_init();
@@ -97,5 +93,7 @@ extern uint8_t PPU_MEM_read(struct ppu_memory *, const uint16_t);
 extern void PPU_MEM_write(struct ppu_memory *, const uint16_t, uint8_t);
 
 extern void PPU_MEM_load_vrom(struct ppu_memory *, FILE *);
+
+extern void PPU_MEM_set_mirroring(struct ppu_memory *, uint8_t);
 
 #endif
