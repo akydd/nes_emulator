@@ -170,6 +170,7 @@ static char *test_MEM_load_trainer()
 	mu_assert("MEM_load_trainer passed high boundary", memory->memory[0x7200] != test_data);
 
 	(void)fclose(trainer_data);
+	MEM_delete(&memory);
 	return 0;
 }
 

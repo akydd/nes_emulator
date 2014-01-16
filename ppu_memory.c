@@ -19,7 +19,7 @@
 #include "ppu_memory.h"
 
 #define PALETTE_RAM_ADDR 0x3F00
-#define PALETTE_RAM_SIZE 0x20
+#define PALETTE_RAM_SIZE 32
 #define NAME_TABLE_0_ADDR 0x2000
 #define ALL_TABLE_MIRROR_ADDR 0x3000
 
@@ -69,7 +69,9 @@ void write_mirrored_palette(struct ppu_memory *ppu_mem, const uint16_t addr, con
 	uint16_t base_addr = (addr % PALETTE_RAM_SIZE) + PALETTE_RAM_ADDR;
 	int i;
 	for(i = 0; i < 5; i++) {
-		ppu_mem->memory[base_addr + i * PALETTE_RAM_SIZE] = val;
+		uint16_t new_addr = base_addr + i * PALETTE_RAM_SIZE;
+		ppu_mem->memory[new_addr] = val;
+		//(void)printf("Writing %#x to %#x\n", val, new_addr);
 	}
 }
 
