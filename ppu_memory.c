@@ -77,7 +77,21 @@ void write_mirrored_palette(struct ppu_memory *ppu_mem, const uint16_t addr, con
 
 void write_with_horizontal_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
 {
-		// TODO
+	ppu_mem->memory[addr] = val;
+
+	if (addr < 0x2800) {
+		if (addr < 0x2400) {
+			ppu_mem->memory[addr + 0x0400] = val;
+		} else {
+			ppu_mem->memory[addr - 0x0400] = val;
+		}
+	} else {
+		if (addr < 0x2C00) {
+			ppu_mem->memory[addr + 0x0400] = val;
+		} else {
+			ppu_mem->memory[addr - 0x0400] = val;
+		}
+	}
 }
 
 void write_with_vertical_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
@@ -85,12 +99,21 @@ void write_with_vertical_mirroring(struct ppu_memory *ppu_mem, const uint16_t ad
 		// TODO
 }
 
+void write_mirrored_nametables(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
+{
+	if (ppu_mem->mirror_type == 0) {
+		write_with_horizontal_mirroring(ppu_mem, addr, val);
+	} else {
+		write_with_vertical_mirroring(ppu_mem, addr, val);
+	}
+}
+
 void PPU_MEM_write(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
 {
 	if (addr >= PALETTE_RAM_ADDR) {
 		write_mirrored_palette(ppu_mem, addr, val);
 	} else if ((addr >= NAME_TABLE_0_ADDR) && (addr < ALL_TABLE_MIRROR_ADDR)) {
-		// TODO
+		write_mirrored_nametables(ppu_mem, addr, val);
 	} else {
 		ppu_mem->memory[addr] = val;
 	}
@@ -110,7 +133,7 @@ void PPU_MEM_load_vrom(struct ppu_memory *ppu_mem, FILE *nes_file)
 	}
 }
 
-void PPU_MEM_set_mirroring(struct ppu_memory *ppu_mem, uint8_t mirror_type)
+void PPU_MEM_set_mirroring(struct ppu_memory *ppu_mem, const uint8_t mirror_type)
 {
 	ppu_mem->mirror_type = mirror_type;
 }

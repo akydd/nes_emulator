@@ -94,6 +94,9 @@ extern void PPU_MEM_write(struct ppu_memory *, const uint16_t, uint8_t);
 
 extern void PPU_MEM_load_vrom(struct ppu_memory *, FILE *);
 
-extern void PPU_MEM_set_mirroring(struct ppu_memory *, uint8_t);
+/*
+ * 0 = horizontal mirroring, 1 = vertical mirroring
+ */ 
+extern void PPU_MEM_set_mirroring(struct ppu_memory *, const uint8_t);
 
 #endif
