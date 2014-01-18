@@ -134,6 +134,8 @@ static char *test_PPU_MEM_nametable0_horizontal_mirroring()
 
 	mu_assert("Nametable 0 not set", memory->memory[0x2000] == 123);
 	mu_assert("Nametable 0 not mirrored in nametable 1", memory->memory[0x2400] == 123);
+	mu_assert("Nametable 0 not mirrored at 0x3000", memory->memory[0x3000] == 123);
+	mu_assert("Nametable 0 not mirrored at 0x3400", memory->memory[0x3400] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -148,6 +150,8 @@ static char *test_PPU_MEM_attributetable0_horizontal_mirroring()
 
 	mu_assert("Attrib table 0 not set", memory->memory[0x23C0] == 123);
 	mu_assert("Attrib table 0 not mirrored in Attrib table 1", memory->memory[0x27C0] == 123);
+	mu_assert("Attrib table 0 not mirrored 0x33C0", memory->memory[0x33C0] == 123);
+	mu_assert("Attrib table 0 not mirrored 0x37C0", memory->memory[0x37C0] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -162,6 +166,8 @@ static char *test_PPU_MEM_nametable1_horizontal_mirroring()
 
 	mu_assert("Nametable 1 not set", memory->memory[0x2400] == 123);
 	mu_assert("Nametable 1 not mirrored in nametable 0", memory->memory[0x2000] == 123);
+	mu_assert("Nametable 1 not mirrored at 0x3400", memory->memory[0x3400] == 123);
+	mu_assert("Nametable 1 not mirrored at 0x3000", memory->memory[0x3000] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -176,6 +182,8 @@ static char *test_PPU_MEM_attributetable1_horizontal_mirroring()
 
 	mu_assert("Attrib table 1 not set", memory->memory[0x27C0] == 123);
 	mu_assert("Attrib table 1 not mirrored in Attrib table 0", memory->memory[0x23C0] == 123);
+	mu_assert("Attrib table 1 not mirrored at 0x37C0", memory->memory[0x37C0] == 123);
+	mu_assert("Attrib table 1 not mirrored at 0x33C0", memory->memory[0x33C0] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -190,6 +198,8 @@ static char *test_PPU_MEM_nametable2_horizontal_mirroring()
 
 	mu_assert("Nametable 2 not set", memory->memory[0x2800] == 123);
 	mu_assert("Nametable 2 not mirrored in nametable 3", memory->memory[0x2C00] == 123);
+	mu_assert("Nametable 2 not mirrored 0x3800", memory->memory[0x3800] == 123);
+	mu_assert("Nametable 2 not mirrored 0x3C00", memory->memory[0x3C00] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -204,6 +214,8 @@ static char *test_PPU_MEM_attributetable2_horizontal_mirroring()
 
 	mu_assert("Attrib table 2 not set", memory->memory[0x2BC0] == 123);
 	mu_assert("Attrib table 2 not mirrored in Attrib table 3", memory->memory[0x2FC0] == 123);
+	mu_assert("Attrib table 2 not mirrored at 0x3BC0", memory->memory[0x3BC0] == 123);
+	mu_assert("Attrib table 2 mirrored at 0x3FC0", memory->memory[0x3FC0] != 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -218,6 +230,8 @@ static char *test_PPU_MEM_nametable3_horizontal_mirroring()
 
 	mu_assert("Nametable 3 not set", memory->memory[0x2C00] == 123);
 	mu_assert("Nametable 3 not mirrored in nametable 2", memory->memory[0x2800] == 123);
+	mu_assert("Nametable 3 not mirrored at 0x3C00", memory->memory[0x3C00] == 123);
+	mu_assert("Nametable 3 not mirrored at 0x3800", memory->memory[0x3800] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -232,6 +246,8 @@ static char *test_PPU_MEM_attributetable3_horizontal_mirroring()
 
 	mu_assert("Attrib table 3 not set", memory->memory[0x2FC0] == 123);
 	mu_assert("Attrib table 3 not mirrored in Attrib table 2", memory->memory[0x2BC0] == 123);
+	mu_assert("Attrib table 3 not mirrored at 0x3BC0", memory->memory[0x3BC0] == 123);
+	mu_assert("Attrib table 3 mirrored at 0x3FC0", memory->memory[0x3FC0] != 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -246,6 +262,8 @@ static char *test_PPU_MEM_nametable0_vertical_mirroring()
 
 	mu_assert("Nametable 0 not set", memory->memory[0x2000] == 123);
 	mu_assert("Nametable 0 not v-mirrored in nametable 2", memory->memory[0x2800] == 123);
+	mu_assert("Nametable 0 not v-mirrored at 0x3000", memory->memory[0x3000] == 123);
+	mu_assert("Nametable 0 not v-mirrored at 0x3800", memory->memory[0x3800] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -260,6 +278,8 @@ static char *test_PPU_MEM_attributetable0_vertical_mirroring()
 
 	mu_assert("Attrib table 0 not set", memory->memory[0x23C0] == 123);
 	mu_assert("Attrib table 0 not v-mirrored in Attrib table 2", memory->memory[0x2BC0] == 123);
+	mu_assert("Attrib table 0 not v-mirrored at 0x33C0", memory->memory[0x33C0] == 123);
+	mu_assert("Attrib table 0 not v-mirrored at 0x3BC0", memory->memory[0x3BC0] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -274,6 +294,8 @@ static char *test_PPU_MEM_nametable1_vertical_mirroring()
 
 	mu_assert("Nametable 1 not set", memory->memory[0x2400] == 123);
 	mu_assert("Nametable 1 not v-mirrored in nametable 3", memory->memory[0x2C00] == 123);
+	mu_assert("Nametable 1 not v-mirrored at 0x3400", memory->memory[0x3400] == 123);
+	mu_assert("Nametable 1 not v-mirrored at 0x3C00", memory->memory[0x3C00] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -288,6 +310,8 @@ static char *test_PPU_MEM_attributetable1_vertical_mirroring()
 
 	mu_assert("Attrib table 1 not set", memory->memory[0x27C0] == 123);
 	mu_assert("Attrib table 1 not v-mirrored in Attrib table 3", memory->memory[0x2FC0] == 123);
+	mu_assert("Attrib table 1 not v-mirrored at 0x37C0", memory->memory[0x37C0] == 123);
+	mu_assert("Attrib table 1 v-mirrored at 0x3FC0", memory->memory[0x3FC0] != 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -302,6 +326,8 @@ static char *test_PPU_MEM_nametable2_vertical_mirroring()
 
 	mu_assert("Nametable 2 not set", memory->memory[0x2800] == 123);
 	mu_assert("Nametable 2 not v-mirrored in nametable 0", memory->memory[0x2000] == 123);
+	mu_assert("Nametable 2 not v-mirrored at 0x3800", memory->memory[0x3800] == 123);
+	mu_assert("Nametable 2 not v-mirrored at 0x3000", memory->memory[0x3000] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -316,6 +342,8 @@ static char *test_PPU_MEM_attributetable2_vertical_mirroring()
 
 	mu_assert("Attrib table 2 not set", memory->memory[0x2BC0] == 123);
 	mu_assert("Attrib table 2 not v-mirrored in Attrib table 0", memory->memory[0x23C0] == 123);
+	mu_assert("Attrib table 2 not v-mirrored at 0x3BC0", memory->memory[0x3BC0] == 123);
+	mu_assert("Attrib table 2 not v-mirrored at 0x33C0", memory->memory[0x33C0] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -330,6 +358,8 @@ static char *test_PPU_MEM_nametable3_vertical_mirroring()
 
 	mu_assert("Nametable 3 not set", memory->memory[0x2C00] == 123);
 	mu_assert("Nametable 3 not v-mirrored in nametable 1", memory->memory[0x2400] == 123);
+	mu_assert("Nametable 3 not v-mirrored 0x3C00", memory->memory[0x3C00] == 123);
+	mu_assert("Nametable 3 not v-mirrored 0x3400", memory->memory[0x3400] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
@@ -344,10 +374,30 @@ static char *test_PPU_MEM_attributetable3_vertical_mirroring()
 
 	mu_assert("Attrib table 3 not set", memory->memory[0x2FC0] == 123);
 	mu_assert("Attrib table 3 not v-mirrored in Attrib table 1", memory->memory[0x27C0] == 123);
+	mu_assert("Attrib table 3 v-mirrored at 0x3FC0", memory->memory[0x3FC0] != 123);
+	mu_assert("Attrib table 3 not v-mirrored at 0x37C0", memory->memory[0x37C0] == 123);
 
 	PPU_MEM_delete(&memory);
 	return 0;
 }
+
+static char *test_PPU_MEM_0x2F00_not_mirrored()
+{
+	memory = PPU_MEM_init();
+
+	PPU_MEM_set_mirroring(memory, 0);
+	PPU_MEM_write(memory, 0x2F00, 123);
+	mu_assert("0x2F00 should not be h-mirrored to 0x3F00", memory->memory[0x3F00] != 123);
+
+
+	PPU_MEM_set_mirroring(memory, 1);
+	PPU_MEM_write(memory, 0x2F00, 123);
+	mu_assert("0x2F00 should not be v-mirrored to 0x3F00", memory->memory[0x3F00] != 123);
+
+	PPU_MEM_delete(&memory);
+	return 0;
+}
+
 static char *test_PPU_MEM_load_vrom()
 {
 	return 0;
@@ -382,6 +432,9 @@ static char *all_tests()
 	mu_run_test(test_PPU_MEM_attributetable1_vertical_mirroring);
 	mu_run_test(test_PPU_MEM_attributetable2_vertical_mirroring);
 	mu_run_test(test_PPU_MEM_attributetable3_vertical_mirroring);
+
+	mu_run_test(test_PPU_MEM_0x2F00_not_mirrored);
+
 	//mu_run_test(test_PPU_MEM_load_vrom);
 
 	return 0;

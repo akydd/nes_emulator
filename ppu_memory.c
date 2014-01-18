@@ -75,33 +75,42 @@ void write_mirrored_palette(struct ppu_memory *ppu_mem, const uint16_t addr, con
 	}
 }
 
-void write_with_horizontal_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
+void write_with_mirror_nametables_to_0x3000(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
 {
 	ppu_mem->memory[addr] = val;
 
+	if (addr < 0x2F00) {
+		ppu_mem->memory[addr + 0x1000] = val;
+	}
+}
+
+void write_with_horizontal_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
+{
+	write_with_mirror_nametables_to_0x3000(ppu_mem, addr, val);
+
 	if (addr < 0x2800) {
 		if (addr < 0x2400) {
-			ppu_mem->memory[addr + 0x0400] = val;
+			write_with_mirror_nametables_to_0x3000(ppu_mem, addr + 0x0400, val);
 		} else {
-			ppu_mem->memory[addr - 0x0400] = val;
+			write_with_mirror_nametables_to_0x3000(ppu_mem, addr - 0x0400, val);
 		}
 	} else {
 		if (addr < 0x2C00) {
-			ppu_mem->memory[addr + 0x0400] = val;
+			write_with_mirror_nametables_to_0x3000(ppu_mem, addr + 0x0400, val);
 		} else {
-			ppu_mem->memory[addr - 0x0400] = val;
+			write_with_mirror_nametables_to_0x3000(ppu_mem, addr - 0x0400, val);
 		}
 	}
 }
 
 void write_with_vertical_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
 {
-	ppu_mem->memory[addr] = val;
+	write_with_mirror_nametables_to_0x3000(ppu_mem, addr, val);
 
 	if (addr < 0x2800) {
-		ppu_mem->memory[addr + 0x0800] = val;
+		write_with_mirror_nametables_to_0x3000(ppu_mem, addr + 0x0800, val);
 	} else {
-		ppu_mem->memory[addr - 0x0800] = val;
+		write_with_mirror_nametables_to_0x3000(ppu_mem, addr - 0x0800, val);
 	}
 }
 
