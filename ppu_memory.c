@@ -96,7 +96,13 @@ void write_with_horizontal_mirroring(struct ppu_memory *ppu_mem, const uint16_t 
 
 void write_with_vertical_mirroring(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
 {
-		// TODO
+	ppu_mem->memory[addr] = val;
+
+	if (addr < 0x2800) {
+		ppu_mem->memory[addr + 0x0800] = val;
+	} else {
+		ppu_mem->memory[addr - 0x0800] = val;
+	}
 }
 
 void write_mirrored_nametables(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_t val)
