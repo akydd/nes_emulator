@@ -65,7 +65,8 @@ void write_mirrored_palette(struct ppu_memory *ppu_mem, const uint16_t addr, con
 		write_mirrored_palette(ppu_mem, 0x3F1C, val);
 	}
 
-	/* All values are written 5 times, starting at PALETTE_RAM_ADDR */
+	/* All values are written 5 times, starting at 0x3F00, and
+	 * ending at 0x3FFF */
 	uint16_t base_addr = (addr % PALETTE_RAM_SIZE) + PALETTE_RAM_ADDR;
 	int i;
 	for(i = 0; i < 5; i++) {
@@ -129,6 +130,9 @@ void PPU_MEM_write(struct ppu_memory *ppu_mem, const uint16_t addr, const uint8_
 		write_mirrored_palette(ppu_mem, addr, val);
 	} else if ((addr >= NAME_TABLE_0_ADDR) && (addr < ALL_TABLE_MIRROR_ADDR)) {
 		write_mirrored_nametables(ppu_mem, addr, val);
+	} else if ((addr >= ALL_TABLE_MIRROR_ADDR) && (addr < PALETTE_RAM_ADDR)) {
+		// This causes an extra write!
+		write_mirrored_nametables(ppu_mem, addr - 0x1000, val);
 	} else {
 		ppu_mem->memory[addr] = val;
 	}

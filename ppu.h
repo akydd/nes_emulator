@@ -114,55 +114,9 @@ extern struct ppu *PPU_init(struct memory *);
  */
 extern void PPU_delete(struct ppu **);
 
-extern uint8_t PPU_step(struct ppu *, struct memory *, int);
-
-/* PPUCTRL - Control Register 1 manipulation */
-void PPU_set_nametable_address(struct ppu *, uint8_t);
-void PPU_set_vertical_write(struct ppu *);
-void PPU_clear_vertical_write(struct ppu *);
-void PPU_set_sprite_pattern_table_address(struct ppu *);
-void PPU_clear_sprite_pattern_table_address(struct ppu *);
-void PPU_set_screen_pattern_table_address(struct ppu *);
-void PPU_clear_screen_pattern_table_address(struct ppu *);
-void PPU_set_sprite_size(struct ppu *);
-void PPU_clear_sprite_size(struct ppu *);
-void PPU_set_VBlank_enable(struct ppu *);
-void PPU_clear_VBlank_enable(struct ppu *);
-// uint8_t PPU_VBlank_is_enabled(struct ppu *, struct memory *);
-
-/* PPUMASK - Control Register 2 manipulation */
-void PPU_set_greyscale(struct ppu *);
-void PPU_clear_greyscale(struct ppu *);
-void PPU_set_image_mask(struct ppu *);
-void PPU_clear_image_mask(struct ppu *);
-void PPU_set_sprite_mask(struct ppu *);
-void PPU_clear_sprite_mask(struct ppu *);
-void PPU_set_screen_enable(struct ppu *);
-void PPU_clear_screen_enable(struct ppu *);
-void PPU_set_sprites_enable(struct ppu *);
-void PPU_clear_sprites_enable(struct ppu *);
-void PPU_set_background_colors(struct ppu *, uint8_t);
-
-/* PPUSTATUS - Status register manipulation */
-uint8_t PPU_VBlank_flag_is_set(struct ppu *);
-uint8_t PPU_hit_flag_is_set(struct ppu *);
-uint8_t PPU_sprite_overflow_is_set(struct ppu *);
-
-/* OAMADDR - OAM address */
-void PPU_set_sprite_memory_address(struct ppu *, uint8_t);
-
-/* OAMDATA - OAM data */
-void PPU_set_sprite_memory_data(struct ppu *, uint8_t);
-uint8_t PPU_get_sprite_memory_data(struct ppu *);
-
-/* PPUSCROLL */
-void PPU_set_scroll(struct ppu *, uint8_t);
-
-/* PPUADDR */
-void PPU_set_memory_addres(struct ppu *, uint8_t);
-
-/* PPUDATA */
-void PPU_set_memory_data(struct ppu *, uint8_t);
-uint8_t PPU_get_memory_data(struct ppu *);
+/* 
+ * Execute a step in PPU processing
+ */
+extern uint8_t PPU_step(struct ppu *, struct memory *, struct ppu_memory *);
 
 #endif

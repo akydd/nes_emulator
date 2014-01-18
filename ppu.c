@@ -22,7 +22,10 @@ struct ppu {
 	/* 2 registers for generating NMIs */
 	unsigned int NMI_occured;
 	unsigned int NMI_output;
-	/* Other registers are stored in shared memory (?) */
+
+	/* Use these to keep cycle state */
+	unsigned int line;
+	unsigned int dot;
 };
 
 struct ppu *PPU_init(struct memory *mem)
@@ -34,6 +37,10 @@ struct ppu *PPU_init(struct memory *mem)
 	MEM_write(mem, PPUMASK_ADDR, 0x00);
 	MEM_write(mem, PPUSTATUS_ADDR, 0xa0);
 
+	/* PPU starts at cycle 0 */
+	ppu->line = 0;
+	ppu->dot = 0;
+
 	return ppu;
 }
 
@@ -42,7 +49,7 @@ void PPU_delete(struct ppu **ppu)
 	free(*ppu);
 }
 
-uint8_t vblank_is_enabled(struct memory *mem)
+inline uint8_t vblank_is_enabled(struct memory *mem)
 {
 	uint8_t ctrl = MEM_read(mem, PPUCTRL_ADDR);
 	return ctrl & (1<<7);
@@ -64,12 +71,35 @@ inline void clear_vblank_flag(struct memory *mem)
 	(void)printf("VBLANK cleared\n");
 }
 
-uint8_t PPU_step(struct ppu *ppu, struct memory *mem, int cycle)
+inline void increment_cycle(struct ppu *ppu)
 {
-	//(void)printf("PPU is in cycle %d\n", cycle);
+	if (ppu->dot == 340) { // end of line
+		ppu->dot = 0;
+		if (ppu->line == 261) { // end of frame
+			ppu->line = 0;
+		} else {
+			ppu->line++;
+		}
+	} else {
+		ppu->dot++;
+	}
+}
+
+inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
+{
+	/* VBLANK flag is cleared at the 2nd cycle of scanline 261 */
+	if (ppu->line == 261 && ppu->dot == 1) {
+		clear_vblank_flag(mem);
+	}
+}
+
+uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
+{
+	// (void)printf("PPU line: %d, dot: %d\n", ppu->line, ppu->dot);
+
 	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
 	 * start of the VBLANKing interval. */
-	if (cycle == 241 * 341 + 1) {
+	if (ppu->dot == 1 && ppu->line == 241) {
 		set_vblank_flag(mem);
 
 		/* This return indicates an NMI to the CPU */
@@ -79,10 +109,10 @@ uint8_t PPU_step(struct ppu *ppu, struct memory *mem, int cycle)
 		}
 	}
 
-	/* VBLANK flag is cleared at the 2nd cycle of scanline 261 */
-	if (cycle == 261 * 341 + 1) {
-		clear_vblank_flag(mem);
+	if (ppu->line < 240 || ppu->line == 261) {
+		render(ppu, mem, ppu_mem);	
 	}
 
+	increment_cycle(ppu);
 	return 1;
 }
