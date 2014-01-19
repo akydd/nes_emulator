@@ -19,11 +19,18 @@
 #include "ppu.h"
 
 struct ppu {
-	/* 2 registers for generating NMIs */
-	unsigned int NMI_occured;
-	unsigned int NMI_output;
+	/* holds the vram address */
+	uint16_t vram_addr;
 
-	/* Use these to keep cycle state */
+	/* Internal latches for attribute table and name table addresses */
+	uint8_t at_latch;
+	uint8_t nt_latch;
+
+	/*  Internal latches for background tile addresses */
+	uint8_t bg_tile_low;
+	uint8_t bg_tile_high;
+
+	/* tracks current line and dot */
 	unsigned int line;
 	unsigned int dot;
 };
@@ -49,6 +56,43 @@ void PPU_delete(struct ppu **ppu)
 	free(*ppu);
 }
 
+inline uint8_t read_status(struct ppu *ppu, struct memory *mem)
+{
+	// clear latch used by PPUADDR
+	// TODO
+	// Get the original value
+	uint8_t val = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
+	// Unset the vblank start flag and write back to mem
+	uint8_t new_val = (val & ~(1<<7));
+	MEM_write(mem, MEM_PPU_STATUS_REG_ADDR, new_val);
+
+	// return original value
+	return val;
+}
+
+inline void write_OAM_data(struct memory *mem, const uint8_t val)
+{
+	// write to the register
+	MEM_write(mem, MEM_PPU_OAMDATA_REG_ADDR, val);
+	// increment OAM address register, too
+	uint8_t incremented_val = MEM_read(mem, MEM_PPU_OAMADDR_REG_ADDR) + 1;
+	MEM_write(mem, MEM_PPU_OAMADDR_REG_ADDR, incremented_val);
+}
+
+inline void write_data(struct memory *mem, const uint8_t val)
+{
+	// write to the register
+	MEM_write(mem, MEM_PPU_DATA_REG_ADDR, val);
+	// increment address register based on control register VRAM address
+	// increment bit value (0 = add 1, 1 = add 32)
+	uint8_t addr = MEM_read(mem, MEM_PPU_ADDR_REG_ADDR);
+	if ((MEM_read(mem, MEM_PPU_STATUS_REG_ADDR) & 1<<2) == 0) {
+		MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, addr + 1);
+	} else {
+		MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, addr + 32);
+	}
+}
+
 inline uint8_t vblank_is_enabled(struct memory *mem)
 {
 	uint8_t ctrl = MEM_read(mem, PPUCTRL_ADDR);
@@ -57,7 +101,7 @@ inline uint8_t vblank_is_enabled(struct memory *mem)
 
 inline void set_vblank_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read_no_set(mem, PPUSTATUS_ADDR);
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status |= (1<<7);
 	MEM_write(mem, PPUSTATUS_ADDR, status);
 	(void)printf("VBLANK set\n");
@@ -65,7 +109,7 @@ inline void set_vblank_flag(struct memory *mem)
 
 inline void clear_vblank_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read_no_set(mem, PPUSTATUS_ADDR);
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status &= ~(1<<7);
 	MEM_write(mem, PPUSTATUS_ADDR, status);
 	(void)printf("VBLANK cleared\n");
@@ -90,6 +134,28 @@ inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_m
 	/* VBLANK flag is cleared at the 2nd cycle of scanline 261 */
 	if (ppu->line == 261 && ppu->dot == 1) {
 		clear_vblank_flag(mem);
+	}
+
+	if ((ppu->dot < 257) && (ppu->dot > 0) && (ppu->dot >= 321)) {
+		uint8_t fetch_cycle = ppu->dot % 8;
+
+		switch(fetch_cycle) {
+			case 0:
+				// increment horizontal
+				break;
+			case 1:
+				// fetch nametable address
+				break;
+			case 3:
+				// fetch attribute table address
+				break;
+			case 5:
+				// fetch low background tile byte
+				break;
+			case 7:
+				// fetch high background tile byte
+				break;
+		}
 	}
 }
 

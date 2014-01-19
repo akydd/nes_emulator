@@ -86,13 +86,10 @@ static char *test_VRAM_registers_are_mirrored()
 		mu_assert("0x2000 not mirrored!", memory->memory[VRAM_REG_ADDR + 0 + i * VRAM_REG_MIRROR_SIZE] == 8);
 		mu_assert("0x2001 not mirrored!", memory->memory[VRAM_REG_ADDR + 1 + i * VRAM_REG_MIRROR_SIZE] == 7);
 		mu_assert("0x2002 not mirrored!", memory->memory[VRAM_REG_ADDR + 2 + i * VRAM_REG_MIRROR_SIZE] == 6);
-		/* 0x2003 will be incremented due to write to 0x2004 */
-		mu_assert("0x2003 not mirrored!", memory->memory[VRAM_REG_ADDR + 3 + i * VRAM_REG_MIRROR_SIZE] == 6);
+		mu_assert("0x2003 not mirrored!", memory->memory[VRAM_REG_ADDR + 3 + i * VRAM_REG_MIRROR_SIZE] == 5);
 		mu_assert("0x2004 not mirrored!", memory->memory[VRAM_REG_ADDR + 4 + i * VRAM_REG_MIRROR_SIZE] == 4);
 		mu_assert("0x2005 not mirrored!", memory->memory[VRAM_REG_ADDR + 5 + i * VRAM_REG_MIRROR_SIZE] == 3);
-		/* 0x2006 will be incremented due to 0x2000:2 == 0 and previous
-		 * write to ox2007 */
-		mu_assert("0x2006 not mirrored!", memory->memory[VRAM_REG_ADDR + 6 + i * VRAM_REG_MIRROR_SIZE] == 3);
+		mu_assert("0x2006 not mirrored!", memory->memory[VRAM_REG_ADDR + 6 + i * VRAM_REG_MIRROR_SIZE] == 2);
 		mu_assert("0x2007 not mirrored!", memory->memory[VRAM_REG_ADDR + 7 + i * VRAM_REG_MIRROR_SIZE] == 1);
 	}
 

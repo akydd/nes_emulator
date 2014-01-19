@@ -59,17 +59,6 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
-	/* Read from 0x2002 unsets the VBLANK flag at bit 7. */
-	if (addr == MEM_PPU_STATUS_REG_ADDR) {
-		uint8_t val = (mem->memory[addr] &= ~(1<<7));
-		/* Don't forget to mirror the change! */
-		write_mirrored_ppu_registers(mem, addr, val);
-	}
-	return mem->memory[addr];
-}
-
-uint8_t MEM_read_no_set(struct memory *mem, const uint16_t addr)
-{
 	return mem->memory[addr];
 }
 
@@ -92,28 +81,6 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 
 		/* Write to all mirrored addresses for this PPU register */
 		write_mirrored_ppu_registers(mem, base_addr, val);
-
-
-		/* Handle special PPU cases */
-
-		/* Write to 0x2004 increments value in 0x2003 by 1 */
-		if (base_addr == MEM_PPU_OAMDATA_REG_ADDR) {
-			uint8_t incremented_val = mem->memory[MEM_PPU_OAMADDR_REG_ADDR] + 1;
-			write_mirrored_ppu_registers(mem, MEM_PPU_OAMADDR_REG_ADDR, incremented_val);
-		}
-
-		/* 
-		 * Write to 0x2006 increments value in 0x2006 based on value in
-		 * 0x2000
-		 */
-		if (base_addr == MEM_PPU_DATA_REG_ADDR) {
-			uint8_t addr = mem->memory[MEM_PPU_ADDR_REG_ADDR];
-			if ((mem->memory[MEM_PPU_STATUS_REG_ADDR] & 1<<2) == 0) {
-				write_mirrored_ppu_registers(mem, MEM_PPU_ADDR_REG_ADDR, addr + 1);
-			} else {
-				write_mirrored_ppu_registers(mem, MEM_PPU_ADDR_REG_ADDR, addr + 32);
-			}
-		}
 	} 
 	/* all other writes */
 	else

@@ -132,16 +132,9 @@ extern struct memory *MEM_init();
 extern void MEM_delete(struct memory **);
 
 /*
- * Return the value at given memory location.  This read operation has possible
- * side effects, such as unsetting the VBLANK flag at addr 0x2002.
+ * Return the value at given memory location.
  */
 extern uint8_t MEM_read(struct memory *, const uint16_t);
-
-/*
- * Return the value at a givem memory location.  This function should not be
- * used for normal memory reads.  Instead, use MEM_read.
- */
-extern uint8_t MEM_read_no_set(struct memory *, const uint16_t);
 
 /* 
  * Writes to memory during CPU execution should be delegated to this function
