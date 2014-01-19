@@ -21,6 +21,12 @@
 struct ppu {
 	/* holds the vram address */
 	uint16_t vram_addr;
+	uint16_t temp_vram_addr;
+
+	uint8_t fine_x_scroll;
+
+	/* Toggle for writes to PPUSCROLL and PPUADDR */
+	uint8_t toggle;
 
 	/* Internal latches for attribute table and name table addresses */
 	uint8_t at_latch;
@@ -43,6 +49,8 @@ struct ppu *PPU_init(struct memory *mem)
 	MEM_write(mem, PPUCTRL_ADDR, 0x00);
 	MEM_write(mem, PPUMASK_ADDR, 0x00);
 	MEM_write(mem, PPUSTATUS_ADDR, 0xa0);
+
+	ppu->toggle = 0;
 
 	/* PPU starts at cycle 0 */
 	ppu->line = 0;
@@ -68,6 +76,52 @@ inline uint8_t read_status(struct ppu *ppu, struct memory *mem)
 
 	// return original value
 	return val;
+}
+
+inline void write_toggle(struct ppu *ppu)
+{
+	if (ppu->toggle == 0) {
+		ppu->toggle = 1;
+	} else {
+		ppu->toggle = 0;
+	}
+}
+
+inline void write_scroll(struct ppu *ppu, struct memory *mem, uint8_t val)
+{
+	uint8_t low_3 = val & 7;
+	uint8_t hi_5 = val & 504;
+
+	if (ppu->toggle == 0) {
+		ppu->fine_x_scroll = low_3;
+		ppu->temp_vram_addr = hi_5 >> 3;
+	} else {
+		ppu->temp_vram_addr |= ((uint16_t)low_3 << 12) & ((uint16_t)hi_5 << 2);
+	}
+
+	write_toggle(ppu);
+	
+	MEM_write(mem, MEM_PPU_SCROLL_REG_ADDR, val);
+}
+
+inline void write_address(struct ppu *ppu, struct memory *mem, uint8_t val)
+{
+	if (ppu->toggle == 0) {
+		ppu->temp_vram_addr = (uint16_t)val << 8;
+	} else {
+		ppu->temp_vram_addr |= val;
+		ppu->vram_addr = ppu->temp_vram_addr;
+	}
+
+	write_toggle(ppu);
+
+	MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, val);
+}
+
+inline void write_OAM_addr(struct memory *mem, const uint8_t val)
+{
+	// write to the register
+	MEM_write(mem, MEM_PPU_OAMADDR_REG_ADDR, val);
 }
 
 inline void write_OAM_data(struct memory *mem, const uint8_t val)
@@ -115,6 +169,20 @@ inline void clear_vblank_flag(struct memory *mem)
 	(void)printf("VBLANK cleared\n");
 }
 
+inline void clear_sprite_overflow_flag(struct memory *mem)
+{
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
+	status &= ~(1<<5);
+	MEM_write(mem, PPUSTATUS_ADDR, status);
+}
+
+inline void clear_sprite_0_hit_flag(struct memory *mem)
+{
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
+	status &= ~(1<<6);
+	MEM_write(mem, PPUSTATUS_ADDR, status);
+}
+
 inline void increment_cycle(struct ppu *ppu)
 {
 	if (ppu->dot == 340) { // end of line
@@ -131,9 +199,15 @@ inline void increment_cycle(struct ppu *ppu)
 
 inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
 {
-	/* VBLANK flag is cleared at the 2nd cycle of scanline 261 */
+	/* VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd cycle of scanline 261 */
 	if (ppu->line == 261 && ppu->dot == 1) {
 		clear_vblank_flag(mem);
+		clear_sprite_overflow_flag(mem);
+		clear_sprite_0_hit_flag(mem);
+	}
+
+	if((ppu->dot >= 275) && (ppu->dot <= 320)) {
+		write_OAM_addr(mem, 0);
 	}
 
 	if ((ppu->dot < 257) && (ppu->dot > 0) && (ppu->dot >= 321)) {
