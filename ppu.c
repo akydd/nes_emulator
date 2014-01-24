@@ -19,14 +19,7 @@
 #include "ppu.h"
 
 struct ppu {
-	/* holds the vram address */
-	uint16_t vram_addr;
-	uint16_t temp_vram_addr;
-
 	uint8_t fine_x_scroll;
-
-	/* Toggle for writes to PPUSCROLL and PPUADDR */
-	uint8_t toggle;
 
 	/* Internal latches for attribute table and name table addresses */
 	uint8_t at_latch;
@@ -49,8 +42,6 @@ struct ppu *PPU_init(struct memory *mem)
 	MEM_write(mem, PPUCTRL_ADDR, 0x00);
 	MEM_write(mem, PPUMASK_ADDR, 0x00);
 	MEM_write(mem, PPUSTATUS_ADDR, 0xa0);
-
-	ppu->toggle = 0;
 
 	/* PPU starts at cycle 0 */
 	ppu->line = 0;
@@ -76,46 +67,6 @@ inline uint8_t read_status(struct ppu *ppu, struct memory *mem)
 
 	// return original value
 	return val;
-}
-
-inline void write_toggle(struct ppu *ppu)
-{
-	if (ppu->toggle == 0) {
-		ppu->toggle = 1;
-	} else {
-		ppu->toggle = 0;
-	}
-}
-
-inline void write_scroll(struct ppu *ppu, struct memory *mem, uint8_t val)
-{
-	uint8_t low_3 = val & 7;
-	uint8_t hi_5 = val & 504;
-
-	if (ppu->toggle == 0) {
-		ppu->fine_x_scroll = low_3;
-		ppu->temp_vram_addr = hi_5 >> 3;
-	} else {
-		ppu->temp_vram_addr |= ((uint16_t)low_3 << 12) & ((uint16_t)hi_5 << 2);
-	}
-
-	write_toggle(ppu);
-	
-	MEM_write(mem, MEM_PPU_SCROLL_REG_ADDR, val);
-}
-
-inline void write_address(struct ppu *ppu, struct memory *mem, uint8_t val)
-{
-	if (ppu->toggle == 0) {
-		ppu->temp_vram_addr = (uint16_t)val << 8;
-	} else {
-		ppu->temp_vram_addr |= val;
-		ppu->vram_addr = ppu->temp_vram_addr;
-	}
-
-	write_toggle(ppu);
-
-	MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, val);
 }
 
 inline void write_OAM_addr(struct memory *mem, const uint8_t val)
@@ -217,23 +168,23 @@ inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_m
 			case 0:
 				// increment horizontal
 				break;
-			case 1:
+			case 2:
 				// fetch nametable address
 				break;
-			case 3:
+			case 4:
 				// fetch attribute table address
 				break;
-			case 5:
+			case 6:
 				// fetch low background tile byte
 				break;
-			case 7:
+			case 8:
 				// fetch high background tile byte
 				break;
 		}
 	}
 }
 
-uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
+uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem, struct ppu_registers *ppu_reg)
 {
 	// (void)printf("PPU line: %d, dot: %d\n", ppu->line, ppu->dot);
 

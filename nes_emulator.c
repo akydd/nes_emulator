@@ -23,6 +23,7 @@
 #include "memory.h"
 #include "ppu_memory.h"
 #include "ppu.h"
+#include "ppu_registers.h"
 #include "loader.h"
 
 
@@ -44,9 +45,10 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	/* Initialize the CPU and PPU */
+	/* Initialize the CPU, PPU, and PPU Registers */
 	struct cpu *cpu = CPU_init(mem);
 	struct ppu *ppu = PPU_init(mem);
+	struct ppu_registers *ppu_reg = PPU_Registers_init();
 
 
 	/* Execution: */
@@ -58,7 +60,7 @@ int main(int argc, char **argv)
 
 		/* PPU steps 3 times for each CPU step */
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
-			ppu_result = PPU_step(ppu, mem, ppu_mem);
+			ppu_result = PPU_step(ppu, mem, ppu_mem, ppu_reg);
 
 			/* Handle non-maskable interrupts */
 			if(ppu_result == 0) {

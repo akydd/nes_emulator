@@ -22,6 +22,7 @@
 #include <stdint.h>
 
 #include "ppu_memory.h"
+#include "ppu_registers.h"
 #include "memory.h"
 
 /*
@@ -117,6 +118,6 @@ extern void PPU_delete(struct ppu **);
 /* 
  * Execute a step in PPU processing
  */
-extern uint8_t PPU_step(struct ppu *, struct memory *, struct ppu_memory *);
+extern uint8_t PPU_step(struct ppu *, struct memory *, struct ppu_memory *, struct ppu_registers *);
 
 #endif
