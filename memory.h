@@ -26,7 +26,9 @@
 #define MEM_RESET_VECTOR 0xFFFC
 #define MEM_BRK_VECTOR 0xFFFE
 #define IO_REG_ADDR 0x4000
-#define MEM_PPU_STATUS_REG_ADDR 0x2000
+#define MEM_PPU_CTRL_1_REG_ADDR 0x2000
+#define MEM_PPU_CTRL_2_REG_ADDR 0x2001
+#define MEM_PPU_STATUS_REG_ADDR 0x2002
 #define MEM_PPU_OAMADDR_REG_ADDR 0x2003
 #define MEM_PPU_OAMDATA_REG_ADDR 0x2004
 #define MEM_PPU_SCROLL_REG_ADDR 0x2005
@@ -114,11 +116,17 @@ struct memory;
  * PPU registers are mapped to 0x2000 to 0x3FFF above as:
  * 
  * 0x2008 - 0x3FFF - 1023 mirrors of 0x2000 - 0x2007
- * 0x2000 - 0x2007 - PPU Control Registers
+ * 0x2007 (R/W)    - PPU Memory Data
+ * 0x2006 (W)      - PPU Memory Address
+ * 0x2005 (W)      - Background scroll
+ * 0x2004 (R/W)    - Sprite Memory Data
+ * 0x2003 (W)      - Sprite Memory Address
+ * 0x2002 (R)      - PPU Status Register
+ * 0x2001 (W)      - PPU Control Register 2
+ * 0x2000 (W)      - PPU Control Register 1
  *
  * Notes:
- * - For details, see ppu.h.
- * - The PPU has its own internal memory as well
+ * - For internal details of the registers, see ppu_memory.h.
  *
  */
 
@@ -133,16 +141,33 @@ extern struct memory *MEM_init();
 extern void MEM_delete(struct memory **);
 
 /*
- * Return the value at given memory location.
+ * Return the value at given memory location.  Note that this function respects
+ * access resitrictions on addresses assigned to data ports (i.e. this function
+ * cannot be used to read 0x2000, 0x2001, 0x2003, 0x2005, 0x2006).
  */
 extern uint8_t MEM_read(struct memory *, const uint16_t);
 
 /* 
  * Writes to memory during CPU execution should be delegated to this function
- * for proper mirroring and side effect handling (such as autoincrementing of
- * certain PPU registers).
+ * for proper mirroring.  Note that this function respects access restrictions on
+ * addresses assigned to data ports (i.e. this function cannot be used to write
+ * to 0x2002).
  */
 extern void MEM_write(struct memory *, const uint16_t, const uint8_t);
+
+/* 
+ * PPU register functions are included here, as the registers are embedded within the
+ * main memory
+ */
+
+/* Set the PPU status register */
+extern void MEM_set_ppu_status(struct memory *, const uint8_t);
+
+/* Read the PPU Control 1 register */
+uint8_t MEM_get_ppu_ctrl_1(struct memory *);
+
+/* Read the PPU Control 2 register */
+uint8_t MEM_get_ppu_ctrl_2(struct memory *);
 
 /*
  * Load 512 byte trainer into memory at 0x7000 - 0x71FF

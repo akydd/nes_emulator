@@ -59,7 +59,28 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
-	return mem->memory[addr];
+	/* There are resitrictions on reading VRAM */
+	if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR))
+	{
+		/* Calculate the base PPU register address */
+		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
+		if ((base_addr == MEM_PPU_CTRL_1_REG_ADDR) || (base_addr == MEM_PPU_CTRL_2_REG_ADDR) || (base_addr == MEM_PPU_OAMADDR_REG_ADDR) || (base_addr == MEM_PPU_SCROLL_REG_ADDR) || (base_addr == MEM_PPU_ADDR_REG_ADDR)) {
+			(void)printf("*** Read not allowed here! ***");
+			exit(0);
+		} else {
+			return mem->memory[addr];
+		}
+	} else {
+		return mem->memory[addr];
+	}
+}
+
+uint8_t MEM_get_ppu_ctrl_1(struct memory *mem) {
+	return mem->memory[MEM_PPU_CTRL_1_REG_ADDR];
+}
+
+uint8_t MEM_get_ppu_ctrl_2(struct memory *mem) {
+	return mem->memory[MEM_PPU_CTRL_2_REG_ADDR];
 }
 
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
@@ -78,6 +99,12 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	{
 		/* Calculate the base PPU register address */
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
+		
+		/* Cannot write to 0x2002 */
+		if (base_addr == MEM_PPU_STATUS_REG_ADDR) {
+			(void)printf("*** Write to 0x2002 not permitted ***");
+			exit(0);
+		}
 
 		/* Write to all mirrored addresses for this PPU register */
 		write_mirrored_ppu_registers(mem, base_addr, val);
@@ -87,6 +114,11 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	{
 		mem->memory[addr] = val;
 	}
+}
+
+void MEM_set_ppu_status(struct memory *mem, const uint8_t val)
+{
+	write_mirrored_ppu_registers(mem, MEM_PPU_STATUS_REG_ADDR, val);
 }
 
 void MEM_load_trainer(struct memory *mem, FILE *nes_file)

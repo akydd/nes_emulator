@@ -41,7 +41,7 @@ struct ppu *PPU_init(struct memory *mem)
 	/* Initialize values as of power-on */
 	MEM_write(mem, PPUCTRL_ADDR, 0x00);
 	MEM_write(mem, PPUMASK_ADDR, 0x00);
-	MEM_write(mem, PPUSTATUS_ADDR, 0xa0);
+	MEM_set_ppu_status(mem, 0xa0);
 
 	/* PPU starts at cycle 0 */
 	ppu->line = 0;
@@ -106,32 +106,32 @@ inline uint8_t vblank_is_enabled(struct memory *mem)
 
 inline void set_vblank_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
+	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
 	status |= (1<<7);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	MEM_set_ppu_status(mem, status);
 	(void)printf("VBLANK set\n");
 }
 
 inline void clear_vblank_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
+	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
 	status &= ~(1<<7);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	MEM_set_ppu_status(mem, status);
 	(void)printf("VBLANK cleared\n");
 }
 
 inline void clear_sprite_overflow_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
+	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
 	status &= ~(1<<5);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	MEM_set_ppu_status(mem, status);
 }
 
 inline void clear_sprite_0_hit_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
+	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
 	status &= ~(1<<6);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	MEM_set_ppu_status(mem, status);
 }
 
 inline void increment_cycle(struct ppu *ppu)
