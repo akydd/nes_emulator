@@ -148,14 +148,17 @@ void MEM_load_rom(struct memory *mem, FILE *nes_file)
 	uint8_t data;
 	uint32_t mem_addr;
 
+	(void)printf("Loading ROM now!\n");
+
 	/* Load 2*16 kb ROM banks into shared memory */
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
+#ifdef DEBUG
+		(void)printf("Loading ROM data %#x into %#x...", data, mem_addr);
+#endif
 		MEM_write(mem, mem_addr, data);
 #ifdef DEBUG
-		if(mem_addr % 1024 == 0) {
-			(void)printf("Loaded ROM data %#x into %#x\n", data, mem_addr);
-		}
+		(void)printf("OK!\n");
 #endif
 		mem_addr++;
 	}

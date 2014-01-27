@@ -7,9 +7,6 @@ OBJ=memory.o cpu.o ppu_memory.o ppu.o ppu_registers.o loader.o
 nes_emulator: $(OBJ) nes_emulator.o
 	$(CC) $(CFLAGS) -o nes_emulator $(OBJ) nes_emulator.o
 
-debug_nes_emulator: $(OBJ) nes_emulator.o
-	$(CC) $(CFLAGS) -DDEBUG -o debug_nes_emulator $(OBJ) nes_emulator.o
-
 
 test_mem: test_mem.o
 	$(CC) $(CFLAGS) -o test_mem test_mem.o

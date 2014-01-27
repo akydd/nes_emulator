@@ -195,6 +195,7 @@ uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem
 
 		/* This return indicates an NMI to the CPU */
 		if (vblank_is_enabled(mem) != 0) {
+			increment_cycle(ppu);
 			(void)printf("Executing VBLANK\n");
 			return 0;
 		}

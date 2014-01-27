@@ -58,14 +58,14 @@ int main(int argc, char **argv)
 	for(;;) {
 		cpu_cycles = CPU_step(cpu, mem);
 
-		/* PPU steps 3 times for each CPU step
+		/* PPU steps 3 times for each CPU step */
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
 			ppu_result = PPU_step(ppu, mem, ppu_mem, ppu_reg);
 
 			if(ppu_result == 0) {
 				CPU_handle_nmi(cpu, mem);
 			}
-		}*/
+		}
 	}
 
 	/*
