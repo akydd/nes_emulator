@@ -59,20 +59,26 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
+	uint8_t val;
+
 	/* There are resitrictions on reading VRAM */
 	if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR))
 	{
 		/* Calculate the base PPU register address */
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
-		if ((base_addr == MEM_PPU_CTRL_1_REG_ADDR) || (base_addr == MEM_PPU_CTRL_2_REG_ADDR) || (base_addr == MEM_PPU_OAMADDR_REG_ADDR) || (base_addr == MEM_PPU_SCROLL_REG_ADDR) || (base_addr == MEM_PPU_ADDR_REG_ADDR)) {
-			(void)printf("*** Read not allowed here! ***");
+		if ((base_addr == MEM_PPU_OAMADDR_REG_ADDR) || (base_addr == MEM_PPU_SCROLL_REG_ADDR) || (base_addr == MEM_PPU_ADDR_REG_ADDR)) {
+			(void)printf("*** Read %#x not allowed here! ***\n", addr);
 			exit(0);
 		} else {
-			return mem->memory[addr];
+			val =  mem->memory[addr];
 		}
 	} else {
-		return mem->memory[addr];
+		val = mem->memory[addr];
 	}
+#ifdef DEBUG	
+	(void)printf("Read data %#x from address %#x\n", val, addr);
+#endif
+	return val;
 }
 
 uint8_t MEM_get_ppu_ctrl_1(struct memory *mem) {
@@ -85,6 +91,9 @@ uint8_t MEM_get_ppu_ctrl_2(struct memory *mem) {
 
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
+#ifdef DEBUG
+	(void)printf("Writing data %#x into address %#x\n", val, addr);
+#endif
 	/* write to mirrored RAM */
 	if (addr < MIRROR_ADDR)
 	{
@@ -143,9 +152,11 @@ void MEM_load_rom(struct memory *mem, FILE *nes_file)
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
 		MEM_write(mem, mem_addr, data);
+#ifdef DEBUG
 		if(mem_addr % 1024 == 0) {
-			(void)printf("Loading data %#x into %#x\n", data, mem_addr);
+			(void)printf("Loaded ROM data %#x into %#x\n", data, mem_addr);
 		}
+#endif
 		mem_addr++;
 	}
 }

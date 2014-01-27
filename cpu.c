@@ -2217,7 +2217,9 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 {
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(memory, cpu->PC);
-	//(void)printf("Executing opcode %#x at %#x\n", opcode, cpu->PC);
+#ifdef DEBUG
+	(void)printf("Executing opcode %#x at %#x\n", opcode, cpu->PC);
+#endif
 	return pf[opcode](cpu, memory);
 }
 

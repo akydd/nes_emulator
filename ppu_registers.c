@@ -27,6 +27,8 @@ struct ppu_registers {
 
 	/* Toggle for writes to PPUSCROLL and PPUADDR */
 	uint8_t toggle;
+
+	uint8_t fine_x_scroll;
 };
 
 struct ppu_registers *PPU_Registers_init()

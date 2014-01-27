@@ -19,6 +19,8 @@
 #ifndef PPU_REGISTERS
 #define PPU_REGISTERS
 
+#include "memory.h"
+
 struct ppu_registers;
 
 extern struct ppu_registers *PPU_Registers_init();
@@ -27,7 +29,7 @@ extern uint8_t PPU_Registers_read_status(struct ppu_registers *reg, struct memor
 
 extern void PPU_Registers_write_status(struct ppu_registers *reg, uint8_t val);
 
-extern void PPU_Registers_write_address(struct ppu_registers *reg, uint8_t val);
+extern void PPU_Registers_write_address(struct ppu_registers *reg, struct memory *, uint8_t val);
 
 extern void PPU_Registers_write_OAM_addr(struct ppu_registers *reg, uint8_t val);
 
