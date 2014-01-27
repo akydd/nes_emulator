@@ -14,7 +14,7 @@ loop for 3 x # clock cycles
     end note
     PPU->PPU: execute
     opt
-       PPU->CPU: Generate NMI
+       PPU->+CPU: Generate NMI
        CPU->-CPU: Execute NMI
 end
 
