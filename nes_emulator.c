@@ -66,6 +66,9 @@ int main(int argc, char **argv)
 				CPU_handle_nmi(cpu, mem);
 			}
 		}
+#ifdef TEST
+		MEM_print_test_status(mem);
+#endif
 	}
 
 	/*

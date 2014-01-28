@@ -179,4 +179,9 @@ extern void MEM_load_trainer(struct memory *, FILE *);
  */
 extern void MEM_load_rom(struct memory *, FILE *);
 
+/* 
+ * Print blarggs test output 
+ */
+extern void MEM_print_test_status(struct memory *);
+
 #endif

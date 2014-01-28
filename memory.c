@@ -154,7 +154,7 @@ void MEM_load_rom(struct memory *mem, FILE *nes_file)
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
 #ifdef DEBUG
-		(void)printf("Loading ROM data %#x into %#x...", data, mem_addr);
+		(void)printf("Loading ROM...");
 #endif
 		MEM_write(mem, mem_addr, data);
 #ifdef DEBUG
@@ -162,4 +162,15 @@ void MEM_load_rom(struct memory *mem, FILE *nes_file)
 #endif
 		mem_addr++;
 	}
+}
+
+void MEM_print_test_status(struct memory *mem)
+{
+	(void)printf("%#x: ", mem->memory[0x6000]);
+	char *a = &(mem->memory[0x6004]);
+	int length = 0;
+	while(*(a++) != '\0' || length++ < 10) {
+		(void)printf("%c", *a);
+	}
+	(void)printf("\n");
 }
