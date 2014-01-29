@@ -143,16 +143,17 @@ void MEM_load_trainer(struct memory *mem, FILE *nes_file)
 	}
 }
 
-void MEM_load_rom(struct memory *mem, FILE *nes_file)
+void MEM_load_rom(struct memory *mem, uint8_t num_banks, FILE *nes_file)
 {
 	uint8_t data;
 	uint32_t mem_addr;
+	uint32_t mem_end;
 
-	(void)printf("Loading ROM now!\n");
+	(void)printf("Loading %d ROM banks\n", num_banks);
 
-	/* Load 2*16 kb ROM banks into shared memory */
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
-	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= MEM_SIZE)) {
+	mem_end = MEM_ROM_LOW_BANK_ADDR + num_banks * 0x4000;
+	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= mem_end)) {
 #ifdef DEBUG
 		(void)printf("Loading ROM...");
 #endif

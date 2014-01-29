@@ -22,6 +22,8 @@
 #include <stdio.h>
 
 #define MEM_STACK_START 0x01FF
+#define MEM_STACK_END 0x0100
+#define MEM_STACK_OFFSET 0x0100
 #define MEM_NMI_VECTOR 0xFFFA
 #define MEM_RESET_VECTOR 0xFFFC
 #define MEM_BRK_VECTOR 0xFFFE
@@ -177,7 +179,7 @@ extern void MEM_load_trainer(struct memory *, FILE *);
 /*
  * Load ROM data into memory
  */
-extern void MEM_load_rom(struct memory *, FILE *);
+extern void MEM_load_rom(struct memory *, uint8_t, FILE *);
 
 /* 
  * Print blarggs test output 

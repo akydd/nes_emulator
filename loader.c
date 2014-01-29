@@ -73,8 +73,8 @@ int LOADER_load_file(struct memory *mem, struct ppu_memory *ppu_mem, char *filen
 		MEM_load_trainer(mem, nes_file);
 	}
 
-	/* Load 2*16 kb ROM banks into shared memory */
-	MEM_load_rom(mem, nes_file);
+	/* Load the 16 kb ROM bank(s) into shared memory */
+	MEM_load_rom(mem, num_16kb_rom_banks, nes_file);
 
 	/* Load 8 kb VROM bank into PPU memory, if present */
 	if(num_8kb_vrom_banks == 1) {

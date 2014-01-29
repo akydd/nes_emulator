@@ -50,27 +50,57 @@ inline void CPU_push16_stack(struct cpu *cpu, struct memory *memory, const uint1
 	/* push high byte, then low */
 	MEM_write(memory, cpu->S, val>>8);
 	cpu->S--;
+
+	/* Wrap stack if needed */
+	if (cpu->S < MEM_STACK_END) {
+		cpu->S = MEM_STACK_START;
+	}
+
 	MEM_write(memory, cpu->S, val);
 	cpu->S--;
+
+	/* Wrap stack if needed */
+	if (cpu->S < MEM_STACK_END) {
+		cpu->S = MEM_STACK_START;
+	}
 }
 
 inline void CPU_push8_stack(struct cpu *cpu, struct memory *memory, const uint8_t val)
 {
 	MEM_write(memory, cpu->S, val);
 	cpu->S--;
+
+	/* Wrap stack if needed */
+	if (cpu->S < MEM_STACK_END) {
+		cpu->S = MEM_STACK_START;
+	}
 }
 
 inline uint8_t CPU_pop8_stack(struct cpu *cpu, struct memory *memory)
 {
 	cpu->S++;
+
+	/* Wrap stack if needed */
+	if (cpu->S > MEM_STACK_START) {
+		cpu->S = MEM_STACK_END;
+	}
+
 	return MEM_read(memory, cpu->S);
 }
 
 inline uint16_t CPU_pop16_stack(struct cpu *cpu, struct memory *memory)
 {
 	cpu->S++;
+	/* Wrap stack if needed */
+	if (cpu->S > MEM_STACK_START) {
+		cpu->S = MEM_STACK_END;
+	}
 	uint16_t low = MEM_read(memory, cpu->S);
 	cpu->S++;
+	/* Wrap stack if needed */
+	if (cpu->S > MEM_STACK_START) {
+		cpu->S = MEM_STACK_END;
+	}
 	uint16_t high = MEM_read(memory , cpu->S);
 	return (high<<8) | low;
 }
@@ -1589,7 +1619,7 @@ uint8_t sta_abs_y(struct cpu *cpu, struct memory *memory)
 uint8_t txs(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	cpu->S = cpu->X;
+	cpu->S = cpu->X + MEM_STACK_OFFSET;
 
 	return 2;
 }
@@ -1784,7 +1814,7 @@ uint8_t lda_abs_y(struct cpu *cpu, struct memory *memory)
 uint8_t tsx(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	cpu->X = cpu->S;
+	cpu->X = cpu->S - MEM_STACK_OFFSET;
 
 	return 2;
 }
@@ -2218,7 +2248,7 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(memory, cpu->PC);
 #if (defined DEBUG || defined TEST)
-	(void)printf("Executing opcode %#x at %#x\n", opcode, cpu->PC);
+	(void)printf("Opcode: %#x, PC: %#x, S: %#x, A: %#x, X: %#x, Y: %#x, P: %#x\n", opcode, cpu->PC, cpu->S, cpu->A, cpu->X, cpu->Y, cpu->P);
 #endif
 	return pf[opcode](cpu, memory);
 }
