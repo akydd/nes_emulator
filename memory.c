@@ -154,13 +154,7 @@ void MEM_load_rom(struct memory *mem, uint8_t num_banks, FILE *nes_file)
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
 	mem_end = MEM_ROM_LOW_BANK_ADDR + num_banks * 0x4000;
 	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= mem_end)) {
-#ifdef DEBUG
-		(void)printf("Loading ROM...");
-#endif
 		MEM_write(mem, mem_addr, data);
-#ifdef DEBUG
-		(void)printf("OK!\n");
-#endif
 		mem_addr++;
 	}
 }

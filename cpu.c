@@ -359,6 +359,8 @@ void CPU_set_overflow_flag_for_adc(struct cpu *cpu, const uint8_t a, const uint8
 	if (((a^result) & (b^result) & 0x80) != 0)
 	{
 		CPU_set_overflow_flag(cpu);
+	} else {
+		CPU_clear_overflow_flag(cpu);
 	}
 }
 
@@ -372,6 +374,8 @@ void CPU_set_overflow_flag_for_sbc(struct cpu *cpu, const uint8_t a, const uint8
 	if (((a^result) & ((0xff-b)^result) & 0x80) != 0)
 	{
 		CPU_set_overflow_flag(cpu);
+	} else {
+		CPU_clear_overflow_flag(cpu);
 	}
 }
 
@@ -379,6 +383,8 @@ void CPU_set_overflow_flag_for_value(struct cpu *cpu, const uint8_t a)
 {
 	if ((a & V_FLAG) == V_FLAG) {
 		CPU_set_overflow_flag(cpu);
+	} else {
+		CPU_clear_overflow_flag(cpu);
 	}
 }
 
@@ -402,6 +408,8 @@ inline void CPU_set_zero_flag_for_value(struct cpu *cpu, const uint8_t a)
 {
 	if (a == 0) {
 		CPU_set_zero_flag(cpu);
+	} else {
+		CPU_clear_zero_flag(cpu);
 	}
 }
 
@@ -424,7 +432,9 @@ inline void CPU_clear_negative_flag(struct cpu *cpu)
 inline void CPU_set_negative_flag_for_value(struct cpu *cpu, const uint8_t a)
 {
 	if ((a & N_FLAG) == N_FLAG) {
-		set_status_flag(cpu, N_FLAG);
+		CPU_set_negative_flag(cpu);
+	} else {
+		CPU_clear_negative_flag(cpu);
 	}
 }
 
