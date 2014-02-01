@@ -136,7 +136,8 @@ void MEM_load_trainer(struct memory *mem, FILE *nes_file)
 	uint8_t data;
 
 	int i = 0;
-	while((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (i < 512)) {
+	while(i < 512) {
+		(void)fread(&data, sizeof(uint8_t), 1, nes_file);
 		*mem_ptr = data;
 		mem_ptr++;
 		i++;
@@ -152,8 +153,9 @@ void MEM_load_rom(struct memory *mem, uint8_t num_banks, FILE *nes_file)
 	(void)printf("Loading %d ROM banks\n", num_banks);
 
 	mem_addr = MEM_ROM_LOW_BANK_ADDR;
-	mem_end = MEM_ROM_LOW_BANK_ADDR + num_banks * 0x4000;
-	while ((fread(&data, sizeof(uint8_t), 1, nes_file) != 0) && (mem_addr <= mem_end)) {
+	mem_end = MEM_ROM_LOW_BANK_ADDR + (num_banks * 0x4000) - 1;
+	while (mem_addr <= mem_end) {
+		(void)fread(&data, sizeof(uint8_t), 1, nes_file);
 		MEM_write(mem, mem_addr, data);
 		mem_addr++;
 	}

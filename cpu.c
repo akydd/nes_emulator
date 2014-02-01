@@ -278,34 +278,24 @@ inline uint8_t CPU_carry_flag_is_set(const struct cpu *cpu)
 	return status_flag_is_set(cpu, C_FLAG);
 }
 
-inline void CPU_set_carry_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, C_FLAG);
-}
-
-inline void CPU_clear_carry_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, C_FLAG);
-}
-
 /*
  * Manipulate the carry flag based on an ADC operation.
  */
-void CPU_set_carry_flag_on_add(struct cpu *cpu, const uint8_t a, const uint8_t b)
+inline void CPU_set_carry_flag_on_add(struct cpu *cpu, const uint8_t a, const uint8_t b)
 {
 	/* if carry flag is zero, check if a + b > 0xff.
 	 * Otherwise, check if a + b >= 0xff. */
 	if (CPU_carry_flag_is_set(cpu) == 0) {
 		if (a > 0xff - b) {
-			CPU_set_carry_flag(cpu);
+			set_status_flag(cpu, C_FLAG);
 		} else {
-			CPU_clear_carry_flag(cpu);
+			clear_status_flag(cpu, C_FLAG);
 		}
 	} else {
 		if (a >= 0xff - b) {
-			CPU_set_carry_flag(cpu);
+			set_status_flag(cpu, C_FLAG);
 		} else {
-			CPU_clear_carry_flag(cpu);
+			clear_status_flag(cpu, C_FLAG);
 		}
 	}
 }
@@ -313,7 +303,7 @@ void CPU_set_carry_flag_on_add(struct cpu *cpu, const uint8_t a, const uint8_t b
 /*
  * Manipulate the carry flag based on an SBC operation
  */
-void CPU_set_carry_flag_on_sub(struct cpu *cpu, const uint8_t a, const uint8_t b)
+inline void CPU_set_carry_flag_on_sub(struct cpu *cpu, const uint8_t a, const uint8_t b)
 {
 	/* If carry flag is set:
 	 * 	If a >= b, set the carry flag.
@@ -324,11 +314,11 @@ void CPU_set_carry_flag_on_sub(struct cpu *cpu, const uint8_t a, const uint8_t b
 	 */
 	if (CPU_carry_flag_is_set(cpu) == 1) {
 		if (a < b) {
-			CPU_clear_carry_flag(cpu);
+			clear_status_flag(cpu, C_FLAG);
 		}
 	} else {
 		if (a > b) {
-			CPU_set_carry_flag(cpu);
+			set_status_flag(cpu, C_FLAG);
 		}
 	}
 }
@@ -339,28 +329,18 @@ inline uint8_t CPU_overflow_flag_is_set(const struct cpu *cpu)
 	return status_flag_is_set(cpu, V_FLAG);
 }
 
-inline void CPU_set_overflow_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, V_FLAG);
-}
-
-inline void CPU_clear_overflow_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, V_FLAG);
-}
-
 /*
  * Manipulate the overflow flag for an ADC operation.
  * Formula found at
  * http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
  */
-void CPU_set_overflow_flag_for_adc(struct cpu *cpu, const uint8_t a, const uint8_t b, const uint8_t result)
+inline void CPU_set_overflow_flag_for_adc(struct cpu *cpu, const uint8_t a, const uint8_t b, const uint8_t result)
 {
 	if (((a^result) & (b^result) & 0x80) != 0)
 	{
-		CPU_set_overflow_flag(cpu);
+		set_status_flag(cpu, V_FLAG);
 	} else {
-		CPU_clear_overflow_flag(cpu);
+		clear_status_flag(cpu, V_FLAG);
 	}
 }
 
@@ -369,22 +349,13 @@ void CPU_set_overflow_flag_for_adc(struct cpu *cpu, const uint8_t a, const uint8
  * Formula found at
  * http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html
  */
-void CPU_set_overflow_flag_for_sbc(struct cpu *cpu, const uint8_t a, const uint8_t b, const uint8_t result)
+inline void CPU_set_overflow_flag_for_sbc(struct cpu *cpu, const uint8_t a, const uint8_t b, const uint8_t result)
 {
 	if (((a^result) & ((0xff-b)^result) & 0x80) != 0)
 	{
-		CPU_set_overflow_flag(cpu);
+		set_status_flag(cpu, V_FLAG);
 	} else {
-		CPU_clear_overflow_flag(cpu);
-	}
-}
-
-void CPU_set_overflow_flag_for_value(struct cpu *cpu, const uint8_t a)
-{
-	if ((a & V_FLAG) == V_FLAG) {
-		CPU_set_overflow_flag(cpu);
-	} else {
-		CPU_clear_overflow_flag(cpu);
+		clear_status_flag(cpu, V_FLAG);
 	}
 }
 
@@ -394,22 +365,12 @@ inline uint8_t CPU_zero_flag_is_set(const struct cpu *cpu)
 	return status_flag_is_set(cpu, Z_FLAG);
 }
 
-inline void CPU_set_zero_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, Z_FLAG);
-}
-
-inline void CPU_clear_zero_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, Z_FLAG);
-}
-
 inline void CPU_set_zero_flag_for_value(struct cpu *cpu, const uint8_t a)
 {
 	if (a == 0) {
-		CPU_set_zero_flag(cpu);
+		set_status_flag(cpu, Z_FLAG);
 	} else {
-		CPU_clear_zero_flag(cpu);
+		clear_status_flag(cpu, Z_FLAG);
 	}
 }
 
@@ -419,22 +380,12 @@ inline uint8_t CPU_negative_flag_is_set(const struct cpu *cpu)
 	return status_flag_is_set(cpu, N_FLAG);
 }
 
-inline void CPU_set_negative_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, N_FLAG);
-}
-
-inline void CPU_clear_negative_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, N_FLAG);
-}
-
 inline void CPU_set_negative_flag_for_value(struct cpu *cpu, const uint8_t a)
 {
 	if ((a & N_FLAG) == N_FLAG) {
-		CPU_set_negative_flag(cpu);
+		set_status_flag(cpu, N_FLAG);
 	} else {
-		CPU_clear_negative_flag(cpu);
+		clear_status_flag(cpu, N_FLAG);
 	}
 }
 
@@ -444,40 +395,10 @@ inline uint8_t CPU_break_flag_is_set(const struct cpu *cpu)
 	return status_flag_is_set(cpu, B_FLAG);
 }
 
-inline void CPU_set_break_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, B_FLAG);
-}
-
-inline void CPU_clear_break_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, B_FLAG);
-}
-
 /* Interrupt flag */
 inline uint8_t CPU_interrupt_flag_is_set(const struct cpu *cpu)
 {
 	return status_flag_is_set(cpu, I_FLAG);
-}
-
-inline void CPU_set_interrupt_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, I_FLAG);
-}
-
-inline void CPU_clear_interrupt_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, I_FLAG);
-}
-
-inline void CPU_set_decimal_flag(struct cpu *cpu)
-{
-	set_status_flag(cpu, D_FLAG);
-}
-
-inline void CPU_clear_decimal_flag(struct cpu *cpu)
-{
-	clear_status_flag(cpu, D_FLAG);
 }
 
 /* Common functions for executing instructions */
@@ -541,9 +462,9 @@ inline void rol(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	/* shift bit 7 into carry flag */
 	if (high_bit_is_set(val))
 	{
-		CPU_set_carry_flag(cpu);
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
+		clear_status_flag(cpu, C_FLAG);
 	}
 
 	MEM_write(memory, addr, result);
@@ -565,9 +486,9 @@ inline void ror(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	/* shift bit 0 into carry flag */
 	if (low_bit_is_set(val))
 	{
-		CPU_set_carry_flag(cpu);
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
+		clear_status_flag(cpu, C_FLAG);
 	}
 
 	MEM_write(memory, addr, result);
@@ -583,9 +504,9 @@ inline void lsr(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	/* shift old bit 0 into the carry flag */
 	if(low_bit_is_set(val))
 	{
-		CPU_set_carry_flag(cpu);
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
+		clear_status_flag(cpu, C_FLAG);
 	}
 
 	MEM_write(memory, addr, result);
@@ -603,8 +524,8 @@ inline void jmp(uint16_t addr, struct cpu *cpu)
  */
 inline void adc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
-	uint8_t a = MEM_read(memory, addr);
-	uint8_t b = cpu->A;
+	uint8_t a = cpu->A;
+	uint8_t b = MEM_read(memory, addr);
 
 	uint8_t sum = a + b;
 	if(CPU_carry_flag_is_set(cpu))
@@ -621,8 +542,8 @@ inline void adc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 
 inline void sbc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
-	uint8_t a = MEM_read(memory, addr);
-	uint8_t b = cpu->A;
+	uint8_t a = cpu->A;
+	uint8_t b = MEM_read(memory, addr);
 
 	uint8_t diff = a - b;
 	if(CPU_carry_flag_is_set(cpu))
@@ -675,16 +596,14 @@ inline void lda(uint16_t addr, struct cpu *cpu, struct memory *memory)
 
 inline void compare(uint8_t a, uint8_t b, struct cpu *cpu)
 {
-	if(a == b) {
-		CPU_set_zero_flag(cpu);
-		CPU_set_carry_flag(cpu);
-	} else if(a > b) {
-		CPU_set_carry_flag(cpu);
-		CPU_set_negative_flag_for_value(cpu, a-b);
+	if(a >= b) {
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
-		CPU_set_negative_flag_for_value(cpu, a-b);
+		clear_status_flag(cpu, C_FLAG);
 	}
+
+	CPU_set_zero_flag_for_value(cpu, a-b);
+	CPU_set_negative_flag_for_value(cpu, a-b);
 }
 
 inline void cpy(uint16_t addr, struct cpu *cpu, struct memory *memory)
@@ -734,7 +653,7 @@ inline void inc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 uint8_t brk(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC += 2;
-	CPU_set_break_flag(cpu);
+	set_status_flag(cpu, B_FLAG);
 	CPU_push16_stack(cpu, memory, cpu->PC);
 	CPU_push8_stack(cpu, memory, cpu->P);
 
@@ -995,9 +914,9 @@ uint8_t rol_acc(struct cpu *cpu, struct memory *memory)
 	/* shift bit 7 into carry flag */
 	if (high_bit_is_set(val))
 	{
-		CPU_set_carry_flag(cpu);
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
+		clear_status_flag(cpu, C_FLAG);
 	}
 
 	cpu->A = result;
@@ -1078,7 +997,7 @@ uint8_t rol_zero_pg_x(struct cpu *cpu, struct memory *memory)
 uint8_t sec(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_set_carry_flag(cpu);
+	set_status_flag(cpu, C_FLAG);
 
 	return 2;
 }
@@ -1173,10 +1092,13 @@ uint8_t lsr_acc(struct cpu *cpu, struct memory *memory)
 	/* shift old bit 0 into the carry flag */
 	if(low_bit_is_set(val))
 	{
-		CPU_set_carry_flag(cpu);
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
+		clear_status_flag(cpu, C_FLAG);
 	}
+
+	CPU_set_zero_flag_for_value(cpu, result);
+	CPU_set_negative_flag_for_value(cpu, result);
 
 	cpu->A = result;
 
@@ -1256,7 +1178,7 @@ uint8_t lsr_zero_pg_x(struct cpu *cpu, struct memory *memory)
 uint8_t cli(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_clear_interrupt_flag(cpu);
+	clear_status_flag(cpu, I_FLAG);
 
 	return 2;
 }
@@ -1358,9 +1280,9 @@ uint8_t ror_acc(struct cpu *cpu, struct memory *memory)
 	/* shift bit 0 into carry flag */
 	if (low_bit_is_set(val))
 	{
-		CPU_set_carry_flag(cpu);
+		set_status_flag(cpu, C_FLAG);
 	} else {
-		CPU_clear_carry_flag(cpu);
+		clear_status_flag(cpu, C_FLAG);
 	}
 
 	cpu->A = result;
@@ -1440,7 +1362,7 @@ uint8_t ror_zero_pg_x(struct cpu *cpu, struct memory *memory)
 uint8_t sei(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_set_interrupt_flag(cpu);
+	set_status_flag(cpu, I_FLAG);
 
 	return 2;
 }
@@ -1807,7 +1729,7 @@ uint8_t ldx_zero_pg_y(struct cpu *cpu, struct memory *memory)
 uint8_t clv(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_clear_overflow_flag(cpu);
+	clear_status_flag(cpu, V_FLAG);
 
 	return 2;
 }
@@ -2000,7 +1922,7 @@ uint8_t dec_zero_pg_x(struct cpu *cpu, struct memory *memory)
 uint8_t cld(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_clear_decimal_flag(cpu);
+	clear_status_flag(cpu, D_FLAG);
 
 	return 2;
 }
@@ -2172,7 +2094,7 @@ uint8_t inc_zero_pg_x(struct cpu *cpu, struct memory *memory)
 uint8_t sed(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_set_decimal_flag(cpu);
+	set_status_flag(cpu, D_FLAG);
 
 	return 2;
 }
