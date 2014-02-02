@@ -546,7 +546,7 @@ inline void sbc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	uint8_t b = MEM_read(memory, addr);
 
 	uint8_t diff = a - b;
-	if(CPU_carry_flag_is_set(cpu))
+	if(!CPU_carry_flag_is_set(cpu))
 	{
 		diff--;
 	}
