@@ -20,6 +20,7 @@
 
 #define MEM_SIZE 0xFFFF
 #define MEM_ROM_LOW_BANK_ADDR 0x8000
+#define MEM_ROM_HIGH_BANK_ADDR 0xC000
 #define MIRROR_ADDR 0x2000
 #define MIRROR_SIZE 0x0800
 #define VRAM_REG_ADDR 0x2000
@@ -59,22 +60,7 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
-	uint8_t val;
-
-	/* There are resitrictions on reading VRAM */
-	if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR))
-	{
-		/* Calculate the base PPU register address */
-		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
-		if ((base_addr == MEM_PPU_OAMADDR_REG_ADDR) || (base_addr == MEM_PPU_SCROLL_REG_ADDR) || (base_addr == MEM_PPU_ADDR_REG_ADDR)) {
-			(void)printf("*** Read %#x not allowed here! ***\n", addr);
-			exit(0);
-		} else {
-			val =  mem->memory[addr];
-		}
-	} else {
-		val = mem->memory[addr];
-	}
+	uint8_t val = mem->memory[addr];
 #ifdef DEBUG	
 	(void)printf("Read data %#x from address %#x\n", val, addr);
 #endif
@@ -108,12 +94,6 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	{
 		/* Calculate the base PPU register address */
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
-		
-		/* Cannot write to 0x2002 */
-		if (base_addr == MEM_PPU_STATUS_REG_ADDR) {
-			(void)printf("*** Write to 0x2002 not permitted ***");
-			exit(0);
-		}
 
 		/* Write to all mirrored addresses for this PPU register */
 		write_mirrored_ppu_registers(mem, base_addr, val);
@@ -152,8 +132,14 @@ void MEM_load_rom(struct memory *mem, uint8_t num_banks, FILE *nes_file)
 
 	(void)printf("Loading %d ROM banks\n", num_banks);
 
-	mem_addr = MEM_ROM_LOW_BANK_ADDR;
-	mem_end = MEM_ROM_LOW_BANK_ADDR + (num_banks * 0x4000) - 1;
+	// This is only correct for 1 or 2 memory banks.
+	if (num_banks == 2) {
+		mem_addr = MEM_ROM_LOW_BANK_ADDR;
+	} else {
+		mem_addr = MEM_ROM_HIGH_BANK_ADDR;
+	}
+
+	mem_end = mem_addr + (num_banks * 0x4000) - 1;
 	while (mem_addr <= mem_end) {
 		(void)fread(&data, sizeof(uint8_t), 1, nes_file);
 		MEM_write(mem, mem_addr, data);
@@ -164,10 +150,10 @@ void MEM_load_rom(struct memory *mem, uint8_t num_banks, FILE *nes_file)
 void MEM_print_test_status(struct memory *mem)
 {
 	(void)printf("%#x: ", mem->memory[0x6000]);
-	char *a = &(mem->memory[0x6004]);
-	int length = 0;
-	while(*(a++) != '\0' || length++ < 10) {
-		(void)printf("%c", *a);
+	uint8_t *a = &(mem->memory[0x6004]);
+	uint8_t length = 0;
+	while(length++ < 10) {
+		(void)printf(" %#x", mem->memory[0x6004 + length]);
 	}
 	(void)printf("\n");
 }

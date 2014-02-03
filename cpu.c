@@ -25,7 +25,9 @@
 /* 
  * Flags, from left to right:
  * Negative, oVerflow, Break, Decimal mode, Interrupt disable, Zero, Carry
- * NV_BDIZC
+ * NV_BDIZC.
+ *
+ * Bit 5 is unused, and should always be set to 1.
  */
 #define N_FLAG 1<<7
 #define V_FLAG 1<<6
@@ -646,16 +648,15 @@ inline void inc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 }
 
 /* 
- * break: Set the break flag, push PC onto the stack,
- * push the status flags on the stack, then address
+ * break: push PC onto the stack, push the status flags on the stack with
+ * the break flag virtually set, then address
  * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
 uint8_t brk(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC += 2;
-	set_status_flag(cpu, B_FLAG);
 	CPU_push16_stack(cpu, memory, cpu->PC);
-	CPU_push8_stack(cpu, memory, cpu->P);
+	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG);
 
 	uint16_t low = MEM_read(memory, MEM_BRK_VECTOR);
 	uint16_t high = MEM_read(memory, MEM_BRK_VECTOR + 1)<<8;
@@ -698,12 +699,13 @@ uint8_t asl_zero_pg(struct cpu *cpu, struct memory *memory)
 }
 
 /*
- * Push processor status flags onto the stack
+ * Push processor status flags onto the stack.  The break flag is always set
+ * virtually (in the stack, but not in the flags) when this happens.
  */
 uint8_t php(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_push8_stack(cpu, memory, cpu->P);
+	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG);
 
 	return 3;
 }
@@ -2164,7 +2166,8 @@ struct cpu *CPU_init(struct memory *memory)
 	cpu->A = 0;
 	cpu->X = 0;
 	cpu->Y = 0;
-	cpu->P = 0x34;
+	// break flag is not set on init
+	cpu->P = 0x24;
 
 	return cpu;
 }
@@ -2187,14 +2190,14 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 
 /*
  * NMI handler does 3 things:
- * 1. Push CPU status reg onto the stack
+ * 1. Push CPU status reg onto the stack, with the blank flag cleared
  * 2. Push CPU return addr onto the stack
  * 3. Set the PC to the NMI handler's address at 0xFFFA - 0XFFFB
  */
 void CPU_handle_nmi(struct cpu *cpu, struct memory *memory)
 {
 	/* 1 */
-	CPU_push8_stack(cpu, memory, cpu->S);
+	CPU_push8_stack(cpu, memory, cpu->P & ~B_FLAG);
 	/* 2 */
 	CPU_push16_stack(cpu, memory, cpu->PC);
 	/* 3 */
