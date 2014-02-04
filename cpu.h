@@ -22,10 +22,17 @@
 #include "memory.h"
 
 /*
- * Initialize the cpu with starting values.
+ * Initialize the cpu with default starting values.
  * Memory must be initialized before passing into this function.
  */
 extern struct cpu *CPU_init(struct memory *);
+
+/*
+ * Initialize the cpu with default starting values, and program counter set to
+ * the passed uint16_t address.
+ * Memory must be initialized before passing into this function.
+ */
+extern struct cpu *CPU_init_to_address(struct memory *, uint16_t);
 
 /*
  * Delete cpu

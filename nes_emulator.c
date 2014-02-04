@@ -30,7 +30,7 @@
 int main(int argc, char **argv)
 {
 	/* Check for input file */
-	if (argc !=2) {
+	if (argc < 2) {
 		(void)printf("You must enter a filename!\n");
 		return 1;
 	}

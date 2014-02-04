@@ -2172,6 +2172,14 @@ struct cpu *CPU_init(struct memory *memory)
 	return cpu;
 }
 
+struct cpu *CPU_init_to_address(struct memory *memory, uint16_t addr)
+{
+	struct cpu *cpu = CPU_init(memory);
+	cpu->PC = addr;
+
+	return cpu;
+}
+
 void CPU_delete(struct cpu **cpu)
 {
 	free(*cpu);
