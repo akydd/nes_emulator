@@ -17,6 +17,7 @@
  */
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 
 #include "cpu.h"
@@ -30,7 +31,37 @@
 int main(int argc, char **argv)
 {
 	/* Check for input file */
-	if (argc < 2) {
+	if (argc < 2 || argc > 3) {
+		(void)printf("Wrong number of  arguments.  You must enter a filename, and optionally specify an address to start CPU execution.\n");
+		return 1;
+	}
+
+	char *filename = NULL;
+	uint16_t pc;
+	int use_pc = 0;
+	int j;
+	for(j = 1; j < argc; j++) {
+		switch(argv[j][0]) {
+			case '-':
+				switch(argv[j][1]) {
+					case 's':
+						if (sscanf(argv[j] + 2, "%"SCNx16, &pc) != 1) {
+							(void)printf("Unable to parse execution address '%s'.  Using default instead.\n", argv[j] + 2);
+						} else {
+							(void)printf("Execution point set to %#x.\n", pc);
+							use_pc = 1;
+						}
+						break;
+					default:
+						(void)printf("Unrecognized option '%s'", argv[j]);
+				}
+				break;
+			default:
+				filename = argv[j];
+		}
+	}
+
+	if (filename == NULL) {
 		(void)printf("You must enter a filename!\n");
 		return 1;
 	}
@@ -38,15 +69,20 @@ int main(int argc, char **argv)
 	/* initialize memory and load data */
 	struct memory *mem = MEM_init();
 	struct ppu_memory *ppu_mem = PPU_MEM_init();
-	if(LOADER_load_file(mem, ppu_mem, *++argv) == 0) {
-		(void)printf("Could not load file '%s'.  Exiting main program.\n", *argv);
+	if(LOADER_load_file(mem, ppu_mem, filename) == 0) {
+		(void)printf("Could not load file '%s'.  Exiting main program.\n", filename);
 		MEM_delete(&mem);
 		PPU_MEM_delete(&ppu_mem);
 		return 1;
 	}
 
 	/* Initialize the CPU, PPU, and PPU Registers */
-	struct cpu *cpu = CPU_init(mem);
+	struct cpu *cpu;
+	if (use_pc == 1) {
+		cpu = CPU_init_to_address(mem, pc);
+	} else {
+		cpu = CPU_init(mem);
+	}
 	struct ppu *ppu = PPU_init(mem);
 	struct ppu_registers *ppu_reg = PPU_Registers_init();
 

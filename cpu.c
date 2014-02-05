@@ -2176,6 +2176,7 @@ struct cpu *CPU_init_to_address(struct memory *memory, uint16_t addr)
 {
 	struct cpu *cpu = CPU_init(memory);
 	cpu->PC = addr;
+	(void)printf("Reinitializing PC to %#x\n", addr);
 
 	return cpu;
 }
