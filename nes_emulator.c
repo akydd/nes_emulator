@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 			}
 		}*/
 #if (defined DEBUG || defined TEST)
-		MEM_print_test_status(mem);
+		// MEM_print_test_status(mem);
 #endif
 	}
 

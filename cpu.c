@@ -2161,8 +2161,8 @@ struct cpu *CPU_init(struct memory *memory)
 	cpu->PC = addr;
 	(void)printf("Initializing PC to %#x\n", addr);
 
-	/* Stack grows down from 0x1FF, or 511 */
-	cpu->S = MEM_STACK_START;
+	/* Stack grows down from 0x1FF, but is decremented to 0x1FD on power up. */
+	cpu->S = MEM_STACK_START - 2;
 	cpu->A = 0;
 	cpu->X = 0;
 	cpu->Y = 0;
@@ -2191,8 +2191,8 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 {
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(memory, cpu->PC);
-#if (defined DEBUG || defined TEST)
-	(void)printf("Opcode: %#x, PC: %#x, S: %#x, A: %#x, X: %#x, Y: %#x, P: %#x\n", opcode, cpu->PC, cpu->S, cpu->A, cpu->X, cpu->Y, cpu->P);
+#if (defined DEBUG)
+	(void)printf("%x  %02x A:%02x X:%02x Y:%02x P:%02x SP:%03x\n", cpu->PC, opcode, cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S);
 #endif
 	return pf[opcode](cpu, memory);
 }

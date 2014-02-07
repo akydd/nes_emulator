@@ -61,7 +61,7 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
 	uint8_t val = mem->memory[addr];
-#ifdef DEBUG	
+#ifdef DEBUG_MEM
 	(void)printf("Read data %#x from address %#x\n", val, addr);
 #endif
 	return val;
@@ -77,7 +77,7 @@ uint8_t MEM_get_ppu_ctrl_2(struct memory *mem) {
 
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
-#ifdef DEBUG
+#ifdef DEBUG_MEM
 	(void)printf("Writing data %#x into address %#x\n", val, addr);
 #endif
 	/* write to mirrored RAM */

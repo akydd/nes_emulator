@@ -2,6 +2,11 @@
 
 My attempt at writing a NES emulator
 
+## Compiling
+    make nes\_emulator
+To make with debugging info printed to the console,
+    make CFLAGS='-Wall -Wextra -DDEBUG' nes\_emulator
+
 ## High Level Design
 
 As far as I know right now, the major NES components are:
