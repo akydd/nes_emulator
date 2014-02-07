@@ -3,9 +3,11 @@
 My attempt at writing a NES emulator
 
 ## Compiling
-    make nes\_emulator
+    make nes_emulator
+
 To make with debugging info printed to the console,
-    make CFLAGS='-Wall -Wextra -DDEBUG' nes\_emulator
+
+    make CFLAGS='-Wall -Wextra -DDEBUG' nes_emulator
 
 ## High Level Design
 
