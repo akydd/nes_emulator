@@ -446,8 +446,18 @@ inline void bit(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	uint8_t val = MEM_read(memory, addr);
 	uint8_t result = cpu->A & val;
 	CPU_set_zero_flag_for_value(cpu, result);
-	cpu->P |= (val & N_FLAG);
-	cpu->P |= (val & V_FLAG);
+	
+	if(bit_is_set(val, 7)) {
+		set_status_flag(cpu, N_FLAG);
+	} else {
+		clear_status_flag(cpu, N_FLAG);
+	}
+
+	if(bit_is_set(val, 6)) {
+		set_status_flag(cpu, V_FLAG);
+	} else {
+		clear_status_flag(cpu, V_FLAG);
+	}
 }
 
 inline void rol(uint16_t addr, struct cpu *cpu, struct memory *memory)
