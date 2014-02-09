@@ -1051,7 +1051,16 @@ uint8_t rol_abs_x(struct cpu *cpu, struct memory *memory)
 uint8_t rti(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	cpu->P = CPU_pop8_stack(cpu, memory);
+	// Unused flag should always be set when loading status flags from
+	// memory.  Break flag should stay at existing value.
+	uint8_t val = CPU_pop8_stack(cpu, memory) | U_FLAG;
+	if (status_flag_is_set(cpu, B_FLAG)) {
+		val |= B_FLAG;
+	} else {
+		val &= ~(B_FLAG);
+	}
+
+	cpu->P = val;
 	cpu->PC = CPU_pop16_stack(cpu, memory);
 
 	return 6;
