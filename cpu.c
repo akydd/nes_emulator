@@ -24,13 +24,14 @@
 
 /* 
  * Flags, from left to right:
- * Negative, oVerflow, Break, Decimal mode, Interrupt disable, Zero, Carry
+ * Negative, oVerflow, Unused, Break, Decimal mode, Interrupt disable, Zero, Carry
  * NV_BDIZC.
  *
- * Bit 5 is unused, and should always be set to 1.
+ * The Unused flag is literally unused, but should always be set to 1.
  */
 #define N_FLAG 1<<7
 #define V_FLAG 1<<6
+#define U_FLAG 1<<5
 #define B_FLAG 1<<4
 #define D_FLAG 1<<3
 #define I_FLAG 1<<2
@@ -666,7 +667,7 @@ uint8_t brk(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC += 2;
 	CPU_push16_stack(cpu, memory, cpu->PC);
-	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG);
+	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG | U_FLAG);
 
 	uint16_t low = MEM_read(memory, MEM_BRK_VECTOR);
 	uint16_t high = MEM_read(memory, MEM_BRK_VECTOR + 1)<<8;
@@ -709,13 +710,12 @@ uint8_t asl_zero_pg(struct cpu *cpu, struct memory *memory)
 }
 
 /*
- * Push processor status flags onto the stack.  The break flag is always set
- * virtually (in the stack, but not in the flags) when this happens.
+ * Push processor status flags onto the stack.
  */
 uint8_t php(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG);
+	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG | U_FLAG);
 
 	return 3;
 }
@@ -896,7 +896,14 @@ uint8_t plp(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
 	uint8_t val = CPU_pop8_stack(cpu, memory);
-	cpu->P = val;
+
+	// cpu->P must always have the U_FLAG set, but existing value of B_FLAG is not modified.
+	if (status_flag_is_set(cpu, B_FLAG)) {
+		val |= B_FLAG;
+	} else {
+		val &= ~(B_FLAG);
+	}
+	cpu->P = val | U_FLAG;
 
 	return 4;
 }
