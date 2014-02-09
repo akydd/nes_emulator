@@ -1767,6 +1767,9 @@ uint8_t tsx(struct cpu *cpu, struct memory *memory)
 	cpu->PC++;
 	cpu->X = cpu->S - MEM_STACK_OFFSET;
 
+	CPU_set_negative_flag_for_value(cpu, cpu->X);
+	CPU_set_zero_flag_for_value(cpu, cpu->X);
+
 	return 2;
 }
 
