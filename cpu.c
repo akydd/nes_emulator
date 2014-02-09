@@ -741,6 +741,8 @@ uint8_t asl_acc(struct cpu *cpu, struct memory *memory)
 	CPU_set_negative_flag_for_value(cpu, new_val);
 	if((val & N_FLAG) == N_FLAG) {
 		cpu->P |= C_FLAG;
+	} else {
+		cpu->P &= ~(C_FLAG);
 	}
 
 	return 2;
