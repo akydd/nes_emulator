@@ -942,6 +942,9 @@ uint8_t rol_acc(struct cpu *cpu, struct memory *memory)
 
 	cpu->A = result;
 
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+
 	return 2;
 }
 
