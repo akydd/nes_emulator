@@ -211,7 +211,8 @@ inline uint16_t ind_x(struct cpu *cpu, struct memory *memory)
 {
 	uint8_t addr_of_low = CPU_pop8_mem(cpu, memory) + cpu->X;
 	uint16_t low = MEM_read(memory, addr_of_low);
-	uint16_t high = MEM_read(memory, addr_of_low + 1)<<8;
+	// Need cast to uint8_t for zero page wrap around
+	uint16_t high = MEM_read(memory, (uint8_t)(addr_of_low + 1))<<8;
 	return (high | low);
 }
 
