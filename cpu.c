@@ -1188,7 +1188,7 @@ uint8_t bvc_r(struct cpu *cpu, struct memory *memory)
 uint8_t eor_ind_y(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
-	uint8_t addr = ind_y(cpu, memory);
+	uint16_t addr = ind_y(cpu, memory);
 	eor(addr, cpu, memory);
 
 	return 5;
