@@ -227,9 +227,13 @@ inline uint16_t ind_y(struct cpu *cpu, struct memory *memory)
 
 inline uint16_t ind(struct cpu *cpu, struct memory *memory)
 {
-	uint16_t addr_of_low = CPU_pop16_mem(cpu, memory);
-	uint16_t low = MEM_read(memory, addr_of_low);
-	uint16_t high = MEM_read(memory, addr_of_low + 1)<<8;
+	// Indirect functions with a bug in the 6502, where the high byte of the
+	// destination address is calculated only after individually incrementing
+	// the low byte of the destination address, which might wrap around
+	uint16_t high_byte_of_low_addr = CPU_pop8_mem(cpu, memory);
+	uint8_t low_byte_of_low_addr = CPU_pop8_mem(cpu, memory);
+	uint16_t low = MEM_read(memory, (high_byte_of_low_addr<<8) | low_byte_of_low_addr);
+	uint16_t high = MEM_read(memory, (high_byte_of_low_addr<<8) | (low_byte_of_low_addr + 1));
 	return (high | low);
 }
 
