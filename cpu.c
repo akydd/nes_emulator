@@ -230,11 +230,16 @@ inline uint16_t ind(struct cpu *cpu, struct memory *memory)
 	// Indirect functions with a bug in the 6502, where the high byte of the
 	// destination address is calculated only after individually incrementing
 	// the low byte of the destination address, which might wrap around
-	uint16_t high_byte_of_low_addr = CPU_pop8_mem(cpu, memory);
 	uint8_t low_byte_of_low_addr = CPU_pop8_mem(cpu, memory);
-	uint16_t low = MEM_read(memory, (high_byte_of_low_addr<<8) | low_byte_of_low_addr);
-	uint16_t high = MEM_read(memory, (high_byte_of_low_addr<<8) | (low_byte_of_low_addr + 1));
-	return (high | low);
+	uint16_t high_byte_of_low_addr = CPU_pop8_mem(cpu, memory)<<8;
+	uint16_t low = MEM_read(memory, high_byte_of_low_addr | low_byte_of_low_addr);
+	uint16_t high;
+	if (low_byte_of_low_addr == 0xFF) {
+		high = MEM_read(memory, high_byte_of_low_addr | (0));
+	} else {
+		high = MEM_read(memory, high_byte_of_low_addr | (low_byte_of_low_addr + 1));
+	}
+	return (high<<8 | low);
 }
 
 inline uint16_t abs_y(struct cpu *cpu, struct memory *memory)
@@ -2234,7 +2239,7 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(memory, cpu->PC);
 #if (defined DEBUG)
-	(void)printf("%x  %02x A:%02x X:%02x Y:%02x P:%02x SP:%03x\n", cpu->PC, opcode, cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S);
+	(void)printf("%04x  %02x A:%02x X:%02x Y:%02x P:%02x SP:%02x\n", cpu->PC, opcode, cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S);
 #endif
 	return pf[opcode](cpu, memory);
 }
