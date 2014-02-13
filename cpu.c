@@ -255,7 +255,12 @@ inline uint16_t abs_x(struct cpu *cpu, struct memory *memory)
 inline uint16_t zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
 	uint16_t addr = (uint16_t)CPU_pop8_mem(cpu, memory);
-	return addr + cpu->X;
+	uint16_t zero_pg_addr = addr + cpu->X;
+	// Wrap around to stay within the zero page
+	if (zero_pg_addr >= 0x100) {
+		zero_pg_addr -= 0x100;
+	}
+	return zero_pg_addr;
 }
 
 inline uint16_t zero_pg_y(struct cpu *cpu, struct memory *memory)
