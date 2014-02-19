@@ -2184,25 +2184,90 @@ uint8_t inc_abs_x(struct cpu *cpu, struct memory *memory)
 
 	return 7;
 }
-/* Array of function pointers to opcode instructions */
-/* codes 0x00 to 0xFF  */
+
+uint8_t nop_1_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	return 2;
+}
+
+uint8_t nop_2_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	return 2;
+}
+
+uint8_t nop_2_bytes_3_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	return 3;
+}
+
+uint8_t nop_2_bytes_4_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	return 4;
+}
+
+uint8_t nop_2_bytes_5_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	return 5;
+}
+
+uint8_t nop_2_bytes_6_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	return 6;
+}
+
+uint8_t nop_2_bytes_8_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	return 8;
+}
+
+uint8_t nop_3_bytes_4_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	cpu->PC++;
+	return 4;
+}
+
+uint8_t nop_3_bytes_6_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	cpu->PC++;
+	return 6;
+}
+
+uint8_t nop_3_bytes_7_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	cpu->PC++;
+	cpu->PC++;
+	return 7;
+}
+/* 
+ * Array of function pointers to opcode instruction
+ * codes 0x00 to 0xFF. NOP instructions were found here:
+ * http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
+ */
 static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
-/* 0x00 */	&brk, &ora_ind_x, NULL, NULL, NULL, &ora_zero_pg, &asl_zero_pg, NULL, &php, &ora_imm, &asl_acc, NULL, NULL, &ora_abs, &asl_abs, NULL,
-/* 0x10 */	&bpl_r, &ora_ind_y, NULL, NULL, NULL, &ora_zero_pg_x, &asl_zero_pg_x, NULL, &clc, &ora_abs_y, NULL, NULL, NULL, &ora_abs_x, &asl_abs_x, NULL,
+/* 0x00 */	&brk, &ora_ind_x, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_3_cycles, &ora_zero_pg, &asl_zero_pg, &nop_2_bytes_5_cycles, &php, &ora_imm, &asl_acc, NULL, &nop_3_bytes_4_cycles, &ora_abs, &asl_abs, &nop_3_bytes_6_cycles,
+/* 0x10 */	&bpl_r, &ora_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &ora_zero_pg_x, &asl_zero_pg_x, NULL, &clc, &ora_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &ora_abs_x, &asl_abs_x, NULL,
 /* 0x20 */	&jsr_abs, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, NULL, &plp, &and_imm, &rol_acc, NULL, &bit_abs, &and_abs, &rol_abs, NULL,
-/* 0x30 */	&bmi_r, &and_ind_y, NULL, NULL, NULL, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, NULL, NULL, NULL, &and_abs_x, &rol_abs_x, NULL,
-/* 0x40 */	&rti, &eor_ind_x, NULL, NULL, NULL, &eor_zero_pg, &lsr_zero_pg, NULL, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, NULL,
-/* 0x50 */	&bvc_r, &eor_ind_y, NULL, NULL, NULL, &eor_zero_pg_x, &lsr_zero_pg_x, NULL, &cli, &eor_abs_y, NULL, NULL, NULL, &eor_abs_x, &lsr_abs_x, NULL,
-/* 0x60 */	&rts, &adc_ind_x, NULL, NULL, NULL, &adc_zero_pg, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
-/* 0x70 */	&bvs_r, &adc_ind_y, NULL, NULL, NULL, &adc_zero_pg_x, &ror_zero_pg_x, NULL, &sei, &adc_abs_y, NULL, NULL, NULL, &adc_abs_x, &ror_abs_x, NULL,
-/* 0x80 */	NULL, &sta_ind_x, NULL, NULL, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, NULL, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, NULL,
-/* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, NULL, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
-/* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, NULL, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, NULL, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, NULL,
-/* 0xB0 */	&bcs_r, &lda_ind_y, NULL, NULL, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, NULL, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, NULL,
-/* 0xC0 */	&cpy_imm, &cmp_ind_x, NULL, NULL, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, NULL, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, NULL,
-/* 0xD0 */	&bne_r, &cmp_ind_y, NULL, NULL, NULL, &cmp_zero_pg_x, &dec_zero_pg_x, NULL, &cld, &cmp_abs_y, NULL, NULL, NULL, &cmp_abs_x, &dec_abs_x, NULL,
-/* 0xE0 */	&cpx_imm, &sbc_ind_x, NULL, NULL, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, NULL, &inx, &sbc_imm, &nop, NULL, &cpx_abs, &sbc_abs, &inc_abs, NULL,
-/* 0xF0 */	&beq_r, &sbc_ind_y, NULL, NULL, NULL, &sbc_zero_pg_x, &inc_zero_pg_x, NULL, &sed, &sbc_abs_y, NULL, NULL, NULL, &sbc_abs_x, &inc_abs_x, NULL
+/* 0x30 */	&bmi_r, &and_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &and_abs_x, &rol_abs_x, NULL,
+/* 0x40 */	&rti, &eor_ind_x, NULL, NULL, &nop_2_bytes_3_cycles, &eor_zero_pg, &lsr_zero_pg, NULL, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, NULL,
+/* 0x50 */	&bvc_r, &eor_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &eor_zero_pg_x, &lsr_zero_pg_x, NULL, &cli, &eor_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &eor_abs_x, &lsr_abs_x, NULL,
+/* 0x60 */	&rts, &adc_ind_x, NULL, NULL, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
+/* 0x70 */	&bvs_r, &adc_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, NULL, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, NULL,
+/* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, NULL, &nop_2_bytes_6_cycles, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &nop_2_bytes_3_cycles, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &nop_3_bytes_4_cycles,
+/* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &nop_2_bytes_4_cycles, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
+/* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &nop_2_bytes_6_cycles, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &nop_2_bytes_3_cycles, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, &nop_3_bytes_4_cycles,
+/* 0xB0 */	&bcs_r, &lda_ind_y, NULL, &nop_2_bytes_5_cycles, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, &nop_2_bytes_4_cycles, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, &nop_3_bytes_4_cycles,
+/* 0xC0 */	&cpy_imm, &cmp_ind_x, NULL, &nop_2_bytes_8_cycles, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &nop_2_bytes_5_cycles, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, &nop_3_bytes_6_cycles,
+/* 0xD0 */	&bne_r, &cmp_ind_y, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_4_cycles, &cmp_zero_pg_x, &dec_zero_pg_x, &nop_2_bytes_6_cycles, &cld, &cmp_abs_y, &nop_1_bytes_2_cycles, &nop_3_bytes_7_cycles, &nop_3_bytes_4_cycles, &cmp_abs_x, &dec_abs_x, &nop_3_bytes_7_cycles,
+/* 0xE0 */	&cpx_imm, &sbc_ind_x, NULL, &nop_2_bytes_8_cycles, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, &nop_2_bytes_5_cycles, &inx, &sbc_imm, &nop, &nop_2_bytes_2_cycles, &cpx_abs, &sbc_abs, &inc_abs, &nop_3_bytes_6_cycles,
+/* 0xF0 */	&beq_r, &sbc_ind_y, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_4_cycles, &sbc_zero_pg_x, &inc_zero_pg_x, &nop_2_bytes_6_cycles, &sed, &sbc_abs_y, &nop_1_bytes_2_cycles, &nop_3_bytes_7_cycles, &nop_3_bytes_4_cycles, &sbc_abs_x, &inc_abs_x, &nop_3_bytes_7_cycles
 };
 
 /* Public functions */
