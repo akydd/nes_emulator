@@ -465,6 +465,23 @@ inline void asl(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	}
 }
 
+inline void slo(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	uint8_t val = MEM_read(memory, addr);
+	uint8_t new_val = val<<1;
+	MEM_write(memory, addr, new_val);
+	
+	cpu->A = cpu->A | new_val;
+
+	CPU_set_zero_flag_for_value(cpu, new_val);
+	CPU_set_negative_flag_for_value(cpu, new_val);
+	if((val & N_FLAG) == N_FLAG) {
+		cpu->P |= C_FLAG;
+	} else {
+		cpu->P &= ~(C_FLAG);
+	}
+}
+
 inline void bit(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	uint8_t val = MEM_read(memory, addr);
@@ -574,6 +591,20 @@ inline void adc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	CPU_set_negative_flag_for_value(cpu, sum);
 	CPU_set_carry_flag_on_add(cpu, a, b);
 	CPU_set_overflow_flag_for_adc(cpu, a, b, sum);
+}
+
+inline void aac(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	cpu->A &= MEM_read(memory, addr);
+
+	CPU_set_zero_flag_for_value(cpu, cpu->A);
+	CPU_set_negative_flag_for_value(cpu, cpu->A);
+
+	if(CPU_negative_flag_is_set(cpu)) {
+		set_status_flag(cpu, C_FLAG);
+	} else {
+		clear_status_flag(cpu, C_FLAG);
+	}
 }
 
 inline void sbc(uint16_t addr, struct cpu *cpu, struct memory *memory)
@@ -2246,15 +2277,82 @@ uint8_t nop_3_bytes_7_cycles(struct cpu *cpu, struct memory *memory) {
 	cpu->PC++;
 	return 7;
 }
+
+/* "Illegal" opcodes */
+
+uint8_t aac_imm(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	aac(addr, cpu, memory);
+
+	return 2;
+}
+
+uint8_t slo_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t slo_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t slo_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 5;
+}
+
+uint8_t slo_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t slo_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t slo_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 7;
+}
+
+uint8_t slo_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu, memory);
+	slo(addr, cpu, memory);
+
+	return 7;
+}
+
 /* 
  * Array of function pointers to opcode instruction
  * codes 0x00 to 0xFF. NOP instructions were found here:
  * http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
  */
 static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
-/* 0x00 */	&brk, &ora_ind_x, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_3_cycles, &ora_zero_pg, &asl_zero_pg, &nop_2_bytes_5_cycles, &php, &ora_imm, &asl_acc, NULL, &nop_3_bytes_4_cycles, &ora_abs, &asl_abs, &nop_3_bytes_6_cycles,
-/* 0x10 */	&bpl_r, &ora_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &ora_zero_pg_x, &asl_zero_pg_x, NULL, &clc, &ora_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &ora_abs_x, &asl_abs_x, NULL,
-/* 0x20 */	&jsr_abs, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, NULL, &plp, &and_imm, &rol_acc, NULL, &bit_abs, &and_abs, &rol_abs, NULL,
+/* 0x00 */	&brk, &ora_ind_x, NULL, &slo_ind_x, &nop_2_bytes_3_cycles, &ora_zero_pg, &asl_zero_pg, &slo_zero_pg, &php, &ora_imm, &asl_acc, &aac_imm, &nop_3_bytes_4_cycles, &ora_abs, &asl_abs, &slo_abs,
+/* 0x10 */	&bpl_r, &ora_ind_y, NULL, &slo_ind_y, &nop_2_bytes_4_cycles, &ora_zero_pg_x, &asl_zero_pg_x, &slo_zero_pg_x, &clc, &ora_abs_y, &nop_1_bytes_2_cycles, &slo_abs_y, &nop_3_bytes_4_cycles, &ora_abs_x, &asl_abs_x, &slo_abs_x,
+/* 0x20 */	&jsr_abs, &and_ind_x, NULL, NULL, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, NULL, &plp, &and_imm, &rol_acc, &aac_imm, &bit_abs, &and_abs, &rol_abs, NULL,
 /* 0x30 */	&bmi_r, &and_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &and_zero_pg_x, &rol_zero_pg_x, NULL, &sec, &and_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &and_abs_x, &rol_abs_x, NULL,
 /* 0x40 */	&rti, &eor_ind_x, NULL, NULL, &nop_2_bytes_3_cycles, &eor_zero_pg, &lsr_zero_pg, NULL, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, NULL,
 /* 0x50 */	&bvc_r, &eor_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &eor_zero_pg_x, &lsr_zero_pg_x, NULL, &cli, &eor_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &eor_abs_x, &lsr_abs_x, NULL,
