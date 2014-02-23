@@ -597,6 +597,45 @@ inline void ror(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	CPU_set_zero_flag_for_value(cpu, result);
 }
 
+inline void rra(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	uint8_t val = MEM_read(memory, addr);
+	uint8_t result = val>>1;
+
+	/* shift carry bit into high bit */
+	if (CPU_carry_flag_is_set(cpu))
+	{
+		result |= 0x80;
+	}
+
+	/* shift bit 0 into carry flag */
+	if (low_bit_is_set(val))
+	{
+		set_status_flag(cpu, C_FLAG);
+	} else {
+		clear_status_flag(cpu, C_FLAG);
+	}
+
+	MEM_write(memory, addr, result);
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+
+	uint8_t a = cpu->A;
+	uint8_t b = result;
+
+	uint8_t sum = a + b;
+	if(CPU_carry_flag_is_set(cpu))
+	{
+		sum++;
+	}
+	cpu->A = sum;
+
+	// CPU_set_zero_flag_for_value(cpu, sum);
+	// CPU_set_negative_flag_for_value(cpu, sum);
+	// CPU_set_carry_flag_on_add(cpu, a, b);
+	CPU_set_overflow_flag_for_adc(cpu, a, b, sum);
+}
+
 inline void lsr(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	uint8_t val = MEM_read(memory, addr);
@@ -2504,9 +2543,65 @@ uint8_t sre_abs_y(struct cpu *cpu, struct memory *memory) {
 	return 7;
 }
 
+uint8_t rra_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 5;
+}
+
+uint8_t rra_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t rra_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t rra_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t rra_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t rra_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 7;
+}
+
+uint8_t rra_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu, memory);
+	rra(addr, cpu, memory);
+
+	return 7;
+}
+
 /* 
  * Array of function pointers to opcode instruction
- * codes 0x00 to 0xFF. NOP instructions were found here:
+ * codes 0x00 to 0xFF. NOP and "illegal" instructions were found here:
  * http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
  */
 static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
@@ -2516,8 +2611,8 @@ static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x30 */	&bmi_r, &and_ind_y, NULL, &rla_ind_y, &nop_2_bytes_4_cycles, &and_zero_pg_x, &rol_zero_pg_x, &rla_zero_pg_x, &sec, &and_abs_y, &nop_1_bytes_2_cycles, &rla_abs_y, &nop_3_bytes_4_cycles, &and_abs_x, &rol_abs_x, &rla_abs_x,
 /* 0x40 */	&rti, &eor_ind_x, NULL, &sre_ind_x, &nop_2_bytes_3_cycles, &eor_zero_pg, &lsr_zero_pg, &sre_zero_pg, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, &sre_abs,
 /* 0x50 */	&bvc_r, &eor_ind_y, NULL, &sre_ind_y, &nop_2_bytes_4_cycles, &eor_zero_pg_x, &lsr_zero_pg_x, &sre_zero_pg_x, &cli, &eor_abs_y, &nop_1_bytes_2_cycles, &sre_abs_y, &nop_3_bytes_4_cycles, &eor_abs_x, &lsr_abs_x, &sre_abs_x,
-/* 0x60 */	&rts, &adc_ind_x, NULL, NULL, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, NULL, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, NULL,
-/* 0x70 */	&bvs_r, &adc_ind_y, NULL, NULL, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, NULL, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, NULL, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, NULL,
+/* 0x60 */	&rts, &adc_ind_x, NULL, &rra_ind_x, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, &rra_zero_pg, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, &rra_abs,
+/* 0x70 */	&bvs_r, &adc_ind_y, NULL, &rra_ind_y, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, &rra_zero_pg_x, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, &rra_abs_y, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, &rra_abs_x,
 /* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, NULL, &nop_2_bytes_6_cycles, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &nop_2_bytes_3_cycles, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &nop_3_bytes_4_cycles,
 /* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &nop_2_bytes_4_cycles, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
 /* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &nop_2_bytes_6_cycles, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &nop_2_bytes_3_cycles, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, &nop_3_bytes_4_cycles,
