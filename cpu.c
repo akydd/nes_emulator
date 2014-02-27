@@ -597,45 +597,6 @@ inline void ror(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	CPU_set_zero_flag_for_value(cpu, result);
 }
 
-inline void rra(uint16_t addr, struct cpu *cpu, struct memory *memory)
-{
-	uint8_t val = MEM_read(memory, addr);
-	uint8_t result = val>>1;
-
-	/* shift carry bit into high bit */
-	if (CPU_carry_flag_is_set(cpu))
-	{
-		result |= 0x80;
-	}
-
-	/* shift bit 0 into carry flag */
-	if (low_bit_is_set(val))
-	{
-		set_status_flag(cpu, C_FLAG);
-	} else {
-		clear_status_flag(cpu, C_FLAG);
-	}
-
-	MEM_write(memory, addr, result);
-	CPU_set_negative_flag_for_value(cpu, result);
-	CPU_set_zero_flag_for_value(cpu, result);
-
-	uint8_t a = cpu->A;
-	uint8_t b = result;
-
-	uint8_t sum = a + b;
-	if(CPU_carry_flag_is_set(cpu))
-	{
-		sum++;
-	}
-	cpu->A = sum;
-
-	// CPU_set_zero_flag_for_value(cpu, sum);
-	// CPU_set_negative_flag_for_value(cpu, sum);
-	// CPU_set_carry_flag_on_add(cpu, a, b);
-	CPU_set_overflow_flag_for_adc(cpu, a, b, sum);
-}
-
 inline void lsr(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	uint8_t val = MEM_read(memory, addr);
@@ -680,19 +641,15 @@ inline void adc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	CPU_set_overflow_flag_for_adc(cpu, a, b, sum);
 }
 
+inline void rra(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	ror(addr, cpu, memory);
+	adc(addr, cpu, memory);
+}
+
 inline void sax(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	MEM_write(memory, addr, cpu->X & cpu->A);
-}
-
-inline void lax(uint16_t addr, struct cpu *cpu, struct memory *memory)
-{
-	uint8_t val = MEM_read(memory, addr);
-	cpu->A = val;
-	cpu->X = val;
-
-	CPU_set_zero_flag_for_value(cpu, val);
-	CPU_set_negative_flag_for_value(cpu, val);
 }
 
 inline void aac(uint16_t addr, struct cpu *cpu, struct memory *memory)
@@ -761,6 +718,12 @@ inline void lda(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	cpu->A = MEM_read(memory, addr);
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
+}
+
+inline void lax(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	lda(addr, cpu, memory);
+	ldx(addr, cpu, memory);
 }
 
 inline void compare(uint8_t a, uint8_t b, struct cpu *cpu)
