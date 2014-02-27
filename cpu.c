@@ -685,6 +685,16 @@ inline void sax(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	MEM_write(memory, addr, cpu->X & cpu->A);
 }
 
+inline void lax(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	uint8_t val = MEM_read(memory, addr);
+	cpu->A = val;
+	cpu->X = val;
+
+	CPU_set_zero_flag_for_value(cpu, val);
+	CPU_set_negative_flag_for_value(cpu, val);
+}
+
 inline void aac(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	cpu->A &= MEM_read(memory, addr);
@@ -2636,6 +2646,62 @@ uint8_t sax_abs(struct cpu *cpu, struct memory *memory) {
 	return 4;
 }
 
+uint8_t lax_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu, memory);
+	lax(addr, cpu, memory);
+
+	return 3;
+}
+
+uint8_t lax_zero_pg_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg_y(cpu, memory);
+	lax(addr, cpu, memory);
+
+	return 4;
+}
+
+uint8_t lax_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu, memory);
+	lax(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t lax_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu, memory);
+	lax(addr, cpu, memory);
+
+	return 5;
+}
+
+uint8_t lax_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_(cpu, memory);
+	lax(addr, cpu, memory);
+
+	return 4;
+}
+
+uint8_t lax_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu, memory);
+	lax(addr, cpu, memory);
+
+	return 4;
+}
+
+uint8_t lax_imm(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	lax(addr, cpu, memory);
+
+	return 2;
+}
+
 /* 
  * Array of function pointers to opcode instruction
  * codes 0x00 to 0xFF. NOP and "illegal" instructions were found here:
@@ -2652,8 +2718,8 @@ static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x70 */	&bvs_r, &adc_ind_y, NULL, &rra_ind_y, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, &rra_zero_pg_x, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, &rra_abs_y, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, &rra_abs_x,
 /* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, NULL, &sax_ind_x, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &sax_zero_pg, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &sax_abs,
 /* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &sax_zero_pg_y, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
-/* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &nop_2_bytes_6_cycles, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &nop_2_bytes_3_cycles, &tay, &lda_imm, &tax, NULL, &ldy_abs, &lda_abs, &ldx_abs, &nop_3_bytes_4_cycles,
-/* 0xB0 */	&bcs_r, &lda_ind_y, NULL, &nop_2_bytes_5_cycles, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, &nop_2_bytes_4_cycles, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, &nop_3_bytes_4_cycles,
+/* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &lax_ind_x, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &lax_zero_pg, &tay, &lda_imm, &tax, &lax_imm, &ldy_abs, &lda_abs, &ldx_abs, &lax_abs,
+/* 0xB0 */	&bcs_r, &lda_ind_y, NULL, &lax_ind_y, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, &lax_zero_pg_y, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, &lax_abs_y,
 /* 0xC0 */	&cpy_imm, &cmp_ind_x, NULL, &nop_2_bytes_8_cycles, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &nop_2_bytes_5_cycles, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, &nop_3_bytes_6_cycles,
 /* 0xD0 */	&bne_r, &cmp_ind_y, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_4_cycles, &cmp_zero_pg_x, &dec_zero_pg_x, &nop_2_bytes_6_cycles, &cld, &cmp_abs_y, &nop_1_bytes_2_cycles, &nop_3_bytes_7_cycles, &nop_3_bytes_4_cycles, &cmp_abs_x, &dec_abs_x, &nop_3_bytes_7_cycles,
 /* 0xE0 */	&cpx_imm, &sbc_ind_x, NULL, &nop_2_bytes_8_cycles, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, &nop_2_bytes_5_cycles, &inx, &sbc_imm, &nop, &nop_2_bytes_2_cycles, &cpx_abs, &sbc_abs, &inc_abs, &nop_3_bytes_6_cycles,
