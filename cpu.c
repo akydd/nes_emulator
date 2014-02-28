@@ -2779,13 +2779,13 @@ static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x50 */	&bvc_r, &eor_ind_y, NULL, &sre_ind_y, &nop_2_bytes_4_cycles, &eor_zero_pg_x, &lsr_zero_pg_x, &sre_zero_pg_x, &cli, &eor_abs_y, &nop_1_bytes_2_cycles, &sre_abs_y, &nop_3_bytes_4_cycles, &eor_abs_x, &lsr_abs_x, &sre_abs_x,
 /* 0x60 */	&rts, &adc_ind_x, NULL, &rra_ind_x, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, &rra_zero_pg, &pla, &adc_imm, &ror_acc, &arr_imm, &jmp_ind, &adc_abs, &ror_abs, &rra_abs,
 /* 0x70 */	&bvs_r, &adc_ind_y, NULL, &rra_ind_y, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, &rra_zero_pg_x, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, &rra_abs_y, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, &rra_abs_x,
-/* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, NULL, &sax_ind_x, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &sax_zero_pg, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &sax_abs,
+/* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, &nop_2_bytes_2_cycles, &sax_ind_x, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &sax_zero_pg, &dey, &nop_2_bytes_2_cycles, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &sax_abs,
 /* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &sax_zero_pg_y, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
 /* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &lax_ind_x, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &lax_zero_pg, &tay, &lda_imm, &tax, &lax_imm, &ldy_abs, &lda_abs, &ldx_abs, &lax_abs,
 /* 0xB0 */	&bcs_r, &lda_ind_y, NULL, &lax_ind_y, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, &lax_zero_pg_y, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, &lax_abs_y,
-/* 0xC0 */	&cpy_imm, &cmp_ind_x, NULL, &dcp_ind_x, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &dcp_zero_pg, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, &dcp_abs,
+/* 0xC0 */	&cpy_imm, &cmp_ind_x, &nop_2_bytes_2_cycles, &dcp_ind_x, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &dcp_zero_pg, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, &dcp_abs,
 /* 0xD0 */	&bne_r, &cmp_ind_y, NULL, &dcp_ind_y, &nop_2_bytes_4_cycles, &cmp_zero_pg_x, &dec_zero_pg_x, &dcp_zero_pg_x, &cld, &cmp_abs_y, &nop_1_bytes_2_cycles, &dcp_abs_y, &nop_3_bytes_4_cycles, &cmp_abs_x, &dec_abs_x, &dcp_abs_x,
-/* 0xE0 */	&cpx_imm, &sbc_ind_x, NULL, &isc_ind_x, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, &isc_zero_pg, &inx, &sbc_imm, &nop, &sbc_imm, &cpx_abs, &sbc_abs, &inc_abs, &isc_abs,
+/* 0xE0 */	&cpx_imm, &sbc_ind_x, &nop_2_bytes_2_cycles, &isc_ind_x, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, &isc_zero_pg, &inx, &sbc_imm, &nop, &sbc_imm, &cpx_abs, &sbc_abs, &inc_abs, &isc_abs,
 /* 0xF0 */	&beq_r, &sbc_ind_y, NULL, &isc_ind_y, &nop_2_bytes_4_cycles, &sbc_zero_pg_x, &inc_zero_pg_x, &isc_zero_pg_x, &sed, &sbc_abs_y, &nop_1_bytes_2_cycles, &isc_abs_y, &nop_3_bytes_4_cycles, &sbc_abs_x, &inc_abs_x, &isc_abs_x
 };
 
