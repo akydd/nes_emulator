@@ -467,67 +467,8 @@ inline void asl(uint16_t addr, struct cpu *cpu, struct memory *memory)
 
 inline void slo(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
-	uint8_t val = MEM_read(memory, addr);
-	uint8_t new_val = val<<1;
-	MEM_write(memory, addr, new_val);
-	
-	cpu->A |= new_val;
-
-	CPU_set_zero_flag_for_value(cpu, new_val);
-	CPU_set_negative_flag_for_value(cpu, new_val);
-	if((val & N_FLAG) == N_FLAG) {
-		cpu->P |= C_FLAG;
-	} else {
-		cpu->P &= ~(C_FLAG);
-	}
-}
-
-inline void rla(uint16_t addr, struct cpu *cpu, struct memory *memory)
-{
-	uint8_t val = MEM_read(memory, addr);
-	uint8_t result = val<<1;
-
-	/* shift carry bit into low bit */
-	if (CPU_carry_flag_is_set(cpu))
-	{
-		result |= 0x01;
-	}
-
-	/* shift bit 7 into carry flag */
-	if (high_bit_is_set(val))
-	{
-		set_status_flag(cpu, C_FLAG);
-	} else {
-		clear_status_flag(cpu, C_FLAG);
-	}
-
-	MEM_write(memory, addr, result);
-	
-	CPU_set_negative_flag_for_value(cpu, result);
-	CPU_set_zero_flag_for_value(cpu, result);
-
-	cpu->A &= result;
-}
-
-inline void sre(uint16_t addr, struct cpu *cpu, struct memory *memory)
-{
-	uint8_t val = MEM_read(memory, addr);
-	uint8_t result = val>>1;
-
-	/* shift old bit 0 into the carry flag */
-	if(low_bit_is_set(val))
-	{
-		set_status_flag(cpu, C_FLAG);
-	} else {
-		clear_status_flag(cpu, C_FLAG);
-	}
-
-	MEM_write(memory, addr, result);
-
-	CPU_set_negative_flag_for_value(cpu, result);
-	CPU_set_zero_flag_for_value(cpu, result);
-
-	cpu->A ^= result;
+	asl(addr, cpu, memory);
+	ora(addr, cpu, memory);
 }
 
 inline void bit(uint16_t addr, struct cpu *cpu, struct memory *memory)
@@ -573,6 +514,12 @@ inline void rol(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	CPU_set_zero_flag_for_value(cpu, result);
 }
 
+inline void rla(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	rol(addr, cpu, memory);
+	and(addr, cpu, memory);
+}
+
 inline void ror(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	uint8_t val = MEM_read(memory, addr);
@@ -613,6 +560,12 @@ inline void lsr(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	MEM_write(memory, addr, result);
 	CPU_set_negative_flag_for_value(cpu, result);
 	CPU_set_zero_flag_for_value(cpu, result);
+}
+
+inline void sre(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	lsr(addr, cpu, memory);
+	eor(addr, cpu, memory);
 }
 
 inline void jmp(uint16_t addr, struct cpu *cpu)
@@ -768,6 +721,12 @@ inline void dec(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	CPU_set_negative_flag_for_value(cpu, result);
 }
 
+inline void dcp(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	dec(addr, cpu, memory);
+	cmp(addr, cpu, memory);
+}
+
 inline void inc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 {
 	uint8_t val = MEM_read(memory, addr);
@@ -775,6 +734,12 @@ inline void inc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 	MEM_write(memory, addr, result);
 	CPU_set_zero_flag_for_value(cpu, result);
 	CPU_set_negative_flag_for_value(cpu, result);
+}
+
+inline void isc(uint16_t addr, struct cpu *cpu, struct memory *memory)
+{
+	inc(addr, cpu, memory);
+	sbc(addr, cpu, memory);
 }
 
 /* 
@@ -2665,6 +2630,118 @@ uint8_t lax_imm(struct cpu *cpu, struct memory *memory) {
 	return 2;
 }
 
+uint8_t dcp_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 5;
+}
+
+uint8_t dcp_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t dcp_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t dcp_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t dcp_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t dcp_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 7;
+}
+
+uint8_t dcp_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu, memory);
+	dcp(addr, cpu, memory);
+
+	return 7;
+}
+
+uint8_t isc_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 5;
+}
+
+uint8_t isc_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = zero_pg_x(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t isc_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_x(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t isc_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = ind_y(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 8;
+}
+
+uint8_t isc_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 6;
+}
+
+uint8_t isc_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 7;
+}
+
+uint8_t isc_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu, memory);
+	isc(addr, cpu, memory);
+
+	return 7;
+}
+
 /* 
  * Array of function pointers to opcode instruction
  * codes 0x00 to 0xFF. NOP and "illegal" instructions were found here:
@@ -2683,10 +2760,10 @@ static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &sax_zero_pg_y, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
 /* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &lax_ind_x, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &lax_zero_pg, &tay, &lda_imm, &tax, &lax_imm, &ldy_abs, &lda_abs, &ldx_abs, &lax_abs,
 /* 0xB0 */	&bcs_r, &lda_ind_y, NULL, &lax_ind_y, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, &lax_zero_pg_y, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, &lax_abs_y,
-/* 0xC0 */	&cpy_imm, &cmp_ind_x, NULL, &nop_2_bytes_8_cycles, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &nop_2_bytes_5_cycles, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, &nop_3_bytes_6_cycles,
-/* 0xD0 */	&bne_r, &cmp_ind_y, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_4_cycles, &cmp_zero_pg_x, &dec_zero_pg_x, &nop_2_bytes_6_cycles, &cld, &cmp_abs_y, &nop_1_bytes_2_cycles, &nop_3_bytes_7_cycles, &nop_3_bytes_4_cycles, &cmp_abs_x, &dec_abs_x, &nop_3_bytes_7_cycles,
-/* 0xE0 */	&cpx_imm, &sbc_ind_x, NULL, &nop_2_bytes_8_cycles, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, &nop_2_bytes_5_cycles, &inx, &sbc_imm, &nop, &nop_2_bytes_2_cycles, &cpx_abs, &sbc_abs, &inc_abs, &nop_3_bytes_6_cycles,
-/* 0xF0 */	&beq_r, &sbc_ind_y, NULL, &nop_2_bytes_8_cycles, &nop_2_bytes_4_cycles, &sbc_zero_pg_x, &inc_zero_pg_x, &nop_2_bytes_6_cycles, &sed, &sbc_abs_y, &nop_1_bytes_2_cycles, &nop_3_bytes_7_cycles, &nop_3_bytes_4_cycles, &sbc_abs_x, &inc_abs_x, &nop_3_bytes_7_cycles
+/* 0xC0 */	&cpy_imm, &cmp_ind_x, NULL, &dcp_ind_x, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &dcp_zero_pg, &iny, &cmp_imm, &dex, NULL, &cpy_abs, &cmp_abs, &dec_abs, &dcp_abs,
+/* 0xD0 */	&bne_r, &cmp_ind_y, NULL, &dcp_ind_y, &nop_2_bytes_4_cycles, &cmp_zero_pg_x, &dec_zero_pg_x, &dec_zero_pg_x, &cld, &cmp_abs_y, &nop_1_bytes_2_cycles, &dcp_abs_y, &nop_3_bytes_4_cycles, &cmp_abs_x, &dec_abs_x, &dcp_abs_x,
+/* 0xE0 */	&cpx_imm, &sbc_ind_x, NULL, &isc_ind_x, &cpx_zero_pg, &sbc_zero_pg, &inc_zero_pg, &isc_zero_pg, &inx, &sbc_imm, &nop, &nop_2_bytes_2_cycles, &cpx_abs, &sbc_abs, &inc_abs, &isc_abs,
+/* 0xF0 */	&beq_r, &sbc_ind_y, NULL, &isc_ind_y, &nop_2_bytes_4_cycles, &sbc_zero_pg_x, &inc_zero_pg_x, &isc_zero_pg_x, &sed, &sbc_abs_y, &nop_1_bytes_2_cycles, &isc_abs_y, &nop_3_bytes_4_cycles, &sbc_abs_x, &inc_abs_x, &isc_abs_x
 };
 
 /* Public functions */
