@@ -2742,6 +2742,60 @@ uint8_t isc_abs_y(struct cpu *cpu, struct memory *memory) {
 	return 7;
 }
 
+uint8_t alr_imm(struct cpu *cpu, struct memory *memory) {
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	and(addr, cpu, memory);
+
+	uint8_t val = cpu->A;
+	uint8_t result = val>>1;
+
+	/* shift old bit 0 into the carry flag */
+	if(low_bit_is_set(val))
+	{
+		set_status_flag(cpu, C_FLAG);
+	} else {
+		clear_status_flag(cpu, C_FLAG);
+	}
+
+	CPU_set_zero_flag_for_value(cpu, result);
+	CPU_set_negative_flag_for_value(cpu, result);
+
+	cpu->A = result;
+
+	return 2;
+}
+
+uint8_t arr_imm(struct cpu *cpu, struct memory *memory)
+{
+	cpu->PC++;
+	uint16_t addr = imm(cpu);
+	and(addr, cpu, memory);
+
+	uint8_t val = cpu->A;
+	uint8_t result = val>>1;
+
+	/* shift carry bit into high bit */
+	if (CPU_carry_flag_is_set(cpu))
+	{
+		result |= 0x80;
+	}
+
+	/* shift bit 0 into carry flag */
+	if (low_bit_is_set(val))
+	{
+		set_status_flag(cpu, C_FLAG);
+	} else {
+		clear_status_flag(cpu, C_FLAG);
+	}
+
+	cpu->A = result;
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+
+	return 2;
+}
+
 /* 
  * Array of function pointers to opcode instruction
  * codes 0x00 to 0xFF. NOP and "illegal" instructions were found here:
@@ -2752,9 +2806,9 @@ static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x10 */	&bpl_r, &ora_ind_y, NULL, &slo_ind_y, &nop_2_bytes_4_cycles, &ora_zero_pg_x, &asl_zero_pg_x, &slo_zero_pg_x, &clc, &ora_abs_y, &nop_1_bytes_2_cycles, &slo_abs_y, &nop_3_bytes_4_cycles, &ora_abs_x, &asl_abs_x, &slo_abs_x,
 /* 0x20 */	&jsr_abs, &and_ind_x, NULL, &rla_ind_x, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, &rla_zero_pg, &plp, &and_imm, &rol_acc, &aac_imm, &bit_abs, &and_abs, &rol_abs, &rla_abs,
 /* 0x30 */	&bmi_r, &and_ind_y, NULL, &rla_ind_y, &nop_2_bytes_4_cycles, &and_zero_pg_x, &rol_zero_pg_x, &rla_zero_pg_x, &sec, &and_abs_y, &nop_1_bytes_2_cycles, &rla_abs_y, &nop_3_bytes_4_cycles, &and_abs_x, &rol_abs_x, &rla_abs_x,
-/* 0x40 */	&rti, &eor_ind_x, NULL, &sre_ind_x, &nop_2_bytes_3_cycles, &eor_zero_pg, &lsr_zero_pg, &sre_zero_pg, &pha, &eor_imm, &lsr_acc, NULL, &jmp_abs, &eor_abs, &lsr_abs, &sre_abs,
+/* 0x40 */	&rti, &eor_ind_x, NULL, &sre_ind_x, &nop_2_bytes_3_cycles, &eor_zero_pg, &lsr_zero_pg, &sre_zero_pg, &pha, &eor_imm, &lsr_acc, &alr_imm, &jmp_abs, &eor_abs, &lsr_abs, &sre_abs,
 /* 0x50 */	&bvc_r, &eor_ind_y, NULL, &sre_ind_y, &nop_2_bytes_4_cycles, &eor_zero_pg_x, &lsr_zero_pg_x, &sre_zero_pg_x, &cli, &eor_abs_y, &nop_1_bytes_2_cycles, &sre_abs_y, &nop_3_bytes_4_cycles, &eor_abs_x, &lsr_abs_x, &sre_abs_x,
-/* 0x60 */	&rts, &adc_ind_x, NULL, &rra_ind_x, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, &rra_zero_pg, &pla, &adc_imm, &ror_acc, NULL, &jmp_ind, &adc_abs, &ror_abs, &rra_abs,
+/* 0x60 */	&rts, &adc_ind_x, NULL, &rra_ind_x, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, &rra_zero_pg, &pla, &adc_imm, &ror_acc, &arr_imm, &jmp_ind, &adc_abs, &ror_abs, &rra_abs,
 /* 0x70 */	&bvs_r, &adc_ind_y, NULL, &rra_ind_y, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, &rra_zero_pg_x, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, &rra_abs_y, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, &rra_abs_x,
 /* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, NULL, &sax_ind_x, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &sax_zero_pg, &dey, NULL, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &sax_abs,
 /* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &sax_zero_pg_y, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
