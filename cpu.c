@@ -2776,6 +2776,34 @@ uint8_t axs_imm(struct cpu *cpu, struct memory *memory)
 	return 2;
 }
 
+uint8_t shy_abs_x(struct cpu *cpu, struct memory *memory)
+{
+	cpu->PC++;
+	uint16_t addr = abs_x(cpu, memory);
+	uint8_t high = (uint8_t)(addr >> 8); 
+	uint8_t result = cpu->Y & (high + 1);
+	MEM_write(memory, addr, result);
+
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+
+	return 5;
+}
+
+uint8_t shx_abs_y(struct cpu *cpu, struct memory *memory)
+{
+	cpu->PC++;
+	uint16_t addr = abs_y(cpu, memory);
+	uint8_t high = (uint8_t)(addr >> 8); 
+	uint8_t result = cpu->X & (high + 1);
+	MEM_write(memory, addr, result);
+
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+
+	return 5;
+}
+
 /* 
  * Array of function pointers to opcode instruction
  * codes 0x00 to 0xFF. NOP and "illegal" instructions were found here:
@@ -2791,7 +2819,7 @@ static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x60 */	&rts, &adc_ind_x, NULL, &rra_ind_x, &nop_2_bytes_3_cycles, &adc_zero_pg, &ror_zero_pg, &rra_zero_pg, &pla, &adc_imm, &ror_acc, &arr_imm, &jmp_ind, &adc_abs, &ror_abs, &rra_abs,
 /* 0x70 */	&bvs_r, &adc_ind_y, NULL, &rra_ind_y, &nop_2_bytes_4_cycles, &adc_zero_pg_x, &ror_zero_pg_x, &rra_zero_pg_x, &sei, &adc_abs_y, &nop_1_bytes_2_cycles, &rra_abs_y, &nop_3_bytes_4_cycles, &adc_abs_x, &ror_abs_x, &rra_abs_x,
 /* 0x80 */	&nop_2_bytes_2_cycles, &sta_ind_x, &nop_2_bytes_2_cycles, &sax_ind_x, &sty_zero_pg, &sta_zero_pg, &stx_zero_pg, &sax_zero_pg, &dey, &nop_2_bytes_2_cycles, &txa, NULL, &sty_abs, &sta_abs, &stx_abs, &sax_abs,
-/* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &sax_zero_pg_y, &tya, &sta_abs_y, &txs, NULL, NULL, &sta_abs_x, NULL, NULL,
+/* 0x90 */	&bcc_r, &sta_ind_y, NULL, NULL, &sty_zero_pg_x, &sta_zero_pg_x, &stx_zero_pg_y, &sax_zero_pg_y, &tya, &sta_abs_y, &txs, NULL, &shy_abs_x, &sta_abs_x, &shx_abs_y, NULL,
 /* 0xA0 */	&ldy_imm, &lda_ind_x, &ldx_imm, &lax_ind_x, &ldy_zero_pg, &lda_zero_pg, &ldx_zero_pg, &lax_zero_pg, &tay, &lda_imm, &tax, &lax_imm, &ldy_abs, &lda_abs, &ldx_abs, &lax_abs,
 /* 0xB0 */	&bcs_r, &lda_ind_y, NULL, &lax_ind_y, &ldy_zero_pg_x, &lda_zero_pg_x, &ldx_zero_pg_y, &lax_zero_pg_y, &clv, &lda_abs_y, &tsx, NULL, &ldy_abs_x, &lda_abs_x, &ldx_abs_y, &lax_abs_y,
 /* 0xC0 */	&cpy_imm, &cmp_ind_x, &nop_2_bytes_2_cycles, &dcp_ind_x, &cpy_zero_pg, &cmp_zero_pg, &dec_zero_pg, &dcp_zero_pg, &iny, &cmp_imm, &dex, &axs_imm, &cpy_abs, &cmp_abs, &dec_abs, &dcp_abs,
