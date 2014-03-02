@@ -149,6 +149,12 @@ void MEM_load_rom(struct memory *mem, uint8_t num_banks, FILE *nes_file)
 
 void MEM_print_test_status(struct memory *mem)
 {
-	uint8_t *a = &(mem->memory[0x6004]);
-	(void)printf("%s", (char *)a);
+	uint8_t code = mem->memory[0x6000];
+	if (code < 0x80) {
+		uint8_t *a = &(mem->memory[0x6004]);
+		while(*a != 0) {
+			(void)printf("%c", *a);
+			a++;
+		}
+	}
 }
