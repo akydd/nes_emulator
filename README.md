@@ -5,9 +5,13 @@ My attempt at writing a NES emulator
 ## Compiling
     make nes_emulator
 
-To make with debugging info printed to the console,
+To build with debugging info printed to the console,
 
     make CFLAGS='-Wall -Wextra -DDEBUG' nes_emulator
+
+To build and display the output of Blarggs tests,
+
+    make CFLAGS='-Wall -Wextra -DBLARGG nes_emulator
 
 ## High Level Design
 

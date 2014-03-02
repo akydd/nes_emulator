@@ -2871,7 +2871,7 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 {
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(memory, cpu->PC);
-#if (defined DEBUG)
+#ifdef DEBUG
 	(void)printf("%04x  %02x A:%02x X:%02x Y:%02x P:%02x SP:%02x\n", cpu->PC, opcode, cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S);
 #endif
 	return pf[opcode](cpu, memory);

@@ -102,8 +102,8 @@ int main(int argc, char **argv)
 				CPU_handle_nmi(cpu, mem);
 			}
 		}*/
-#if (defined DEBUG || defined TEST)
-		// MEM_print_test_status(mem);
+#ifdef BLARGG 
+		MEM_print_test_status(mem);
 #endif
 	}
 
