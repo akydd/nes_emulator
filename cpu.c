@@ -754,7 +754,7 @@ uint8_t brk(struct cpu *cpu, struct memory *memory)
 	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG | U_FLAG);
 
 	uint16_t low = MEM_read(memory, MEM_BRK_VECTOR);
-	uint16_t high = MEM_read(memory, MEM_BRK_VECTOR + 1)<<8;
+	uint16_t high = ((uint16_t)MEM_read(memory, MEM_BRK_VECTOR + 1))<<8;
 	cpu->PC = (high | low);
 
 	return 7;
@@ -2798,9 +2798,6 @@ uint8_t shy_abs_x(struct cpu *cpu, struct memory *memory)
 	uint8_t high = (uint8_t)(addr >> 8); 
 	uint8_t result = cpu->Y & (high + 1);
 	MEM_write(memory, addr, result);
-
-	CPU_set_negative_flag_for_value(cpu, result);
-	CPU_set_zero_flag_for_value(cpu, result);
 
 	return 5;
 }
