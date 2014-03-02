@@ -2735,32 +2735,46 @@ uint8_t alr_imm(struct cpu *cpu, struct memory *memory) {
 	return 2;
 }
 
+/*
+ * The ARR command does the following:
+ * 1. ANDs the accumulator and the immediate value
+ * 2. Shifts the accumulator to the right
+ * 3. Copy the carry flag into the 7th (highest, with the count starting at 0) bit of the accumulator
+ * 4. Set the negative and zero flags just as ROR would
+ * 5. Copy the 5th bit from the result into the carry flag
+ * 6. Copy the result of an exclusive or of the 4th and 5th bits in the result
+ *    into the overflow flag. 
+ */
 uint8_t arr_imm(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	and(addr, cpu, memory);
-
 	uint8_t val = cpu->A;
 	uint8_t result = val>>1;
 
-	/* shift carry bit into high bit */
-	if (CPU_carry_flag_is_set(cpu))
-	{
+       	if (CPU_carry_flag_is_set(cpu)) {
 		result |= 0x80;
 	}
 
-	/* shift bit 0 into carry flag */
-	if (low_bit_is_set(val))
-	{
+	cpu->A = result;
+
+	CPU_set_negative_flag_for_value(cpu, result);
+	CPU_set_zero_flag_for_value(cpu, result);
+
+	// Set the carry flag
+	if (bit_is_set(result, 5)) {
 		set_status_flag(cpu, C_FLAG);
 	} else {
 		clear_status_flag(cpu, C_FLAG);
 	}
 
-	cpu->A = result;
-	CPU_set_negative_flag_for_value(cpu, result);
-	CPU_set_zero_flag_for_value(cpu, result);
+	// Set the overflow flag
+	if (bit_is_set(result, 5) ^ bit_is_set(result, 4)) {
+		set_status_flag(cpu, V_FLAG);
+	} else {
+		clear_status_flag(cpu, V_FLAG);
+	}
 
 	return 2;
 }
@@ -2770,6 +2784,7 @@ uint8_t axs_imm(struct cpu *cpu, struct memory *memory)
 	cpu->PC++;
 	uint8_t a = cpu->X & cpu->A;
 	uint8_t b = MEM_read(memory, cpu->PC);
+	cpu->PC++;
 	compare(a, b, cpu);
 	cpu->X = a-b;
 
