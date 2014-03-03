@@ -41,7 +41,7 @@ struct ppu *PPU_init(struct memory *mem)
 	/* Initialize values as of power-on */
 	MEM_write(mem, PPUCTRL_ADDR, 0x00);
 	MEM_write(mem, PPUMASK_ADDR, 0x00);
-	MEM_set_ppu_status(mem, 0xa0);
+	MEM_write(mem, PPUSTATUS_ADDR, 0xa0);
 
 	/* PPU starts at cycle 0 */
 	ppu->line = 0;
@@ -60,10 +60,10 @@ inline uint8_t read_status(struct ppu *ppu, struct memory *mem)
 	// clear latch used by PPUADDR
 	// TODO
 	// Get the original value
-	uint8_t val = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
+	uint8_t val = MEM_read(mem, PPUSTATUS_ADDR);
 	// Unset the vblank start flag and write back to mem
 	uint8_t new_val = (val & ~(1<<7));
-	MEM_write(mem, MEM_PPU_STATUS_REG_ADDR, new_val);
+	MEM_write(mem, PPUSTATUS_ADDR, new_val);
 
 	// return original value
 	return val;
@@ -72,29 +72,29 @@ inline uint8_t read_status(struct ppu *ppu, struct memory *mem)
 inline void write_OAM_addr(struct memory *mem, const uint8_t val)
 {
 	// write to the register
-	MEM_write(mem, MEM_PPU_OAMADDR_REG_ADDR, val);
+	MEM_write(mem, OAMADDR_ADDR, val);
 }
 
 inline void write_OAM_data(struct memory *mem, const uint8_t val)
 {
 	// write to the register
-	MEM_write(mem, MEM_PPU_OAMDATA_REG_ADDR, val);
+	MEM_write(mem, OAMDATA_ADDR, val);
 	// increment OAM address register, too
-	uint8_t incremented_val = MEM_read(mem, MEM_PPU_OAMADDR_REG_ADDR) + 1;
-	MEM_write(mem, MEM_PPU_OAMADDR_REG_ADDR, incremented_val);
+	uint8_t incremented_val = MEM_read(mem, OAMADDR_ADDR) + 1;
+	MEM_write(mem, OAMADDR_ADDR, incremented_val);
 }
 
 inline void write_data(struct memory *mem, const uint8_t val)
 {
 	// write to the register
-	MEM_write(mem, MEM_PPU_DATA_REG_ADDR, val);
+	MEM_write(mem, PPUDATA_ADDR, val);
 	// increment address register based on control register VRAM address
 	// increment bit value (0 = add 1, 1 = add 32)
-	uint8_t addr = MEM_read(mem, MEM_PPU_ADDR_REG_ADDR);
-	if ((MEM_read(mem, MEM_PPU_STATUS_REG_ADDR) & 1<<2) == 0) {
-		MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, addr + 1);
+	uint8_t addr = MEM_read(mem, PPUADDR_ADDR);
+	if ((MEM_read(mem, PPUSTATUS_ADDR) & 1<<2) == 0) {
+		MEM_write(mem, PPUADDR_ADDR, addr + 1);
 	} else {
-		MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, addr + 32);
+		MEM_write(mem, PPUADDR_ADDR, addr + 32);
 	}
 }
 
@@ -106,32 +106,32 @@ inline uint8_t vblank_is_enabled(struct memory *mem)
 
 inline void set_vblank_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status |= (1<<7);
-	MEM_set_ppu_status(mem, status);
+	MEM_write(mem, PPUSTATUS_ADDR, status);
 	(void)printf("VBLANK set\n");
 }
 
 inline void clear_vblank_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status &= ~(1<<7);
-	MEM_set_ppu_status(mem, status);
+	MEM_write(mem, PPUSTATUS_ADDR, status);
 	(void)printf("VBLANK cleared\n");
 }
 
 inline void clear_sprite_overflow_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status &= ~(1<<5);
-	MEM_set_ppu_status(mem, status);
+	MEM_write(mem, PPUSTATUS_ADDR, status);
 }
 
 inline void clear_sprite_0_hit_flag(struct memory *mem)
 {
-	uint8_t status = MEM_read(mem, MEM_PPU_STATUS_REG_ADDR);
+	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status &= ~(1<<6);
-	MEM_set_ppu_status(mem, status);
+	MEM_write(mem, PPUSTATUS_ADDR, status);
 }
 
 inline void increment_cycle(struct ppu *ppu)

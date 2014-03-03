@@ -67,14 +67,6 @@ uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 	return val;
 }
 
-uint8_t MEM_get_ppu_ctrl_1(struct memory *mem) {
-	return mem->memory[MEM_PPU_CTRL_1_REG_ADDR];
-}
-
-uint8_t MEM_get_ppu_ctrl_2(struct memory *mem) {
-	return mem->memory[MEM_PPU_CTRL_2_REG_ADDR];
-}
-
 void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 {
 #ifdef DEBUG_MEM
@@ -103,11 +95,6 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	{
 		mem->memory[addr] = val;
 	}
-}
-
-void MEM_set_ppu_status(struct memory *mem, const uint8_t val)
-{
-	write_mirrored_ppu_registers(mem, MEM_PPU_STATUS_REG_ADDR, val);
 }
 
 void MEM_load_trainer(struct memory *mem, FILE *nes_file)

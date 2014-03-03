@@ -28,14 +28,6 @@
 #define MEM_RESET_VECTOR 0xFFFC
 #define MEM_BRK_VECTOR 0xFFFE
 #define IO_REG_ADDR 0x4000
-#define MEM_PPU_CTRL_1_REG_ADDR 0x2000
-#define MEM_PPU_CTRL_2_REG_ADDR 0x2001
-#define MEM_PPU_STATUS_REG_ADDR 0x2002
-#define MEM_PPU_OAMADDR_REG_ADDR 0x2003
-#define MEM_PPU_OAMDATA_REG_ADDR 0x2004
-#define MEM_PPU_SCROLL_REG_ADDR 0x2005
-#define MEM_PPU_ADDR_REG_ADDR 0x2006
-#define MEM_PPU_DATA_REG_ADDR 0x2007
 
 struct memory;
 /*
@@ -158,18 +150,8 @@ extern uint8_t MEM_read(struct memory *, const uint16_t);
 extern void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
 /* 
- * PPU register functions are included here, as the registers are embedded within the
- * main memory
+ * PPU register functions are not included here, as they are the responsibility of the PPU.
  */
-
-/* Set the PPU status register */
-extern void MEM_set_ppu_status(struct memory *, const uint8_t);
-
-/* Read the PPU Control 1 register */
-uint8_t MEM_get_ppu_ctrl_1(struct memory *);
-
-/* Read the PPU Control 2 register */
-uint8_t MEM_get_ppu_ctrl_2(struct memory *);
 
 /*
  * Load 512 byte trainer into memory at 0x7000 - 0x71FF
