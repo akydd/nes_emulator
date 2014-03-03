@@ -59,7 +59,7 @@ inline void PPU_Registers_write_address(struct ppu_registers *reg, struct memory
 
 	write_toggle(reg);
 
-	MEM_write(mem, MEM_PPU_ADDR_REG_ADDR, val);
+	MEM_write(mem, PPUADDR_ADDR, val);
 }
 
 
@@ -77,5 +77,5 @@ inline void PPU_Registers_write_scroll(struct ppu_registers *reg, struct memory 
 
 	write_toggle(reg);
 	
-	MEM_write(mem, MEM_PPU_SCROLL_REG_ADDR, val);
+	MEM_write(mem, PPUSCROLL_ADDR, val);
 }

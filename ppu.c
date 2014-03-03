@@ -184,7 +184,7 @@ inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_m
 	}
 }
 
-uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem, struct ppu_registers *ppu_reg)
+uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
 {
 	// (void)printf("PPU line: %d, dot: %d\n", ppu->line, ppu->dot);
 
