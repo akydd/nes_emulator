@@ -186,8 +186,9 @@ inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_m
 
 uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
 {
-	// (void)printf("PPU line: %d, dot: %d\n", ppu->line, ppu->dot);
-
+#ifdef DEBUG_PPU
+	(void)printf("SL %d.%d\n", ppu->line, ppu->dot);
+#endif
 	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
 	 * start of the VBLANKing interval. */
 	if (ppu->dot == 1 && ppu->line == 241) {
