@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "memory.h"
+#include "controller.h"
 
 #define MEM_SIZE 0xFFFF
 #define MEM_ROM_LOW_BANK_ADDR 0x8000
@@ -28,6 +29,7 @@
 
 struct memory {
 	uint8_t memory[MEM_SIZE];
+	struct controller controller;
 };
 
 struct memory *MEM_init()
@@ -94,6 +96,11 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 	else
 	{
 		mem->memory[addr] = val;
+
+		// Writes to a controller
+		if (addr == MEM_CONTROLLER_REG_ADDR) {
+			CONTROLLER_write(mem->controller, val);
+		}
 	}
 }
 

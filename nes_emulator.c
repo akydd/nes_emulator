@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <SDL2/SDL.h>
 
 #include "cpu.h"
 #include "memory.h"
@@ -75,7 +76,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	// Initialize the CPU and PPU
+	// Initialize the CPU and PPU.
 	struct cpu *cpu;
 	if (use_pc == 1) {
 		cpu = CPU_init_to_address(mem, pc);
@@ -84,12 +85,18 @@ int main(int argc, char **argv)
 	}
 	struct ppu *ppu = PPU_init(mem);
 
+	// Setup SDL
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
 
 	/* Execution: */
 	uint16_t cpu_cycles = 0;
+	SDL_Event input_event;
 	uint16_t i;
 	uint8_t ppu_result = 0;
 	for(;;) {
+		while(SDL_PollEvent(&input_event)) {
+			// do something
+		}
 		cpu_cycles = CPU_step(cpu, mem);
 
 		// PPU steps 3 times for each CPU step
@@ -112,5 +119,8 @@ int main(int argc, char **argv)
 	PPU_delete(&ppu);
 	PPU_MEM_delete(&ppu_mem);
 	MEM_delete(&mem);
+
+	SDL_Quit();
+
 	return 0;
 }

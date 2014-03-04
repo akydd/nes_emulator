@@ -3,7 +3,7 @@
  *
  *       Filename:  memory.h
  *
- *    Description:  
+ *    Description:  Public interface to the NES CPU memory module.
  *
  *        Version:  1.0
  *        Created:  13-03-28 08:39:54 PM
@@ -28,6 +28,7 @@
 #define MEM_RESET_VECTOR 0xFFFC
 #define MEM_BRK_VECTOR 0xFFFE
 #define IO_REG_ADDR 0x4000
+#define MEM_CONTROLLER_REG_ADDR 0x4016
 
 struct memory;
 /*
@@ -122,6 +123,12 @@ struct memory;
  * Notes:
  * - For internal details of the registers, see ppu_memory.h.
  *
+ *
+ * Game Controllers
+ * ================
+ *
+ * I/O for the game controllers is mapped to 0x4016 and 0x4017.
+ *
  */
 
 /*
@@ -135,17 +142,13 @@ extern struct memory *MEM_init();
 extern void MEM_delete(struct memory **);
 
 /*
- * Return the value at given memory location.  Note that this function respects
- * access resitrictions on addresses assigned to data ports (i.e. this function
- * cannot be used to read 0x2000, 0x2001, 0x2003, 0x2005, 0x2006).
+ * Return the value at given memory location.
  */
 extern uint8_t MEM_read(struct memory *, const uint16_t);
 
 /* 
  * Writes to memory during CPU execution should be delegated to this function
- * for proper mirroring.  Note that this function respects access restrictions on
- * addresses assigned to data ports (i.e. this function cannot be used to write
- * to 0x2002).
+ * for proper mirroring.
  */
 extern void MEM_write(struct memory *, const uint16_t, const uint8_t);
 
