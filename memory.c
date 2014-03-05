@@ -17,7 +17,6 @@
 #include <stdlib.h>
 
 #include "memory.h"
-#include "controller.h"
 
 #define MEM_SIZE 0xFFFF
 #define MEM_ROM_LOW_BANK_ADDR 0x8000
@@ -29,12 +28,11 @@
 
 struct memory {
 	uint8_t memory[MEM_SIZE];
-	struct controller controller;
+	struct controller *controller;
 };
 
 struct memory *MEM_init()
 {
-	/* Allocate memory */
 	struct memory *mem = malloc(sizeof(struct memory));
 
 	/* clear the allocated memory */
@@ -43,11 +41,20 @@ struct memory *MEM_init()
 	{
 		*mem_ptr = 0;
 	}
+	
+	mem->controller = NULL;
+
 	return mem;
+}
+
+void MEM_attach_controller(struct memory *mem, struct controller *controller)
+{
+	mem->controller = controller;
 }
 
 void MEM_delete(struct memory **mem)
 {
+	(*mem)->controller = NULL;
 	free(*mem);
 	*mem = NULL;
 }
@@ -62,7 +69,12 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
-	uint8_t val = mem->memory[addr];
+	uint8_t val;
+	if (addr == MEM_CONTROLLER_REG_ADDR && mem->controller != NULL) {
+		val = CONTROLLER_read(mem->controller);
+	} else {
+		val = mem->memory[addr];
+	}
 #ifdef DEBUG_MEM
 	(void)printf("Read data %#x from address %#x\n", val, addr);
 #endif
@@ -98,7 +110,7 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 		mem->memory[addr] = val;
 
 		// Writes to a controller
-		if (addr == MEM_CONTROLLER_REG_ADDR) {
+		if (addr == MEM_CONTROLLER_REG_ADDR && mem->controller != NULL) {
 			CONTROLLER_write(mem->controller, val);
 		}
 	}

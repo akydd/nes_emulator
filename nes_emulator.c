@@ -27,6 +27,10 @@
 #include "ppu.h"
 #include "loader.h"
 
+uint8_t process_input(const uint8_t *state)
+{
+	return state[SDL_SCANCODE_Z]<<7 | state[SDL_SCANCODE_X]<<6 | state[SDL_SCANCODE_Q]<<5 | state[SDL_SCANCODE_W]<<4 | state[SDL_SCANCODE_UP]<<3 | state[SDL_SCANCODE_DOWN]<<2 | state[SDL_SCANCODE_LEFT]<<1 | state[SDL_SCANCODE_RIGHT]<<0;
+}
 
 int main(int argc, char **argv)
 {
@@ -76,7 +80,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	// Initialize the CPU and PPU.
+	// Initialize the Controller, CPU and PPU.
 	struct cpu *cpu;
 	if (use_pc == 1) {
 		cpu = CPU_init_to_address(mem, pc);
@@ -84,6 +88,8 @@ int main(int argc, char **argv)
 		cpu = CPU_init(mem);
 	}
 	struct ppu *ppu = PPU_init(mem);
+	struct controller *gamepad = CONTROLLER_init();
+	MEM_attach_controller(mem, gamepad);
 
 	// Setup SDL
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
@@ -95,8 +101,10 @@ int main(int argc, char **argv)
 	uint8_t ppu_result = 0;
 	for(;;) {
 		while(SDL_PollEvent(&input_event)) {
-			// do something
+			const uint8_t *state = SDL_GetKeyboardState(NULL);
+			CONTROLLER_set_keys(gamepad, process_input(state));
 		}
+
 		cpu_cycles = CPU_step(cpu, mem);
 
 		// PPU steps 3 times for each CPU step
@@ -117,6 +125,7 @@ int main(int argc, char **argv)
 	 */
 	CPU_delete(&cpu);
 	PPU_delete(&ppu);
+	CONTROLLER_delete(&gamepad);
 	PPU_MEM_delete(&ppu_mem);
 	MEM_delete(&mem);
 

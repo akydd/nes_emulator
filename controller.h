@@ -30,4 +30,6 @@ extern void CONTROLLER_write(struct controller *, const uint8_t);
 
 extern uint8_t CONTROLLER_read(struct controller *);
 
+extern void CONTROLLER_set_keys(struct controller *, const uint8_t);
+
 #endif

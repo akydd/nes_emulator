@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "controller.h"
+
 #define MEM_STACK_START 0x01FF
 #define MEM_STACK_END 0x0100
 #define MEM_STACK_OFFSET 0x0100
@@ -135,6 +137,11 @@ struct memory;
  * Create a new memory struct.
  */
 extern struct memory *MEM_init();
+
+/*
+ * Attach a controller.  In the NES, the controller is mapped into memory.
+ */
+extern void MEM_attach_controller(struct memory *, struct controller *);
 
 /*
  * Delete a memory struct
