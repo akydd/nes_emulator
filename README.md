@@ -3,15 +3,20 @@
 My attempt at writing a NES emulator
 
 ## Compiling
+
+### Using Make
     make nes_emulator
 
 To build with debugging info printed to the console,
 
-    make CFLAGS='-Wall -Wextra -DDEBUG' nes_emulator
+    make nes_emulator DEBUG=1
 
 To build and display the output of Blarggs tests,
 
     make CFLAGS='-Wall -Wextra -DBLARGG nes_emulator
+
+### Using SCons
+    scons
 
 ## High Level Design
 

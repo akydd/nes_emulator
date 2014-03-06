@@ -97,6 +97,7 @@ static char *test_VRAM_registers_are_mirrored()
 	return 0;
 }
 
+/*
 static char *test_write_to_PPU_OAMDATA_REG_increments_PPU_OAMADDR_REG()
 {
 	memory = MEM_init();
@@ -146,6 +147,7 @@ static char *test_write_to_PPU_DATA_increments_PPU_ADDR_by_32()
 	MEM_delete(&memory);
 	return 0;
 }
+*/
 
 static char *test_MEM_load_trainer()
 {
@@ -177,9 +179,11 @@ static char *all_tests()
 	mu_run_test(test_MEM_write_mirrored);
 	mu_run_test(test_MEM_write_non_mirrored);
 	mu_run_test(test_VRAM_registers_are_mirrored);
+	/*
 	mu_run_test(test_write_to_PPU_OAMDATA_REG_increments_PPU_OAMADDR_REG);
 	mu_run_test(test_write_to_PPU_DATA_increments_PPU_ADDR_by_1);
 	mu_run_test(test_write_to_PPU_DATA_increments_PPU_ADDR_by_32);
+	*/
 	mu_run_test(test_MEM_load_trainer);
 
 	return 0;
