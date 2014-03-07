@@ -48,6 +48,7 @@ struct controller *CONTROLLER_init()
 	struct controller *controller = malloc(sizeof(struct controller));
 	controller->read_position = A;
 	controller->strobe_state = strobe_high;
+	controller->key_states = 0;
 
 	return controller;
 }
@@ -56,23 +57,6 @@ void CONTROLLER_delete(struct controller **controller)
 {
 	free(*controller);
 	*controller = NULL;
-}
-
-void strobe(struct controller *controller)
-{
-	controller->read_position = A;
-	controller->strobe_state = strobe_low;
-}
-
-void shift_read_position(struct controller *controller)
-{
-	(controller->read_position)>>1;
-
-	// shift read position back to the beginning if we've run through all
-	// the buttons.
-	if(controller->read_position == 0) {
-		controller->read_position = A;
-	}
 }
 
 uint8_t CONTROLLER_read(struct controller *controller)
@@ -85,7 +69,14 @@ uint8_t CONTROLLER_read(struct controller *controller)
 
 	if (controller->strobe_state == strobe_low) {
 		result = (controller->key_states & controller->read_position);
-		shift_read_position(controller);	
+		(controller->read_position) /= 2;
+
+		// if we've cycled through all buttons, set strobe high and read
+		// position to A
+		if (controller->read_position == 0) {
+			controller->read_position = A;
+			controller->strobe_state = strobe_high;
+		}
 	}
 
 	return ((result != 0) | 0x40);
@@ -104,7 +95,8 @@ void CONTROLLER_write(struct controller *controller, const uint8_t val)
 	}
 
 	if (val == 0 && controller->strobe_state == strobe_staged) {
-		strobe(controller);
+		controller->strobe_state = strobe_low;
+		controller->read_position = A;
 		return;
 	}
 

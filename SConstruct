@@ -9,6 +9,7 @@ Default(targetRelease)
 # tests
 env.Program('test_mem', ['test_mem.c', 'controller.o'])
 env.Program('test_cpu', ['test_cpu.c', 'memory.o', 'controller.o'])
+env.Program('test_controller', ['test_controller.c'])
 
 # object files
 env.Object('ppu.c')
