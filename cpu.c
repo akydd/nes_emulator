@@ -2883,7 +2883,7 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 {
 	/* Get opcode at PC */
 	uint8_t opcode = MEM_read(memory, cpu->PC);
-#ifdef DEBUG
+#ifdef DEBUG_CPU
 	(void)printf("%04x  %02x A:%02x X:%02x Y:%02x P:%02x SP:%02x\n", cpu->PC, opcode, cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S);
 #endif
 	return pf[opcode](cpu, memory);
@@ -2906,5 +2906,7 @@ void CPU_handle_nmi(struct cpu *cpu, struct memory *memory)
 	uint16_t high = MEM_read(memory, MEM_NMI_VECTOR + 1);
 	uint16_t addr = (high<<8) | low;
 	cpu->PC = addr;
+#ifdef DEBUG_CPU
 	(void)printf("NMI set PC to %#x\n", addr);
+#endif
 }

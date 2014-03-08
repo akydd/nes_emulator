@@ -109,7 +109,9 @@ inline void set_vblank_flag(struct memory *mem)
 	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status |= (1<<7);
 	MEM_write(mem, PPUSTATUS_ADDR, status);
+#ifdef DEBUG_PPU
 	(void)printf("VBLANK set\n");
+#endif
 }
 
 inline void clear_vblank_flag(struct memory *mem)
@@ -117,7 +119,9 @@ inline void clear_vblank_flag(struct memory *mem)
 	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
 	status &= ~(1<<7);
 	MEM_write(mem, PPUSTATUS_ADDR, status);
+#ifdef DEBUG_PPU
 	(void)printf("VBLANK cleared\n");
+#endif
 }
 
 inline void clear_sprite_overflow_flag(struct memory *mem)
@@ -197,7 +201,9 @@ uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem
 		/* This return indicates an NMI to the CPU */
 		if (vblank_is_enabled(mem) != 0) {
 			increment_cycle(ppu);
+#ifdef DEBUG_CPU
 			(void)printf("Executing VBLANK\n");
+#endif
 			return 0;
 		}
 	}

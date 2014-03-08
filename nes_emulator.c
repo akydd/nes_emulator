@@ -102,6 +102,9 @@ int main(int argc, char **argv)
 	for(;;) {
 		while(SDL_PollEvent(&input_event)) {
 			const uint8_t *state = SDL_GetKeyboardState(NULL);
+#ifdef DEBUG_CONTROLLER
+			(void)printf("%#x\n", *state);
+#endif
 			CONTROLLER_set_keys(gamepad, process_input(state));
 		}
 
