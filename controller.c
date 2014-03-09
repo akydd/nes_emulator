@@ -15,6 +15,7 @@
  * =====================================================================================
  */
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "controller.h"
 
@@ -84,6 +85,9 @@ uint8_t CONTROLLER_read(struct controller *controller)
 
 void CONTROLLER_set_keys(struct controller *controller, const uint8_t state)
 {
+#ifdef DEBUG_CONTROLLER
+	(void)printf("Keys updated: %#x\n", state);
+#endif
 	controller->key_states = state;
 }
 

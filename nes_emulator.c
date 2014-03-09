@@ -27,6 +27,10 @@
 #include "ppu.h"
 #include "loader.h"
 
+// TODO: move SDL window stuff to a separate render module?
+const int SCREEN_WIDTH = 256;
+const int SCREEN_HEIGHT = 240;
+
 uint8_t process_input(const uint8_t *state)
 {
 	return state[SDL_SCANCODE_Z]<<7 | state[SDL_SCANCODE_X]<<6 | state[SDL_SCANCODE_Q]<<5 | state[SDL_SCANCODE_W]<<4 | state[SDL_SCANCODE_UP]<<3 | state[SDL_SCANCODE_DOWN]<<2 | state[SDL_SCANCODE_LEFT]<<1 | state[SDL_SCANCODE_RIGHT]<<0;
@@ -92,25 +96,40 @@ int main(int argc, char **argv)
 	MEM_attach_controller(mem, gamepad);
 
 	// Setup SDL
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
+	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Window *window = SDL_CreateWindow("nes_emulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
 
 	/* Execution: */
 	uint16_t cpu_cycles = 0;
-	SDL_Event input_event;
+	SDL_Event event;
 	uint16_t i;
 	uint8_t ppu_result = 0;
-	for(;;) {
-		while(SDL_PollEvent(&input_event)) {
-			const uint8_t *state = SDL_GetKeyboardState(NULL);
-#ifdef DEBUG_CONTROLLER
-			(void)printf("%#x\n", *state);
-#endif
-			CONTROLLER_set_keys(gamepad, process_input(state));
+	const uint8_t *state = SDL_GetKeyboardState(NULL);
+	int running = 1;
+	while(running == 1) {
+		// Handle keyboard input and quit event
+		if (SDL_PollEvent(&event) != 0) {
+			switch (event.type) {
+				case SDL_QUIT:
+					running = 0;
+					break;
+				case SDL_KEYDOWN:
+				case SDL_KEYUP:
+					switch (event.key.keysym.sym) {
+						case SDLK_ESCAPE:
+						case SDLK_q:
+							running = 0;
+							break;
+					}
+					CONTROLLER_set_keys(gamepad, process_input(state));
+					break;
+			}
 		}
 
 		cpu_cycles = CPU_step(cpu, mem);
 
 		// PPU steps 3 times for each CPU step
+		/*
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
 			ppu_result = PPU_step(ppu, mem, ppu_mem);
 
@@ -118,6 +137,7 @@ int main(int argc, char **argv)
 				CPU_handle_nmi(cpu, mem);
 			}
 		}
+		*/
 #ifdef BLARGG 
 		MEM_print_test_status(mem);
 #endif
@@ -126,13 +146,15 @@ int main(int argc, char **argv)
 	/*
 	 * Shutdown
 	 */
+	(void)printf("Starting shutdown...\n");
 	CPU_delete(&cpu);
 	PPU_delete(&ppu);
 	CONTROLLER_delete(&gamepad);
 	PPU_MEM_delete(&ppu_mem);
 	MEM_delete(&mem);
 
+	SDL_DestroyWindow(window);
 	SDL_Quit();
-
+	(void)printf("Shutdown complete!");
 	return 0;
 }
