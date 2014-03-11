@@ -25,7 +25,7 @@ for mode in modes.split(","):
 		env.Append(CPPDEFINES = validModes[mode])
 		print '**** Compiling in ' + mode + ' mode...'
 
-source=['nes_emulator.c', 'ppu.o', 'cpu.o', 'loader.o', 'memory.o', 'controller.o', 'ppu_memory.o']
+source=['nes_emulator.c', 'ppu.o', 'cpu.o', 'loader.o', 'memory.o', 'controller.o', 'ppu_memory.o', 'input_processor.o']
 
 # targets
 targetRelease=env.Program('nes_emulator', source, LIBS='SDL2')
@@ -43,3 +43,4 @@ env.Object('controller.c')
 env.Object('memory.c')
 env.Object('cpu.c')
 env.Object('loader.c')
+env.Object('input_processor.c')
