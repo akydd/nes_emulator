@@ -163,4 +163,8 @@ void MEM_print_test_status(struct memory *mem)
 			a++;
 		}
 	}
+
+	if (code == 0x81) {
+		(void)printf("Press reset button for test to continue.\n");
+	}
 }

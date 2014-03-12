@@ -49,4 +49,9 @@ extern int CPU_step(struct cpu *, struct memory *);
  */
 extern void CPU_handle_nmi(struct cpu *, struct memory *);
 
+/*
+ * Soft (button) reset handler
+ */
+extern void CPU_reset(struct cpu *, struct memory *);
+
 #endif

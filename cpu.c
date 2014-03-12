@@ -2910,3 +2910,19 @@ void CPU_handle_nmi(struct cpu *cpu, struct memory *memory)
 	(void)printf("NMI set PC to %#x\n", addr);
 #endif
 }
+
+void CPU_reset(struct cpu *cpu, struct memory *memory)
+{
+	/* initialize PC to 2-byte address at the reset vector */
+	uint16_t low = MEM_read(memory, MEM_RESET_VECTOR);
+	uint16_t high = MEM_read(memory, MEM_RESET_VECTOR + 1);
+	uint16_t addr = (high<<8) | low;
+	cpu->PC = addr;
+	// Decrement stack pointer by 3, but no writes
+	cpu->S = cpu->S - 3;
+	// Set the interrupt flag
+	set_status_flag(cpu, I_FLAG);
+#ifdef DEBUG_CPU
+	(void)printf("Resetting the cpu\n");
+#endif
+}

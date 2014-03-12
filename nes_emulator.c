@@ -89,8 +89,8 @@ int main(int argc, char **argv)
 	}
 	struct ppu *ppu = PPU_init(mem);
 	struct controller *gamepad = CONTROLLER_init();
-	const uint8_t *state;
-	struct input_processor *input_processor = INPUT_init(&state);
+	const uint8_t *keys;
+	struct input_processor *input_processor = INPUT_init(&keys);
 	MEM_attach_controller(mem, gamepad);
 
 	// Setup SDL
@@ -101,10 +101,17 @@ int main(int argc, char **argv)
 	uint16_t cpu_cycles = 0;
 	uint16_t i;
 	uint8_t ppu_result = 0;
-	int running = 1;
-	while(running == 1) {
+	int nes_state = 1;
+	while(nes_state != 0) {
 		// Handle keyboard input and quit event
-		INPUT_process(input_processor, gamepad, &running, &state);
+		INPUT_process(input_processor, gamepad, &nes_state, &keys);
+
+		// Handle soft reset
+		if(nes_state == 2) {
+			CPU_reset(cpu, mem);
+			// TODO: reset the PPU
+		}
+
 		// Execute the cpu step
 		cpu_cycles = CPU_step(cpu, mem);
 
@@ -126,7 +133,7 @@ int main(int argc, char **argv)
 	/*
 	 * Shutdown
 	 */
-	(void)printf("Starting shutdown...\n");
+	(void)printf("Starting shutdown\n");
 	INPUT_delete(&input_processor);
 	CPU_delete(&cpu);
 	PPU_delete(&ppu);
@@ -136,6 +143,6 @@ int main(int argc, char **argv)
 
 	SDL_DestroyWindow(window);
 	SDL_Quit();
-	(void)printf("Shutdown complete!");
+	(void)printf("Shutdown complete!\n");
 	return 0;
 }
