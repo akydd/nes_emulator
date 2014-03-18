@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "cpu.h"
 #include "memory.h"
@@ -747,7 +748,7 @@ inline void isc(uint16_t addr, struct cpu *cpu, struct memory *memory)
  * the break flag virtually set, then address
  * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
-uint8_t brk(struct cpu *cpu, struct memory *memory)
+uint8_t cpu_brk(struct cpu *cpu, struct memory *memory)
 {
 	cpu->PC += 2;
 	CPU_push16_stack(cpu, memory, cpu->PC);
@@ -2822,7 +2823,7 @@ uint8_t shx_abs_y(struct cpu *cpu, struct memory *memory)
  * http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
  */
 static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
-/* 0x00 */	&brk, &ora_ind_x, NULL, &slo_ind_x, &nop_2_bytes_3_cycles, &ora_zero_pg, &asl_zero_pg, &slo_zero_pg, &php, &ora_imm, &asl_acc, &aac_imm, &nop_3_bytes_4_cycles, &ora_abs, &asl_abs, &slo_abs,
+/* 0x00 */	&cpu_brk, &ora_ind_x, NULL, &slo_ind_x, &nop_2_bytes_3_cycles, &ora_zero_pg, &asl_zero_pg, &slo_zero_pg, &php, &ora_imm, &asl_acc, &aac_imm, &nop_3_bytes_4_cycles, &ora_abs, &asl_abs, &slo_abs,
 /* 0x10 */	&bpl_r, &ora_ind_y, NULL, &slo_ind_y, &nop_2_bytes_4_cycles, &ora_zero_pg_x, &asl_zero_pg_x, &slo_zero_pg_x, &clc, &ora_abs_y, &nop_1_bytes_2_cycles, &slo_abs_y, &nop_3_bytes_4_cycles, &ora_abs_x, &asl_abs_x, &slo_abs_x,
 /* 0x20 */	&jsr_abs, &and_ind_x, NULL, &rla_ind_x, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, &rla_zero_pg, &plp, &and_imm, &rol_acc, &aac_imm, &bit_abs, &and_abs, &rol_abs, &rla_abs,
 /* 0x30 */	&bmi_r, &and_ind_y, NULL, &rla_ind_y, &nop_2_bytes_4_cycles, &and_zero_pg_x, &rol_zero_pg_x, &rla_zero_pg_x, &sec, &and_abs_y, &nop_1_bytes_2_cycles, &rla_abs_y, &nop_3_bytes_4_cycles, &and_abs_x, &rol_abs_x, &rla_abs_x,
@@ -2922,7 +2923,8 @@ void CPU_reset(struct cpu *cpu, struct memory *memory)
 	cpu->S = cpu->S - 3;
 	// Set the interrupt flag
 	set_status_flag(cpu, I_FLAG);
-#ifdef DEBUG_CPU
-	(void)printf("Resetting the cpu\n");
+#if defined(DEBUG_CPU) || defined(BLARGG)
+	(void)printf("********** Resetting the cpu **********\n");
+	(void)sleep(3);
 #endif
 }

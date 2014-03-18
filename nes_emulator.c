@@ -108,6 +108,7 @@ int main(int argc, char **argv)
 
 		// Handle soft reset
 		if(nes_state == 2) {
+			nes_state = 1;
 			CPU_reset(cpu, mem);
 			// TODO: reset the PPU
 		}
