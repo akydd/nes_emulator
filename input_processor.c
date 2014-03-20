@@ -51,7 +51,6 @@ void INPUT_process(struct input_processor *processor, struct controller *control
 				*nes_state = 0;
 				break;
 			case SDL_KEYDOWN:
-			case SDL_KEYUP:
 				switch (processor->event.key.keysym.sym) {
 					case SDLK_ESCAPE:
 					case SDLK_q:
@@ -61,6 +60,9 @@ void INPUT_process(struct input_processor *processor, struct controller *control
 						*nes_state = 2;
 						break;
 				}
+				CONTROLLER_set_keys(controller, process_input(*keys));
+				break;
+			case SDL_KEYUP:
 				CONTROLLER_set_keys(controller, process_input(*keys));
 				break;
 		}
