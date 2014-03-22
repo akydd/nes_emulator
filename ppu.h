@@ -22,7 +22,6 @@
 #include <stdint.h>
 
 #include "ppu_memory.h"
-#include "memory.h"
 
 /*
  * PPU registers are mapped to CPU memory:
@@ -107,7 +106,7 @@
  * Create a new ppu struct.
  * Memory must be instantiated before passing into this function.
  */
-extern struct ppu *PPU_init(struct memory *);
+extern struct ppu *PPU_init();
 
 /*
  * Destroy the given ppu
@@ -117,6 +116,10 @@ extern void PPU_delete(struct ppu **);
 /* 
  * Execute a step in PPU processing
  */
-extern uint8_t PPU_step(struct ppu *, struct memory *, struct ppu_memory *);
+extern uint8_t PPU_step(struct ppu *, struct ppu_memory *);
+
+extern uint8_t PPU_read_register(struct ppu *, uint16_t);
+
+extern void PPU_write_register(struct ppu *, uint16_t, uint8_t);
 
 #endif

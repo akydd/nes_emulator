@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #include "controller.h"
+#include "ppu.h"
 
 #define MEM_STACK_START 0x01FF
 #define MEM_STACK_END 0x0100
@@ -142,6 +143,11 @@ extern struct memory *MEM_init();
  * Attach a controller.  In the NES, the controller is mapped into memory.
  */
 extern void MEM_attach_controller(struct memory *, struct controller *);
+
+/*
+ * Attach a PPU.  In the NES, the PPU registers are mapped into memory.
+ */
+extern void MEM_attach_ppu(struct memory *, struct ppu *);
 
 /*
  * Delete a memory struct

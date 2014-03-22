@@ -19,29 +19,29 @@
 #include "ppu.h"
 
 struct ppu {
-	uint8_t fine_x_scroll;
-
-	/* Internal latches for attribute table and name table addresses */
-	uint8_t at_latch;
-	uint8_t nt_latch;
-
-	/*  Internal latches for background tile addresses */
-	uint8_t bg_tile_low;
-	uint8_t bg_tile_high;
+	// Registers.
+	uint8_t ctrl;
+	uint8_t mask;
+	uint8_t status;
+	uint8_t oam_addr;
+	uint8_t oam_data;
+	uint8_t scroll;
+	uint8_t addr;
+	uint8_t data;
 
 	/* tracks current line and dot */
 	unsigned int line;
 	unsigned int dot;
 };
 
-struct ppu *PPU_init(struct memory *mem)
+struct ppu *PPU_init()
 {
 	struct ppu *ppu = malloc(sizeof(struct ppu));
 
 	/* Initialize values as of power-on */
-	MEM_write(mem, PPUCTRL_ADDR, 0x00);
-	MEM_write(mem, PPUMASK_ADDR, 0x00);
-	MEM_write(mem, PPUSTATUS_ADDR, 0xa0);
+	ppu->ctrl = 0x00;
+	ppu->mask = 0x00;
+	ppu->status = 0xa0;
 
 	/* PPU starts at cycle 0 */
 	ppu->line = 0;
@@ -50,92 +50,143 @@ struct ppu *PPU_init(struct memory *mem)
 	return ppu;
 }
 
+uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
+{
+	uint8_t val;
+	switch(addr) {
+		case 0x2000:
+			val = ppu->ctrl;
+			break;
+		case 0x2001:
+			val = ppu->mask;
+			break;
+		case 0x2002:
+			val = ppu->status;
+			break;
+		case 0x2003:
+			val = ppu->oam_addr;
+			break;
+		case 0x2004:
+			val = ppu->oam_data;
+			break;
+		case 0x2005:
+			val = ppu->scroll;
+			break;
+		case 0x2006:
+			val = ppu->addr;
+			break;
+		case 0x2007:
+			val = ppu->data;
+			break;
+	}
+	return val;
+}
+
+void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
+{
+	switch(addr) {
+		case 0x2000:
+			ppu->ctrl = value;
+			break;
+		case 0x2001:
+			ppu->mask = value;
+			break;
+		case 0x2002:
+			ppu->status = value;
+			break;
+		case 0x2003:
+			ppu->oam_addr = value;
+			break;
+		case 0x2004:
+			ppu->oam_data = value;
+			break;
+		case 0x2005:
+			ppu->scroll = value;
+			break;
+		case 0x2006:
+			ppu->addr = value;
+			break;
+		case 0x2007:
+			ppu->data = value;
+			break;
+	}
+}
+
 void PPU_delete(struct ppu **ppu)
 {
 	free(*ppu);
 }
 
-inline uint8_t read_status(struct ppu *ppu, struct memory *mem)
+inline uint8_t read_status(struct ppu *ppu)
 {
 	// clear latch used by PPUADDR
 	// TODO
 	// Get the original value
-	uint8_t val = MEM_read(mem, PPUSTATUS_ADDR);
+	uint8_t val = ppu->status;
 	// Unset the vblank start flag and write back to mem
 	uint8_t new_val = (val & ~(1<<7));
-	MEM_write(mem, PPUSTATUS_ADDR, new_val);
+	ppu->status = new_val;
 
 	// return original value
 	return val;
 }
 
-inline void write_OAM_addr(struct memory *mem, const uint8_t val)
+inline void write_OAM_addr(struct ppu *ppu, const uint8_t val)
 {
 	// write to the register
-	MEM_write(mem, OAMADDR_ADDR, val);
+	ppu->oam_addr = val;
 }
 
-inline void write_OAM_data(struct memory *mem, const uint8_t val)
+inline void write_OAM_data(struct ppu *ppu, const uint8_t val)
 {
 	// write to the register
-	MEM_write(mem, OAMDATA_ADDR, val);
+	ppu->oam_data = val;
 	// increment OAM address register, too
-	uint8_t incremented_val = MEM_read(mem, OAMADDR_ADDR) + 1;
-	MEM_write(mem, OAMADDR_ADDR, incremented_val);
+	ppu->oam_addr++;
 }
 
-inline void write_data(struct memory *mem, const uint8_t val)
+inline void write_data(struct ppu *ppu, const uint8_t val)
 {
 	// write to the register
-	MEM_write(mem, PPUDATA_ADDR, val);
+	ppu->data = val;
 	// increment address register based on control register VRAM address
 	// increment bit value (0 = add 1, 1 = add 32)
-	uint8_t addr = MEM_read(mem, PPUADDR_ADDR);
-	if ((MEM_read(mem, PPUSTATUS_ADDR) & 1<<2) == 0) {
-		MEM_write(mem, PPUADDR_ADDR, addr + 1);
+	if ((ppu->status & 1<<2) == 0) {
+		ppu->addr++;
 	} else {
-		MEM_write(mem, PPUADDR_ADDR, addr + 32);
+		ppu->addr += 32;
 	}
 }
 
-inline uint8_t vblank_is_enabled(struct memory *mem)
+inline uint8_t vblank_is_enabled(struct ppu *ppu)
 {
-	uint8_t ctrl = MEM_read(mem, PPUCTRL_ADDR);
-	return ctrl & (1<<7);
+	return ppu->ctrl & (1<<7);
 }
 
-inline void set_vblank_flag(struct memory *mem)
+inline void set_vblank_flag(struct ppu *ppu)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
-	status |= (1<<7);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	ppu->status |= (1<<7);
 #ifdef DEBUG_PPU
 	(void)printf("VBLANK set\n");
 #endif
 }
 
-inline void clear_vblank_flag(struct memory *mem)
+inline void clear_vblank_flag(struct ppu *ppu)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
-	status &= ~(1<<7);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	ppu->status &= ~(1<<7);
 #ifdef DEBUG_PPU
 	(void)printf("VBLANK cleared\n");
 #endif
 }
 
-inline void clear_sprite_overflow_flag(struct memory *mem)
+inline void clear_sprite_overflow_flag(struct ppu *ppu)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
-	status &= ~(1<<5);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	ppu->status &= ~(1<<5);
 }
 
-inline void clear_sprite_0_hit_flag(struct memory *mem)
+inline void clear_sprite_0_hit_flag(struct ppu *ppu)
 {
-	uint8_t status = MEM_read(mem, PPUSTATUS_ADDR);
-	status &= ~(1<<6);
-	MEM_write(mem, PPUSTATUS_ADDR, status);
+	ppu->status &= ~(1<<6);
 }
 
 inline void increment_cycle(struct ppu *ppu)
@@ -152,17 +203,17 @@ inline void increment_cycle(struct ppu *ppu)
 	}
 }
 
-inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
+inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
 	/* VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd cycle of scanline 261 */
 	if (ppu->line == 261 && ppu->dot == 1) {
-		clear_vblank_flag(mem);
-		clear_sprite_overflow_flag(mem);
-		clear_sprite_0_hit_flag(mem);
+		clear_vblank_flag(ppu);
+		clear_sprite_overflow_flag(ppu);
+		clear_sprite_0_hit_flag(ppu);
 	}
 
 	if((ppu->dot >= 275) && (ppu->dot <= 320)) {
-		write_OAM_addr(mem, 0);
+		write_OAM_addr(ppu, 0);
 	}
 
 	if ((ppu->dot < 257) && (ppu->dot > 0) && (ppu->dot >= 321)) {
@@ -188,7 +239,7 @@ inline void render(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_m
 	}
 }
 
-uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem)
+uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
 #ifdef DEBUG_PPU
 	(void)printf("SL %d.%d\n", ppu->line, ppu->dot);
@@ -196,10 +247,10 @@ uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem
 	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
 	 * start of the VBLANKing interval. */
 	if (ppu->dot == 1 && ppu->line == 241) {
-		set_vblank_flag(mem);
+		set_vblank_flag(ppu);
 
 		/* This return indicates an NMI to the CPU */
-		if (vblank_is_enabled(mem) != 0) {
+		if (vblank_is_enabled(ppu) != 0) {
 			increment_cycle(ppu);
 #ifdef DEBUG_CPU
 			(void)printf("Executing VBLANK\n");
@@ -209,7 +260,7 @@ uint8_t PPU_step(struct ppu *ppu, struct memory *mem, struct ppu_memory *ppu_mem
 	}
 
 	if (ppu->line < 240 || ppu->line == 261) {
-		render(ppu, mem, ppu_mem);	
+		render(ppu, ppu_mem);	
 	}
 
 	increment_cycle(ppu);

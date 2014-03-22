@@ -29,6 +29,7 @@
 struct memory {
 	uint8_t memory[MEM_SIZE];
 	struct controller *controller;
+	struct ppu *ppu;
 };
 
 struct memory *MEM_init()
@@ -43,6 +44,7 @@ struct memory *MEM_init()
 	}
 	
 	mem->controller = NULL;
+	mem->ppu = NULL;
 
 	return mem;
 }
@@ -52,9 +54,15 @@ void MEM_attach_controller(struct memory *mem, struct controller *controller)
 	mem->controller = controller;
 }
 
+void MEM_attach_ppu(struct memory *mem, struct ppu *ppu)
+{
+	mem->ppu = ppu;
+}
+
 void MEM_delete(struct memory **mem)
 {
 	(*mem)->controller = NULL;
+	(*mem)->ppu = NULL;
 	free(*mem);
 	*mem = NULL;
 }
@@ -70,8 +78,17 @@ void write_mirrored_ppu_registers(struct memory *mem, const uint16_t base_addr, 
 uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 {
 	uint8_t val;
-	if (addr == MEM_CONTROLLER_REG_ADDR && mem->controller != NULL) {
+
+	if ((addr == MEM_CONTROLLER_REG_ADDR) && (mem->controller != NULL)) {
+		// special case for reading the address to which the controller is
+		// attached
 		val = CONTROLLER_read(mem->controller);
+	} else if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR) && (mem->ppu != NULL)) {
+		// Special case for when the PPU is attached.  Reducing the
+		// address to the base address should bypass the mirroring
+		// altogether.
+		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
+		val = PPU_read_register(mem->ppu, base_addr);
 	} else {
 		val = mem->memory[addr];
 	}
@@ -101,8 +118,13 @@ void MEM_write(struct memory *mem, const uint16_t addr, const uint8_t val)
 		/* Calculate the base PPU register address */
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
 
-		/* Write to all mirrored addresses for this PPU register */
-		write_mirrored_ppu_registers(mem, base_addr, val);
+		// If the PPU is attached, update its registers and bypass the
+		// mirrored memory altogether.
+		if (mem->ppu != NULL) {
+			PPU_write_register(mem->ppu, base_addr, val);
+		} else {
+			write_mirrored_ppu_registers(mem, base_addr, val);
+		}
 	} 
 	/* all other writes */
 	else

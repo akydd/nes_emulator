@@ -87,7 +87,7 @@ int main(int argc, char **argv)
 	} else {
 		cpu = CPU_init(mem);
 	}
-	struct ppu *ppu = PPU_init(mem);
+	struct ppu *ppu = PPU_init();
 	struct controller *gamepad = CONTROLLER_init();
 	const uint8_t *keys;
 	struct input_processor *input_processor = INPUT_init(&keys);
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
 		// PPU steps 3 times for each CPU step
 		/*
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
-			ppu_result = PPU_step(ppu, mem, ppu_mem);
+			ppu_result = PPU_step(ppu, ppu_mem);
 
 			if(ppu_result == 0) {
 				CPU_handle_nmi(cpu, mem);
