@@ -29,7 +29,10 @@ struct ppu {
 	uint8_t addr;
 	uint8_t data;
 
-	/* tracks current line and dot */
+	// Odd frame
+	int odd_frame;
+
+	// tracks current line and dot
 	unsigned int line;
 	unsigned int dot;
 };
@@ -38,13 +41,14 @@ struct ppu *PPU_init()
 {
 	struct ppu *ppu = malloc(sizeof(struct ppu));
 
-	/* Initialize values as of power-on */
+	// Initialize values as of power-on
 	ppu->ctrl = 0x00;
 	ppu->mask = 0x00;
 	ppu->status = 0xa0;
 
-	/* PPU starts at cycle 0 */
-	ppu->line = 0;
+	// PPU starts at pre-render scanline 261, dot 0, even frame
+	ppu->odd_frame = 0;
+	ppu->line = 261;
 	ppu->dot = 0;
 
 	return ppu;
@@ -205,14 +209,14 @@ inline void increment_cycle(struct ppu *ppu)
 
 inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
-	/* VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd cycle of scanline 261 */
+	/* VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd dot of scanline 261 */
 	if (ppu->line == 261 && ppu->dot == 1) {
 		clear_vblank_flag(ppu);
 		clear_sprite_overflow_flag(ppu);
 		clear_sprite_0_hit_flag(ppu);
 	}
 
-	if((ppu->dot >= 275) && (ppu->dot <= 320)) {
+	if((ppu->dot >= 257) && (ppu->dot <= 320)) {
 		write_OAM_addr(ppu, 0);
 	}
 
