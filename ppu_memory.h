@@ -79,6 +79,31 @@ struct ppu_memory;
  * |__________________| 0x0000
  *
  *
+ * Name Tables
+ * ===========
+ * Each name table contains 960 bytes, which split up the screen into 30
+ * rows, top to bottom, each with 32 columns, left to right.  Usually
+ * the top and bottom most rows are not visible.  Each cell is 8x8 pixels.
+ *
+ * Attribute Tables
+ * ================
+ * Each attribute table contains 64 bytes, or 512 bits, which are used to color
+ * in the above 960 tiles, via compression.
+ *
+ * There are only 4 background palette, which needs only 2 bits to represent, so
+ * each attribute table contains 256 background palette assignments.  Rounding
+ * up, this means that 4 tiles must be handled by each palette assignment, or
+ * that 16 tiles must be handled by each byte in the attribute table.  This is
+ * accomplished by grouping the 960 cells in the name tables into larger cells
+ * of 4x4 name table cells, subdivided into 4 quadrants of 2x2 name table cells.
+ * Each of these larger cells is 32x32 pixels.
+ *
+ * The assignment of palettes bytes to the 32x32 pixel cells is AABBCCDD to
+ * DD CC
+ * BB AA
+ *
+ * Each scanline, the PPU looks into the name tables 34 times and draws 8x1 pixels
+ * for each table for the first 33 of those fetches.
  */
 
 #define PPU_MEM_SIZE 0x4000

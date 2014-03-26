@@ -32,9 +32,16 @@ struct ppu {
 	// Odd frame
 	int odd_frame;
 
-	// tracks current line and dot
+	// tracks current line and dot.  There are 262 scanlines (0 to 261) and
+	// 341 dots (0 to 340).
 	unsigned int line;
 	unsigned int dot;
+
+	// background shift registers
+	uint16_t high_bg;
+	uint16_t low_bg;
+	uint8_t high_bg_attribute;
+	uint8_t low_bg_attribute;
 };
 
 struct ppu *PPU_init()
@@ -209,7 +216,7 @@ inline void increment_cycle(struct ppu *ppu)
 
 inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
-	/* VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd dot of scanline 261 */
+	// VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd dot of scanline 261
 	if (ppu->line == 261 && ppu->dot == 1) {
 		clear_vblank_flag(ppu);
 		clear_sprite_overflow_flag(ppu);
@@ -220,7 +227,7 @@ inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 		write_OAM_addr(ppu, 0);
 	}
 
-	if ((ppu->dot < 257) && (ppu->dot > 0) && (ppu->dot >= 321)) {
+	if ((ppu->dot < 257 && ppu->dot > 0) || (ppu->dot > 320)) {
 		uint8_t fetch_cycle = ppu->dot % 8;
 
 		switch(fetch_cycle) {
@@ -263,7 +270,7 @@ uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 		}
 	}
 
-	if (ppu->line < 240 || ppu->line == 261) {
+	if (ppu->line < 240) {
 		render(ppu, ppu_mem);	
 	}
 
