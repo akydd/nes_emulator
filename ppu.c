@@ -151,9 +151,11 @@ void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
 			ppu->oam_data = value;
 			break;
 		case 0x2005:
+			ppu->scroll = value;
 			write_to_scroll(ppu, value);
 			break;
 		case 0x2006:
+			ppu->addr = value;
 			write_to_addr(ppu, value);
 			break;
 		case 0x2007:
