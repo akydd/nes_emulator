@@ -87,7 +87,8 @@ struct ppu_memory;
  *
  * Colors
  * ======
- * Colors take values 0x00 to 0x3F.
+ * Colors take values 0x00 to 0x3F, for a total of 64 colors.  56 of them are
+ * unique.
  *
  * The NES PPU does not use RGB, it uses NTSC to generate the colors.
  * http://wiki.nesdev.com/w/index.php/NTSC_video

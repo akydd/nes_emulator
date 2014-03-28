@@ -29,8 +29,14 @@ struct ppu {
 	uint8_t addr;
 	uint8_t data;
 
-	// Odd frame
+	// Odd frame toggle
 	int odd_frame;
+
+	// for scrolling
+	uint16_t loopy_v;
+	uint16_t loopy_t;
+	uint16_t loopy_x;
+	uint8_t write_toggle;
 
 	// tracks current line and dot.  There are 262 scanlines (0 to 261) and
 	// 341 dots (0 to 340).
@@ -57,6 +63,11 @@ struct ppu *PPU_init()
 	ppu->odd_frame = 0;
 	ppu->line = 261;
 	ppu->dot = 0;
+
+	ppu->write_toggle = 0;
+	ppu->loopy_v = 0;
+	ppu->loopy_t = 0;
+	ppu->loopy_x = 0;
 
 	return ppu;
 }
@@ -93,6 +104,34 @@ uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 	return val;
 }
 
+inline uint16_t set_bits(uint16_t source, uint16_t dest, int num, int source_pos, int dest_pos)
+{
+	uint16_t mask = ((1<<(num))-1)<<(source_pos-num);
+	// TODO: finish this
+}
+
+inline void write_to_scroll(struct ppu *ppu, uint8_t value)
+{
+	if (ppu->write_toggle == 0) {
+		ppu->loopy_x = value % 8;
+	} else {
+
+	}
+
+	ppu->write_toggle ^= 1;
+}
+
+inline void write_to_addr(struct ppu *ppu, uint8_t value)
+{
+	if (ppu->write_toggle == 0) {
+
+	} else {
+
+	}
+
+	ppu->write_toggle ^= 1;
+}
+
 void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
 {
 	switch(addr) {
@@ -112,10 +151,10 @@ void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
 			ppu->oam_data = value;
 			break;
 		case 0x2005:
-			ppu->scroll = value;
+			write_to_scroll(ppu, value);
 			break;
 		case 0x2006:
-			ppu->addr = value;
+			write_to_addr(ppu, value);
 			break;
 		case 0x2007:
 			ppu->data = value;
