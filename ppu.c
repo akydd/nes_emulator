@@ -32,11 +32,17 @@ struct ppu {
 	// Odd frame toggle
 	int odd_frame;
 
-	// for scrolling
+	// for scrolling.  Here, loopy_v and loopy_t are decoded like so:
+	// U yyy NN YYYYY XXXXX
+	// | ||| || ||||| +++++-- coarse X scroll
+	// | ||| || +++++-------- coarse Y scroll
+	// | ||| ++-------------- nametable select
+	// | +++----------------- fine Y scroll
+	// +--------------------- unused
 	uint16_t loopy_v;
 	uint16_t loopy_t;
-	uint16_t loopy_x;
-	uint8_t write_toggle;
+	uint16_t loopy_x; // only 3 bits were really needed for this guy
+	int write_toggle;
 
 	// tracks current line and dot.  There are 262 scanlines (0 to 261) and
 	// 341 dots (0 to 340).
@@ -72,12 +78,18 @@ struct ppu *PPU_init()
 	return ppu;
 }
 
+inline void read_ctrl(struct ppu *ppu)
+{
+	ppu->write_toggle = 0;
+}
+
 uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 {
 	uint8_t val;
 	switch(addr) {
 		case 0x2000:
 			val = ppu->ctrl;
+			read_ctrl(ppu);
 			break;
 		case 0x2001:
 			val = ppu->mask;
@@ -104,18 +116,34 @@ uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 	return val;
 }
 
+/* 
+ * This was fun to figure out.  Copy num bits at source_pos from source
+ * into dest at dest_pos.  Positions start at 0, the LSB.
+ * */
 inline uint16_t set_bits(uint16_t source, uint16_t dest, int num, int source_pos, int dest_pos)
 {
-	uint16_t mask = ((1<<(num))-1)<<(source_pos-num);
-	// TODO: finish this
+	uint16_t mask = ((1<<(num))-1)<<(source_pos);
+
+	if (dest_pos >= source_pos) {
+		return (dest & (~(mask << dest_pos))) | ((source & mask) << dest_pos);
+	}
+
+	return (dest & (~(mask >> (source_pos - dest_pos)))) | ((source & mask) >> (source_pos - dest_pos));
+}
+
+inline void write_to_ctrl(struct ppu *ppu, uint8_t value)
+{
+	ppu->loopy_t = set_bits(value, ppu->loopy_t, 2, 0, 10);
 }
 
 inline void write_to_scroll(struct ppu *ppu, uint8_t value)
 {
 	if (ppu->write_toggle == 0) {
 		ppu->loopy_x = value % 8;
+		ppu->loopy_t = set_bits(value, ppu->loopy_t, 5, 3, 0);
 	} else {
-
+		ppu->loopy_t = set_bits(value, ppu->loopy_t, 3, 0, 12);
+		ppu->loopy_t = set_bits(value, ppu->loopy_t, 5, 3, 5);
 	}
 
 	ppu->write_toggle ^= 1;
@@ -124,9 +152,12 @@ inline void write_to_scroll(struct ppu *ppu, uint8_t value)
 inline void write_to_addr(struct ppu *ppu, uint8_t value)
 {
 	if (ppu->write_toggle == 0) {
-
+		ppu->loopy_t = set_bits(value, ppu->loopy_t, 6, 0, 8);
+		// clear bit 15 of loopy_t, too
+		ppu->loopy_t &= ~(1<<15);
 	} else {
-
+		ppu->loopy_t = set_bits(value, ppu->loopy_t, 8, 0, 0);
+		ppu->loopy_v = ppu->loopy_t;
 	}
 
 	ppu->write_toggle ^= 1;
@@ -137,6 +168,7 @@ void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
 	switch(addr) {
 		case 0x2000:
 			ppu->ctrl = value;
+			write_to_ctrl(ppu, value);
 			break;
 		case 0x2001:
 			ppu->mask = value;
