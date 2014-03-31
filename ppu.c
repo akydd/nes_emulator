@@ -39,8 +39,8 @@ struct ppu {
 	// | ||| ++-------------- nametable select
 	// | +++----------------- fine Y scroll
 	// +--------------------- unused
-	uint16_t loopy_v;
-	uint16_t loopy_t;
+	uint16_t loopy_v; // VRAM address value
+	uint16_t loopy_t; // scroll & addr address latch
 	uint16_t loopy_x; // only 3 bits were really needed for this guy
 	int write_toggle;
 
@@ -83,6 +83,14 @@ inline void read_ctrl(struct ppu *ppu)
 	ppu->write_toggle = 0;
 }
 
+inline void read_status(struct ppu *ppu)
+{
+	// clear latch used by PPUADDR
+	ppu->loopy_t = 0;
+	// Unset the vblank start flag and write back to mem
+	ppu->status &= ~(1<<7);
+}
+
 uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 {
 	uint8_t val;
@@ -96,6 +104,7 @@ uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 			break;
 		case 0x2002:
 			val = ppu->status;
+			read_status(ppu);
 			break;
 		case 0x2003:
 			val = ppu->oam_addr;
@@ -122,7 +131,7 @@ uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
  * */
 inline uint16_t set_bits(uint16_t source, uint16_t dest, int num, int source_pos, int dest_pos)
 {
-	uint16_t mask = ((1<<(num))-1)<<(source_pos);
+	unsigned long mask = ((1UL<<(num))-1UL)<<(source_pos);
 
 	if (dest_pos >= source_pos) {
 		return (dest & (~(mask << dest_pos))) | ((source & mask) << dest_pos);
@@ -201,26 +210,6 @@ void PPU_delete(struct ppu **ppu)
 	free(*ppu);
 }
 
-inline uint8_t read_status(struct ppu *ppu)
-{
-	// clear latch used by PPUADDR
-	// TODO
-	// Get the original value
-	uint8_t val = ppu->status;
-	// Unset the vblank start flag and write back to mem
-	uint8_t new_val = (val & ~(1<<7));
-	ppu->status = new_val;
-
-	// return original value
-	return val;
-}
-
-inline void write_OAM_addr(struct ppu *ppu, const uint8_t val)
-{
-	// write to the register
-	ppu->oam_addr = val;
-}
-
 inline void write_OAM_data(struct ppu *ppu, const uint8_t val)
 {
 	// write to the register
@@ -297,7 +286,7 @@ inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 	}
 
 	if((ppu->dot >= 257) && (ppu->dot <= 320)) {
-		write_OAM_addr(ppu, 0);
+		ppu->oam_addr = 0;
 	}
 
 	if ((ppu->dot < 257 && ppu->dot > 0) || (ppu->dot > 320)) {
