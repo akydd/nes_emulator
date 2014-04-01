@@ -91,6 +91,17 @@ inline void read_status(struct ppu *ppu)
 	ppu->status &= ~(1<<7);
 }
 
+inline void read_or_write_data(struct ppu *ppu)
+{
+	// increment loopy_v based on control register VRAM address
+	// increment bit value (0 = add 1, 1 = add 32)
+	if ((ppu->status & 1<<2) == 0) {
+		ppu->loopy_v++;
+	} else {
+		ppu->loopy_v += 32;
+	}
+}
+
 uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 {
 	uint8_t val;
@@ -120,6 +131,7 @@ uint8_t PPU_read_register(struct ppu *ppu, uint16_t addr)
 			break;
 		case 0x2007:
 			val = ppu->data;
+			read_or_write_data(ppu);
 			break;
 	}
 	return val;
@@ -196,11 +208,15 @@ void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
 			write_to_scroll(ppu, value);
 			break;
 		case 0x2006:
+			// valid values are 0x0000 through 0x3FFF.  Mirror down
+			// otherwise.
+			value = value % 0x4000;
 			ppu->addr = value;
 			write_to_addr(ppu, value);
 			break;
 		case 0x2007:
 			ppu->data = value;
+			read_or_write_data(ppu);
 			break;
 	}
 }
@@ -208,27 +224,6 @@ void PPU_write_register(struct ppu *ppu, uint16_t addr, uint8_t value)
 void PPU_delete(struct ppu **ppu)
 {
 	free(*ppu);
-}
-
-inline void write_OAM_data(struct ppu *ppu, const uint8_t val)
-{
-	// write to the register
-	ppu->oam_data = val;
-	// increment OAM address register, too
-	ppu->oam_addr++;
-}
-
-inline void write_data(struct ppu *ppu, const uint8_t val)
-{
-	// write to the register
-	ppu->data = val;
-	// increment address register based on control register VRAM address
-	// increment bit value (0 = add 1, 1 = add 32)
-	if ((ppu->status & 1<<2) == 0) {
-		ppu->addr++;
-	} else {
-		ppu->addr += 32;
-	}
 }
 
 inline uint8_t vblank_is_enabled(struct ppu *ppu)
@@ -315,18 +310,18 @@ inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
 #ifdef DEBUG_PPU
-	(void)printf("SL %d.%d\n", ppu->line, ppu->dot);
+	(void)printf("SL %03d.%03d ", ppu->line, ppu->dot);
 #endif
 	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
 	 * start of the VBLANKing interval. */
 	if (ppu->dot == 1 && ppu->line == 241) {
 		set_vblank_flag(ppu);
 
-		/* This return indicates an NMI to the CPU */
+		// This return indicates an NMI to the CPU
 		if (vblank_is_enabled(ppu) != 0) {
 			increment_cycle(ppu);
-#ifdef DEBUG_CPU
-			(void)printf("Executing VBLANK\n");
+#ifdef DEBUG_PPU
+			(void)printf("\n*** Executing VBLANK ***\n");
 #endif
 			return 0;
 		}
@@ -336,6 +331,9 @@ uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 		render(ppu, ppu_mem);	
 	}
 
+#ifdef DEBUG_PPU
+	(void)printf("ctrl:%02x mask:%02x status:%02x oamaddr:%02x oamdata:%02x scroll:%02x addr:%02x data:%02x loopy_v:%02x loopy_t:%02x loopy_x:%02x\n", ppu->ctrl, ppu->mask, ppu->status, ppu->oam_addr, ppu->oam_data, ppu->scroll, ppu->addr, ppu->data, ppu->loopy_v, ppu->loopy_t, ppu->loopy_x);
+#endif
 	increment_cycle(ppu);
 	return 1;
 }

@@ -117,7 +117,6 @@ int main(int argc, char **argv)
 		cpu_cycles = CPU_step(cpu, mem);
 
 		// PPU steps 3 times for each CPU step
-		/*
 		for(i = 0; i <= 3 * cpu_cycles; i++) {
 			ppu_result = PPU_step(ppu, ppu_mem);
 
@@ -125,7 +124,6 @@ int main(int argc, char **argv)
 				CPU_handle_nmi(cpu, mem);
 			}
 		}
-		*/
 #ifdef BLARGG 
 		MEM_print_test_status(mem);
 #endif
