@@ -332,7 +332,7 @@ uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 	}
 
 #ifdef DEBUG_PPU
-	(void)printf("ctrl:%02x mask:%02x status:%02x oamaddr:%02x oamdata:%02x scroll:%02x addr:%02x data:%02x loopy_v:%02x loopy_t:%02x loopy_x:%02x\n", ppu->ctrl, ppu->mask, ppu->status, ppu->oam_addr, ppu->oam_data, ppu->scroll, ppu->addr, ppu->data, ppu->loopy_v, ppu->loopy_t, ppu->loopy_x);
+	(void)printf("ctrl:%02x mask:%02x status:%02x oamaddr:%02x oamdata:%02x scroll:%02x addr:%02x data:%02x loopy_v:%04x loopy_t:%04x loopy_x:%04x\n", ppu->ctrl, ppu->mask, ppu->status, ppu->oam_addr, ppu->oam_data, ppu->scroll, ppu->addr, ppu->data, ppu->loopy_v, ppu->loopy_t, ppu->loopy_x);
 #endif
 	increment_cycle(ppu);
 	return 1;

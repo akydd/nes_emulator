@@ -92,6 +92,7 @@ int main(int argc, char **argv)
 	const uint8_t *keys;
 	struct input_processor *input_processor = INPUT_init(&keys);
 	MEM_attach_controller(mem, gamepad);
+	// MEM_attach_ppu(mem, ppu);
 
 	// Setup SDL
 	SDL_Init(SDL_INIT_VIDEO);

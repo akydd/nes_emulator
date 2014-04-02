@@ -745,14 +745,15 @@ inline void isc(uint16_t addr, struct cpu *cpu, struct memory *memory)
 
 /* 
  * break: push PC onto the stack, push the status flags on the stack with
- * the break flag virtually set, then address
+ * the break flag virtually set, set the interrupt disable flag, then address
  * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
 uint8_t cpu_brk(struct cpu *cpu, struct memory *memory)
 {
-	cpu->PC += 2;
-	CPU_push16_stack(cpu, memory, cpu->PC);
+	CPU_push16_stack(cpu, memory, cpu->PC + 2);
 	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG | U_FLAG);
+
+	set_status_flag(cpu, I_FLAG);
 
 	uint16_t low = MEM_read(memory, MEM_BRK_VECTOR);
 	uint16_t high = ((uint16_t)MEM_read(memory, MEM_BRK_VECTOR + 1))<<8;
