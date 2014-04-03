@@ -85,7 +85,7 @@ uint8_t MEM_read(struct memory *mem, const uint16_t addr)
 		val = CONTROLLER_read(mem->controller);
 	} else if ((addr >= VRAM_REG_ADDR) && (addr < IO_REG_ADDR) && (mem->ppu != NULL)) {
 		// Special case for when the PPU is attached.  Reducing the
-		// address to the base address should bypass the mirroring
+		// address to (base address + 8) should bypass the mirroring
 		// altogether.
 		uint16_t base_addr = (addr % VRAM_REG_MIRROR_SIZE) + VRAM_REG_ADDR;
 		val = PPU_read_register(mem->ppu, base_addr);

@@ -114,14 +114,14 @@ struct memory;
  * PPU registers are mapped to 0x2000 to 0x3FFF above as:
  * 
  * 0x2008 - 0x3FFF - 1023 mirrors of 0x2000 - 0x2007
- * 0x2007 (R/W)    - PPU Memory Data
- * 0x2006 (W)      - PPU Memory Address
- * 0x2005 (W)      - Background scroll
- * 0x2004 (R/W)    - Sprite Memory Data
- * 0x2003 (W)      - Sprite Memory Address
- * 0x2002 (R)      - PPU Status Register
- * 0x2001 (W)      - PPU Control Register 2
- * 0x2000 (W)      - PPU Control Register 1
+ * 0x2007 (R/W)    - Data
+ * 0x2006 (W)      - Address
+ * 0x2005 (W)      - Scroll
+ * 0x2004 (R/W)    - OAM Data
+ * 0x2003 (W)      - OAM Address
+ * 0x2002 (R)      - Status
+ * 0x2001 (W)      - Mask
+ * 0x2000 (W)      - Control
  *
  * Notes:
  * - For internal details of the registers, see ppu_memory.h.
