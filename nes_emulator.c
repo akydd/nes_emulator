@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	const uint8_t *keys;
 	struct input_processor *input_processor = INPUT_init(&keys);
 	MEM_attach_controller(mem, gamepad);
-	// MEM_attach_ppu(mem, ppu);
+	MEM_attach_ppu(mem, ppu);
 
 	// Setup SDL
 	SDL_Init(SDL_INIT_VIDEO);
@@ -118,11 +118,12 @@ int main(int argc, char **argv)
 		cpu_cycles = CPU_step(cpu, mem);
 
 		// PPU steps 3 times for each CPU step
-		for(i = 0; i <= 3 * cpu_cycles; i++) {
+		for(i = 0; i < 3 * cpu_cycles; i++) {
 			ppu_result = PPU_step(ppu, ppu_mem);
 
 			if(ppu_result == 0) {
 				CPU_handle_nmi(cpu, mem);
+				break;
 			}
 		}
 #ifdef BLARGG 

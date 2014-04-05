@@ -280,29 +280,39 @@ inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 		clear_sprite_0_hit_flag(ppu);
 	}
 
-	if((ppu->dot >= 257) && (ppu->dot <= 320)) {
-		ppu->oam_addr = 0;
+	if (ppu->line == 261 || ppu->line >= 240) {
+		if((ppu->dot >= 257) && (ppu->dot <= 320)) {
+			ppu->oam_addr = 0;
+		}
 	}
 
-	if ((ppu->dot < 257 && ppu->dot > 0) || (ppu->dot > 320)) {
-		uint8_t fetch_cycle = ppu->dot % 8;
+	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
+	 * start of the VBLANKing interval. */
+	if (ppu->line == 241 && ppu->dot == 1) {
+		set_vblank_flag(ppu);
+	}
 
-		switch(fetch_cycle) {
-			case 0:
-				// increment horizontal
-				break;
-			case 2:
-				// fetch nametable address
-				break;
-			case 4:
-				// fetch attribute table address
-				break;
-			case 6:
-				// fetch low background tile byte
-				break;
-			case 8:
-				// fetch high background tile byte
-				break;
+	if (ppu->line < 240 || ppu->line == 261) {
+		if ((ppu->dot < 257 && ppu->dot > 0) || (ppu->dot > 320)) {
+			uint8_t fetch_cycle = ppu->dot % 8;
+
+			switch(fetch_cycle) {
+				case 0:
+					// increment horizontal
+					break;
+				case 2:
+					// fetch nametable address
+					break;
+				case 4:
+					// fetch attribute table address
+					break;
+				case 6:
+					// fetch low background tile byte
+					break;
+				case 8:
+					// fetch high background tile byte
+					break;
+			}
 		}
 	}
 }
@@ -312,28 +322,23 @@ uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 #ifdef DEBUG_PPU
 	(void)printf("SL %03d.%03d ", ppu->line, ppu->dot);
 #endif
-	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
-	 * start of the VBLANKing interval. */
-	if (ppu->dot == 1 && ppu->line == 241) {
-		set_vblank_flag(ppu);
+	int return_val = 1;
+	render(ppu, ppu_mem);	
 
-		// This return indicates an NMI to the CPU
+	// check for NMI
+	if (ppu->line == 241 && ppu->dot == 1) {
 		if (vblank_is_enabled(ppu) != 0) {
-			increment_cycle(ppu);
 #ifdef DEBUG_PPU
 			(void)printf("\n*** Executing VBLANK ***\n");
 #endif
-			return 0;
+			return_val = 0;
 		}
 	}
 
-	if (ppu->line < 240) {
-		render(ppu, ppu_mem);	
-	}
 
 #ifdef DEBUG_PPU
 	(void)printf("ctrl:%02x mask:%02x status:%02x oamaddr:%02x oamdata:%02x scroll:%02x addr:%02x data:%02x loopy_v:%04x loopy_t:%04x loopy_x:%04x\n", ppu->ctrl, ppu->mask, ppu->status, ppu->oam_addr, ppu->oam_data, ppu->scroll, ppu->addr, ppu->data, ppu->loopy_v, ppu->loopy_t, ppu->loopy_x);
 #endif
 	increment_cycle(ppu);
-	return 1;
+	return return_val;
 }

@@ -46,6 +46,8 @@ struct cpu {
 	uint8_t X;	/* X index */
 	uint8_t Y;	/* Y index */
 	uint8_t P;	/* processor status flags */
+
+	uint8_t cycles;	/* Holds the number of cycles needed for the current instruction */
 };
 
 /* Stack manipulation */
@@ -748,8 +750,10 @@ inline void isc(uint16_t addr, struct cpu *cpu, struct memory *memory)
  * the break flag virtually set, set the interrupt disable flag, then address
  * $FFFE/$FFFF is loaded into the PC. BRK is really a two-byte instruction.
  */
-uint8_t cpu_brk(struct cpu *cpu, struct memory *memory)
+void cpu_brk(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	CPU_push16_stack(cpu, memory, cpu->PC + 2);
 	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG | U_FLAG);
 
@@ -758,65 +762,65 @@ uint8_t cpu_brk(struct cpu *cpu, struct memory *memory)
 	uint16_t low = MEM_read(memory, MEM_BRK_VECTOR);
 	uint16_t high = ((uint16_t)MEM_read(memory, MEM_BRK_VECTOR + 1))<<8;
 	cpu->PC = (high | low);
-
-	return 7;
 }
 
 /*
  * bitwise or of operand and the accumulator, stored in accumulator
  */
-uint8_t ora_ind_x(struct cpu *cpu, struct memory *memory)
+void ora_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t ora_zero_pg(struct cpu *cpu, struct memory *memory)
+void ora_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 3;
 }
 
 /*
  * shift bits to the left, pushing in 0.
  */
-uint8_t asl_zero_pg(struct cpu *cpu, struct memory *memory)
+void asl_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	asl(addr, cpu, memory);
-
-	return 5;
 }
 
 /*
  * Push processor status flags onto the stack.
  */
-uint8_t php(struct cpu *cpu, struct memory *memory)
+void php(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	CPU_push8_stack(cpu, memory, cpu->P | B_FLAG | U_FLAG);
-
-	return 3;
 }
 
-uint8_t ora_imm(struct cpu *cpu, struct memory *memory)
+void ora_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	ora(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t asl_acc(struct cpu *cpu, struct memory *memory)
+void asl_acc(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 
 	uint8_t val = cpu->A;
@@ -830,158 +834,159 @@ uint8_t asl_acc(struct cpu *cpu, struct memory *memory)
 	} else {
 		cpu->P &= ~(C_FLAG);
 	}
-
-	return 2;
 }
 
-uint8_t ora_abs(struct cpu *cpu, struct memory *memory)
+void ora_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t asl_abs(struct cpu *cpu, struct memory *memory)
+void asl_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	asl(addr, cpu, memory);
-
-	return 6;
 }
 
 /*
  * If negative flag is clear, add relative displacement to cpu->PC
  */
-uint8_t bpl_r(struct cpu *cpu, struct memory *memory)
+void bpl_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be handled as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_negative_flag_is_set(cpu) == 0) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t ora_ind_y(struct cpu *cpu, struct memory *memory)
+void ora_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t ora_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void ora_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t asl_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void asl_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	asl(addr, cpu, memory);
-
-	return 6;
 }
 
 /*
  * Clear carry flag
  */
-uint8_t clc(struct cpu *cpu, struct memory *memory)
+void clc(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->P &= ~C_FLAG;
 	cpu->PC++;
-
-	return 2;
 }
 
-uint8_t ora_abs_y(struct cpu *cpu, struct memory *memory)
+void ora_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ora_abs_x(struct cpu *cpu, struct memory *memory)
+void ora_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	ora(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t asl_abs_x(struct cpu *cpu, struct memory *memory)
+void asl_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	asl(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t jsr_abs(struct cpu *cpu, struct memory *memory)
+void jsr_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t transfer_addr = abs_(cpu, memory);
 	uint16_t next_op_addr = cpu->PC-1;
 	CPU_push16_stack(cpu, memory, next_op_addr);
 	cpu->PC = transfer_addr;
-
-	return 6;
 }
 
-uint8_t and_ind_x(struct cpu *cpu, struct memory *memory)
+void and_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t bit_zero_pg(struct cpu *cpu, struct memory *memory)
+void bit_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	bit(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t and_zero_pg(struct cpu *cpu, struct memory *memory)
+void and_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t rol_zero_pg(struct cpu *cpu, struct memory *memory)
+void rol_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	rol(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t plp(struct cpu *cpu, struct memory *memory)
+void plp(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint8_t val = CPU_pop8_stack(cpu, memory);
 
@@ -992,21 +997,21 @@ uint8_t plp(struct cpu *cpu, struct memory *memory)
 		val &= ~(B_FLAG);
 	}
 	cpu->P = val | U_FLAG;
-
-	return 4;
 }
 
-uint8_t and_imm(struct cpu *cpu, struct memory *memory)
+void and_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	and(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t rol_acc(struct cpu *cpu, struct memory *memory)
+void rol_acc(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 
 	uint8_t val = cpu->A;
@@ -1030,117 +1035,118 @@ uint8_t rol_acc(struct cpu *cpu, struct memory *memory)
 
 	CPU_set_negative_flag_for_value(cpu, result);
 	CPU_set_zero_flag_for_value(cpu, result);
-
-	return 2;
 }
 
-uint8_t bit_abs(struct cpu *cpu, struct memory *memory)
+void bit_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	bit(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t and_abs(struct cpu *cpu, struct memory *memory)
+void and_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t rol_abs(struct cpu *cpu, struct memory *memory)
+void rol_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	rol(addr, cpu, memory);
-
-	return 6;
 }
 
 /*
  * Branch when negative
  */
-uint8_t bmi_r(struct cpu *cpu, struct memory *memory)
+void bmi_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must ba handled as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_negative_flag_is_set(cpu) == 1) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t and_ind_y(struct cpu *cpu, struct memory *memory)
+void and_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t and_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void and_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t rol_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void rol_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	rol(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sec(struct cpu *cpu, struct memory *memory)
+void sec(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	set_status_flag(cpu, C_FLAG);
-
-	return 2;
 }
 
-uint8_t and_abs_y(struct cpu *cpu, struct memory *memory)
+void and_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t and_abs_x(struct cpu *cpu, struct memory *memory)
+void and_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	and(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t rol_abs_x(struct cpu *cpu, struct memory *memory)
+void rol_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	rol(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t rti(struct cpu *cpu, struct memory *memory)
+void rti(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	// Unused flag should always be set when loading status flags from
 	// memory.  Break flag should stay at existing value.
@@ -1153,57 +1159,57 @@ uint8_t rti(struct cpu *cpu, struct memory *memory)
 
 	cpu->P = val;
 	cpu->PC = CPU_pop16_stack(cpu, memory);
-
-	return 6;
 }
 
-uint8_t eor_ind_x(struct cpu *cpu, struct memory *memory)
+void eor_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t eor_zero_pg(struct cpu *cpu, struct memory *memory)
+void eor_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 3;
 }
 
 
-uint8_t lsr_zero_pg(struct cpu *cpu, struct memory *memory)
+void lsr_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	lsr(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t pha(struct cpu *cpu, struct memory *memory)
+void pha(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	CPU_push8_stack(cpu, memory, cpu->A);
-
-	return 3;
 }
 
-uint8_t eor_imm(struct cpu *cpu, struct memory *memory)
+void eor_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	eor(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t lsr_acc(struct cpu *cpu, struct memory *memory)
+void lsr_acc(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint8_t val = cpu->A;
 	uint8_t result = val>>1;
@@ -1220,172 +1226,173 @@ uint8_t lsr_acc(struct cpu *cpu, struct memory *memory)
 	CPU_set_negative_flag_for_value(cpu, result);
 
 	cpu->A = result;
-
-	return 2;
 }
 
-uint8_t jmp_abs(struct cpu *cpu, struct memory *memory)
+void jmp_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	jmp(addr, cpu);
-
-	return 3;
 }
 
-uint8_t eor_abs(struct cpu *cpu, struct memory *memory)
+void eor_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lsr_abs(struct cpu *cpu, struct memory *memory)
+void lsr_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	lsr(addr, cpu, memory);
-
-	return 6;
 }
 
 /*
  * If overflow flag is clear, add relative displacement to cpu->PC
  */
-uint8_t bvc_r(struct cpu *cpu, struct memory *memory)
+void bvc_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be handled as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_overflow_flag_is_set(cpu) == 0) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t eor_ind_y(struct cpu *cpu, struct memory *memory)
+void eor_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t eor_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void eor_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint8_t addr = zero_pg_x(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lsr_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void lsr_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint8_t addr = zero_pg_x(cpu, memory);
 	lsr(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t cli(struct cpu *cpu, struct memory *memory)
+void cli(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	clear_status_flag(cpu, I_FLAG);
-
-	return 2;
 }
 
-uint8_t eor_abs_y(struct cpu *cpu, struct memory *memory)
+void eor_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t eor_abs_x(struct cpu *cpu, struct memory *memory)
+void eor_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	eor(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lsr_abs_x(struct cpu *cpu, struct memory *memory)
+void lsr_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	lsr(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t rts(struct cpu *cpu, struct memory *memory)
+void rts(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC = CPU_pop16_stack(cpu, memory) + 1;
-
-	return 6;
 }
 
-uint8_t adc_ind_x(struct cpu *cpu, struct memory *memory)
+void adc_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t adc_zero_pg(struct cpu *cpu, struct memory *memory)
+void adc_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t ror_zero_pg(struct cpu *cpu, struct memory *memory)
+void ror_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	ror(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t pla(struct cpu *cpu, struct memory *memory)
+void pla(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint8_t val = CPU_pop8_stack(cpu, memory);
 	cpu->A = val;
 
 	CPU_set_zero_flag_for_value(cpu, val);
 	CPU_set_negative_flag_for_value(cpu, val);
-
-	return 4;
 }
 
-uint8_t adc_imm(struct cpu *cpu, struct memory *memory)
+void adc_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	adc(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t ror_acc(struct cpu *cpu, struct memory *memory)
+void ror_acc(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint8_t val = cpu->A;
 	uint8_t result = val>>1;
@@ -1407,1313 +1414,1318 @@ uint8_t ror_acc(struct cpu *cpu, struct memory *memory)
 	cpu->A = result;
 	CPU_set_negative_flag_for_value(cpu, result);
 	CPU_set_zero_flag_for_value(cpu, result);
-
-	return 2;
 }
 
-uint8_t jmp_ind(struct cpu *cpu, struct memory *memory)
+void jmp_ind(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind(cpu, memory);
 	jmp(addr, cpu);
-
-	return 5;
 }
 
-uint8_t adc_abs(struct cpu *cpu, struct memory *memory)
+void adc_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ror_abs(struct cpu *cpu, struct memory *memory)
+void ror_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	ror(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t bvs_r(struct cpu *cpu, struct memory *memory)
+void bvs_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be handles as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_overflow_flag_is_set(cpu) == 1) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t adc_ind_y(struct cpu *cpu, struct memory *memory)
+void adc_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t adc_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void adc_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ror_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void ror_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	ror(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sei(struct cpu *cpu, struct memory *memory)
+void sei(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	set_status_flag(cpu, I_FLAG);
-
-	return 2;
 }
 
-uint8_t adc_abs_y(struct cpu *cpu, struct memory *memory)
+void adc_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t adc_abs_x(struct cpu *cpu, struct memory *memory)
+void adc_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	adc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ror_abs_x(struct cpu *cpu, struct memory *memory)
+void ror_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	ror(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t sta_ind_x(struct cpu *cpu, struct memory *memory)
+void sta_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sty_zero_pg(struct cpu *cpu, struct memory *memory)
+void sty_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	sty(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t sta_zero_pg(struct cpu *cpu, struct memory *memory)
+void sta_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t stx_zero_pg(struct cpu *cpu, struct memory *memory)
+void stx_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	stx(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t dey(struct cpu *cpu, struct memory *memory)
+void dey(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->Y--;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->Y);
 	CPU_set_negative_flag_for_value(cpu, cpu->Y);
-
-	return 2;
 }
 
-uint8_t txa(struct cpu *cpu, struct memory *memory)
+void txa(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->A = cpu->X;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
-
-	return 2;
 }
 
-uint8_t sty_abs(struct cpu *cpu, struct memory *memory)
+void sty_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	sty(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t sta_abs(struct cpu *cpu, struct memory *memory)
+void sta_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t stx_abs(struct cpu * cpu, struct memory *memory)
+void stx_abs(struct cpu * cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	stx(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t bcc_r(struct cpu *cpu, struct memory *memory)
+void bcc_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be treated as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_carry_flag_is_set(cpu) == 0) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t sta_ind_y(struct cpu *cpu, struct memory *memory)
+void sta_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sty_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void sty_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	sty(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t sta_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void sta_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t stx_zero_pg_y(struct cpu *cpu, struct memory *memory)
+void stx_zero_pg_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_y(cpu, memory);
 	stx(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t tya(struct cpu *cpu, struct memory *memory)
+void tya(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->A = cpu->Y;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
-
-	return 2;
 }
 
-uint8_t sta_abs_y(struct cpu *cpu, struct memory *memory)
+void sta_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t txs(struct cpu *cpu, struct memory *memory)
+void txs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->S = cpu->X + MEM_STACK_OFFSET;
-
-	return 2;
 }
 
-uint8_t sta_abs_x(struct cpu *cpu, struct memory *memory)
+void sta_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	sta(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t ldy_imm(struct cpu *cpu, struct memory *memory)
+void ldy_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	ldy(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t lda_ind_x(struct cpu *cpu, struct memory *memory)
+void lda_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t ldx_imm(struct cpu *cpu, struct memory *memory)
+void ldx_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	ldx(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t ldy_zero_pg(struct cpu *cpu, struct memory *memory)
+void ldy_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	ldy(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t lda_zero_pg(struct cpu *cpu, struct memory *memory)
+void lda_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t ldx_zero_pg(struct cpu *cpu, struct memory *memory)
+void ldx_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	ldx(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t tay(struct cpu *cpu, struct memory *memory)
+void tay(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->Y = cpu->A;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
-
-	return 2;
 }
 
-uint8_t lda_imm(struct cpu *cpu, struct memory *memory)
+void lda_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	lda(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t tax(struct cpu *cpu, struct memory *memory)
+void tax(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->X = cpu->A;
 
 	CPU_set_zero_flag_for_value(cpu, cpu->A);
 	CPU_set_negative_flag_for_value(cpu, cpu->A);
-
-	return 2;
 }
 
-uint8_t ldy_abs(struct cpu *cpu, struct memory *memory)
+void ldy_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	ldy(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lda_abs(struct cpu *cpu, struct memory *memory)
+void lda_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ldx_abs(struct cpu *cpu, struct memory *memory)
+void ldx_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	ldx(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t bcs_r(struct cpu *cpu, struct memory *memory)
+void bcs_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be treated as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_carry_flag_is_set(cpu) == 1) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t lda_ind_y(struct cpu *cpu, struct memory *memory)
+void lda_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t ldy_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void ldy_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	ldy(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lda_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void lda_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr =zero_pg_x(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ldx_zero_pg_y(struct cpu *cpu, struct memory *memory)
+void ldx_zero_pg_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_y(cpu, memory);
 	ldx(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t clv(struct cpu *cpu, struct memory *memory)
+void clv(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	clear_status_flag(cpu, V_FLAG);
-
-	return 2;
 }
 
-uint8_t lda_abs_y(struct cpu *cpu, struct memory *memory)
+void lda_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t tsx(struct cpu *cpu, struct memory *memory)
+void tsx(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->X = cpu->S - MEM_STACK_OFFSET;
 
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
 	CPU_set_zero_flag_for_value(cpu, cpu->X);
-
-	return 2;
 }
 
-uint8_t ldy_abs_x(struct cpu *cpu, struct memory *memory)
+void ldy_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	ldy(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lda_abs_x(struct cpu *cpu, struct memory *memory)
+void lda_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	lda(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t ldx_abs_y(struct cpu *cpu, struct memory *memory)
+void ldx_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	ldx(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t cpy_imm(struct cpu *cpu, struct memory *memory)
+void cpy_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cpy(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t cmp_ind_x(struct cpu *cpu, struct memory *memory)
+void cmp_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t cpy_zero_pg(struct cpu *cpu, struct memory *memory)
+void cpy_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	cpy(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t cmp_zero_pg(struct cpu *cpu, struct memory *memory)
+void cmp_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t dec_zero_pg(struct cpu *cpu, struct memory *memory)
+void dec_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	dec(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t iny(struct cpu *cpu, struct memory *memory)
+void iny(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->Y++;
 	CPU_set_zero_flag_for_value(cpu, cpu->Y);
 	CPU_set_negative_flag_for_value(cpu, cpu->Y);
-
-	return 2;
 }
 
-uint8_t cmp_imm(struct cpu *cpu, struct memory *memory)
+void cmp_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cmp(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t dex(struct cpu *cpu, struct memory *memory)
+void dex(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->X--;
 	CPU_set_zero_flag_for_value(cpu, cpu->X);
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
-
-	return 2;
 }
 
-uint8_t cpy_abs(struct cpu *cpu, struct memory *memory)
+void cpy_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	cpy(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t cmp_abs(struct cpu *cpu, struct memory *memory)
+void cmp_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t dec_abs(struct cpu *cpu, struct memory *memory)
+void dec_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	dec(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t bne_r(struct cpu *cpu, struct memory *memory)
+void bne_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be treated as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_zero_flag_is_set(cpu) == 0) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t cmp_ind_y(struct cpu *cpu, struct memory *memory)
+void cmp_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t cmp_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void cmp_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t dec_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void dec_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	dec(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t cld(struct cpu *cpu, struct memory *memory)
+void cld(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	clear_status_flag(cpu, D_FLAG);
-
-	return 2;
 }
 
-uint8_t cmp_abs_y(struct cpu *cpu, struct memory *memory)
+void cmp_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t cmp_abs_x(struct cpu *cpu, struct memory *memory)
+void cmp_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	cmp(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t dec_abs_x(struct cpu *cpu, struct memory *memory)
+void dec_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	dec(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t cpx_imm(struct cpu *cpu, struct memory *memory)
+void cpx_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	cpx(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t sbc_ind_x(struct cpu *cpu, struct memory *memory)
+void sbc_ind_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t cpx_zero_pg(struct cpu *cpu, struct memory *memory)
+void cpx_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	cpx(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t sbc_zero_pg(struct cpu *cpu, struct memory *memory)
+void sbc_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t inc_zero_pg(struct cpu *cpu, struct memory *memory)
+void inc_zero_pg(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	inc(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t inx(struct cpu *cpu, struct memory *memory)
+void inx(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	cpu->X++;
 	CPU_set_zero_flag_for_value(cpu, cpu->X);
 	CPU_set_negative_flag_for_value(cpu, cpu->X);
-
-	return 2;
 }
 
-uint8_t sbc_imm(struct cpu *cpu, struct memory *memory)
+void sbc_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	sbc(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t nop(struct cpu *cpu, struct memory *memory)
+void nop(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
 	cpu->PC++;
-	return 2;
 }
 
-uint8_t cpx_abs(struct cpu *cpu, struct memory *memory)
+void cpx_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	cpx(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t sbc_abs(struct cpu *cpu, struct memory *memory)
+void sbc_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t inc_abs(struct cpu *cpu, struct memory *memory)
+void inc_abs(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	inc(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t beq_r(struct cpu *cpu, struct memory *memory)
+void beq_r(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	/* Offset must be treated as a signed number */
 	int8_t offset = (int8_t)CPU_pop8_mem(cpu, memory);
 
 	if(CPU_zero_flag_is_set(cpu) == 1) {
 		cpu->PC += offset;
-		return 3;
+		cpu->cycles++;
 	}
-	return 2;
 }
 
-uint8_t sbc_ind_y(struct cpu *cpu, struct memory *memory)
+void sbc_ind_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t sbc_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void sbc_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t inc_zero_pg_x(struct cpu *cpu, struct memory *memory)
+void inc_zero_pg_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	inc(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sed(struct cpu *cpu, struct memory *memory)
+void sed(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	set_status_flag(cpu, D_FLAG);
-
-	return 2;
 }
 
-uint8_t sbc_abs_y(struct cpu *cpu, struct memory *memory)
+void sbc_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t sbc_abs_x(struct cpu *cpu, struct memory *memory)
+void sbc_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	sbc(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t inc_abs_x(struct cpu *cpu, struct memory *memory)
+void inc_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	inc(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t nop_1_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
+void nop_1_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 2;
 	cpu->PC++;
-	return 2;
 }
 
 
-uint8_t nop_2_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
+void nop_2_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 2;
 	cpu->PC++;
 	cpu->PC++;
-	return 2;
 }
 
-uint8_t nop_2_bytes_3_cycles(struct cpu *cpu, struct memory *memory) {
+void nop_2_bytes_3_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 3;
 	cpu->PC++;
 	cpu->PC++;
-	return 3;
 }
 
-uint8_t nop_2_bytes_4_cycles(struct cpu *cpu, struct memory *memory) {
+void nop_2_bytes_4_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
 	cpu->PC++;
 	cpu->PC++;
-	return 4;
 }
 
-uint8_t nop_3_bytes_4_cycles(struct cpu *cpu, struct memory *memory) {
+void nop_3_bytes_4_cycles(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
 	cpu->PC++;
 	cpu->PC++;
 	cpu->PC++;
-	return 4;
 }
 
 /* "Illegal" opcodes */
 
-uint8_t aac_imm(struct cpu *cpu, struct memory *memory) {
+void aac_imm(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	aac(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t slo_ind_x(struct cpu *cpu, struct memory *memory) {
+void slo_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t slo_ind_y(struct cpu *cpu, struct memory *memory) {
+void slo_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t slo_zero_pg(struct cpu *cpu, struct memory *memory) {
+void slo_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t slo_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+void slo_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t slo_abs(struct cpu *cpu, struct memory *memory) {
+void slo_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t slo_abs_y(struct cpu *cpu, struct memory *memory) {
+void slo_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t slo_abs_x(struct cpu *cpu, struct memory *memory) {
+void slo_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	slo(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t rla_zero_pg(struct cpu *cpu, struct memory *memory) {
+void rla_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t rla_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+void rla_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t rla_ind_x(struct cpu *cpu, struct memory *memory) {
+void rla_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t rla_ind_y(struct cpu *cpu, struct memory *memory) {
+void rla_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t rla_abs(struct cpu *cpu, struct memory *memory) {
+void rla_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t rla_abs_x(struct cpu *cpu, struct memory *memory) {
+void rla_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t rla_abs_y(struct cpu *cpu, struct memory *memory) {
+void rla_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	rla(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t sre_zero_pg(struct cpu *cpu, struct memory *memory) {
+void sre_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t sre_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+void sre_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sre_ind_x(struct cpu *cpu, struct memory *memory) {
+void sre_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t sre_ind_y(struct cpu *cpu, struct memory *memory) {
+void sre_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t sre_abs(struct cpu *cpu, struct memory *memory) {
+void sre_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sre_abs_x(struct cpu *cpu, struct memory *memory) {
+void sre_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t sre_abs_y(struct cpu *cpu, struct memory *memory) {
+void sre_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	sre(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t rra_zero_pg(struct cpu *cpu, struct memory *memory) {
+void rra_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t rra_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+void rra_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t rra_ind_x(struct cpu *cpu, struct memory *memory) {
+void rra_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t rra_ind_y(struct cpu *cpu, struct memory *memory) {
+void rra_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t rra_abs(struct cpu *cpu, struct memory *memory) {
+void rra_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t rra_abs_x(struct cpu *cpu, struct memory *memory) {
+void rra_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t rra_abs_y(struct cpu *cpu, struct memory *memory) {
+void rra_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	rra(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t sax_zero_pg(struct cpu *cpu, struct memory *memory) {
+void sax_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	sax(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t sax_zero_pg_y(struct cpu *cpu, struct memory *memory) {
+void sax_zero_pg_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_y(cpu, memory);
 	sax(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t sax_ind_x(struct cpu *cpu, struct memory *memory) {
+void sax_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	sax(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t sax_abs(struct cpu *cpu, struct memory *memory) {
+void sax_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	sax(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lax_zero_pg(struct cpu *cpu, struct memory *memory) {
+void lax_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 3;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	lax(addr, cpu, memory);
-
-	return 3;
 }
 
-uint8_t lax_zero_pg_y(struct cpu *cpu, struct memory *memory) {
+void lax_zero_pg_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_y(cpu, memory);
 	lax(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lax_ind_x(struct cpu *cpu, struct memory *memory) {
+void lax_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	lax(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t lax_ind_y(struct cpu *cpu, struct memory *memory) {
+void lax_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	lax(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t lax_abs(struct cpu *cpu, struct memory *memory) {
+void lax_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
+	
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	lax(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lax_abs_y(struct cpu *cpu, struct memory *memory) {
+void lax_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 4;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	lax(addr, cpu, memory);
-
-	return 4;
 }
 
-uint8_t lax_imm(struct cpu *cpu, struct memory *memory) {
+void lax_imm(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	lax(addr, cpu, memory);
-
-	return 2;
 }
 
-uint8_t dcp_zero_pg(struct cpu *cpu, struct memory *memory) {
+void dcp_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t dcp_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+void dcp_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t dcp_ind_x(struct cpu *cpu, struct memory *memory) {
+void dcp_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t dcp_ind_y(struct cpu *cpu, struct memory *memory) {
+void dcp_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t dcp_abs(struct cpu *cpu, struct memory *memory) {
+void dcp_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t dcp_abs_x(struct cpu *cpu, struct memory *memory) {
+void dcp_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t dcp_abs_y(struct cpu *cpu, struct memory *memory) {
+void dcp_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	dcp(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t isc_zero_pg(struct cpu *cpu, struct memory *memory) {
+void isc_zero_pg(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 5;
 }
 
-uint8_t isc_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+void isc_zero_pg_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = zero_pg_x(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t isc_ind_x(struct cpu *cpu, struct memory *memory) {
+void isc_ind_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_x(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t isc_ind_y(struct cpu *cpu, struct memory *memory) {
+void isc_ind_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 8;
+
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 8;
 }
 
-uint8_t isc_abs(struct cpu *cpu, struct memory *memory) {
+void isc_abs(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 6;
+
 	cpu->PC++;
 	uint16_t addr = abs_(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 6;
 }
 
-uint8_t isc_abs_x(struct cpu *cpu, struct memory *memory) {
+void isc_abs_x(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t isc_abs_y(struct cpu *cpu, struct memory *memory) {
+void isc_abs_y(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 7;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	isc(addr, cpu, memory);
-
-	return 7;
 }
 
-uint8_t alr_imm(struct cpu *cpu, struct memory *memory) {
+void alr_imm(struct cpu *cpu, struct memory *memory) {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	and(addr, cpu, memory);
@@ -2733,8 +2745,6 @@ uint8_t alr_imm(struct cpu *cpu, struct memory *memory) {
 	CPU_set_negative_flag_for_value(cpu, result);
 
 	cpu->A = result;
-
-	return 2;
 }
 
 /*
@@ -2747,8 +2757,10 @@ uint8_t alr_imm(struct cpu *cpu, struct memory *memory) {
  * 6. Copy the result of an exclusive or of the 4th and 5th bits in the result
  *    into the overflow flag. 
  */
-uint8_t arr_imm(struct cpu *cpu, struct memory *memory)
+void arr_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint16_t addr = imm(cpu);
 	and(addr, cpu, memory);
@@ -2777,35 +2789,35 @@ uint8_t arr_imm(struct cpu *cpu, struct memory *memory)
 	} else {
 		clear_status_flag(cpu, V_FLAG);
 	}
-
-	return 2;
 }
 
-uint8_t axs_imm(struct cpu *cpu, struct memory *memory)
+void axs_imm(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 2;
+
 	cpu->PC++;
 	uint8_t a = cpu->X & cpu->A;
 	uint8_t b = MEM_read(memory, cpu->PC);
 	cpu->PC++;
 	compare(a, b, cpu);
 	cpu->X = a-b;
-
-	return 2;
 }
 
-uint8_t shy_abs_x(struct cpu *cpu, struct memory *memory)
+void shy_abs_x(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	uint8_t high = (uint8_t)(addr >> 8); 
 	uint8_t result = cpu->Y & (high + 1);
 	MEM_write(memory, addr, result);
-
-	return 5;
 }
 
-uint8_t shx_abs_y(struct cpu *cpu, struct memory *memory)
+void shx_abs_y(struct cpu *cpu, struct memory *memory)
 {
+	cpu->cycles = 5;
+
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	uint8_t high = (uint8_t)(addr >> 8); 
@@ -2814,8 +2826,6 @@ uint8_t shx_abs_y(struct cpu *cpu, struct memory *memory)
 
 	CPU_set_negative_flag_for_value(cpu, result);
 	CPU_set_zero_flag_for_value(cpu, result);
-
-	return 5;
 }
 
 /* 
@@ -2823,7 +2833,7 @@ uint8_t shx_abs_y(struct cpu *cpu, struct memory *memory)
  * codes 0x00 to 0xFF. NOP and "illegal" instructions were found here:
  * http://visual6502.org/wiki/index.php?title=6502_all_256_Opcodes
  */
-static uint8_t (* const pf[]) (struct cpu *, struct memory *) = {
+static void (* const pf[]) (struct cpu *, struct memory *) = {
 /* 0x00 */	&cpu_brk, &ora_ind_x, NULL, &slo_ind_x, &nop_2_bytes_3_cycles, &ora_zero_pg, &asl_zero_pg, &slo_zero_pg, &php, &ora_imm, &asl_acc, &aac_imm, &nop_3_bytes_4_cycles, &ora_abs, &asl_abs, &slo_abs,
 /* 0x10 */	&bpl_r, &ora_ind_y, NULL, &slo_ind_y, &nop_2_bytes_4_cycles, &ora_zero_pg_x, &asl_zero_pg_x, &slo_zero_pg_x, &clc, &ora_abs_y, &nop_1_bytes_2_cycles, &slo_abs_y, &nop_3_bytes_4_cycles, &ora_abs_x, &asl_abs_x, &slo_abs_x,
 /* 0x20 */	&jsr_abs, &and_ind_x, NULL, &rla_ind_x, &bit_zero_pg, &and_zero_pg, &rol_zero_pg, &rla_zero_pg, &plp, &and_imm, &rol_acc, &aac_imm, &bit_abs, &and_abs, &rol_abs, &rla_abs,
@@ -2863,6 +2873,8 @@ struct cpu *CPU_init(struct memory *memory)
 	// break flag is not set on init
 	cpu->P = 0x24;
 
+	cpu->cycles = 0;
+
 	return cpu;
 }
 
@@ -2888,7 +2900,8 @@ int CPU_step(struct cpu *cpu, struct memory *memory)
 #ifdef DEBUG_CPU
 	(void)printf("%04x  %02x A:%02x X:%02x Y:%02x P:%02x SP:%02x\n", cpu->PC, opcode, cpu->A, cpu->X, cpu->Y, cpu->P, cpu->S);
 #endif
-	return pf[opcode](cpu, memory);
+	pf[opcode](cpu, memory);
+	return cpu->cycles;
 }
 
 /*
