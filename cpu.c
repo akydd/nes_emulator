@@ -219,13 +219,27 @@ inline uint16_t ind_x(struct cpu *cpu, struct memory *memory)
 	return (high | low);
 }
 
+/* 
+ * ind_y lookups have a side effect for many instuctions:
+ * if the addition of the lower 8 bits of each value result in a carry,
+ * cpu->cycles is increased by 1.  If this is not the case for an
+ * instruction, the instruction should set the number of cycles after
+ * calling this function.
+ */
 inline uint16_t ind_y(struct cpu *cpu, struct memory *memory)
 {
 	uint8_t addr_of_low = CPU_pop8_mem(cpu, memory);
 	uint16_t low = MEM_read(memory, addr_of_low);
 	// Need cast to uint8_t for zero page wrap around
 	uint16_t high = MEM_read(memory, (uint8_t)(addr_of_low + 1))<<8;
-	return (high|low) + cpu->Y;
+	uint16_t a = high|low;
+	uint16_t sum = a + cpu->Y;
+
+	if (a>>8 != sum>>8) {
+		cpu->cycles++;
+	}
+
+	return sum;
 }
 
 inline uint16_t ind(struct cpu *cpu, struct memory *memory)
@@ -245,14 +259,42 @@ inline uint16_t ind(struct cpu *cpu, struct memory *memory)
 	return (high<<8 | low);
 }
 
+/* 
+ * abs_y lookups have a side effect for many instuctions:
+ * if the addition of the lower 8 bits of each value result in a carry,
+ * cpu->cycles is increased by 1.  If this is not the case for an
+ * instruction, the instruction should set the number of cycles after
+ * calling this function.
+ */
 inline uint16_t abs_y(struct cpu *cpu, struct memory *memory)
 {
-	return CPU_pop16_mem(cpu, memory) + cpu->Y;
+	uint16_t a = CPU_pop16_mem(cpu, memory);
+	uint16_t sum = a + cpu->Y;
+
+	if (a>>8 != sum>>8) {
+		cpu->cycles++;
+	}
+
+	return sum;
 }
 
+/* 
+ * abs_x lookups have a side effect for many instuctions:
+ * if the addition of the lower 8 bits of each value result in a carry,
+ * cpu->cycles is increased by 1.  If this is not the case for an
+ * instruction, the instruction should set the number of cycles after
+ * calling this function.
+ */
 inline uint16_t abs_x(struct cpu *cpu, struct memory *memory)
 {
-	return CPU_pop16_mem(cpu, memory) + cpu->X;
+	uint16_t a = CPU_pop16_mem(cpu, memory);
+	uint16_t sum = a + cpu->X;
+
+	if (a>>8 != sum>>8) {
+		cpu->cycles++;
+	}
+
+	return sum;
 }
 
 inline uint16_t zero_pg_x(struct cpu *cpu, struct memory *memory)
@@ -929,11 +971,11 @@ void ora_abs_x(struct cpu *cpu, struct memory *memory)
 
 void asl_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 7;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	asl(addr, cpu, memory);
+
+	cpu->cycles = 7;
 }
 
 void jsr_abs(struct cpu *cpu, struct memory *memory)
@@ -1136,11 +1178,11 @@ void and_abs_x(struct cpu *cpu, struct memory *memory)
 
 void rol_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 7;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	rol(addr, cpu, memory);
+
+	cpu->cycles = 7;
 }
 
 void rti(struct cpu *cpu, struct memory *memory)
@@ -1327,11 +1369,11 @@ void eor_abs_x(struct cpu *cpu, struct memory *memory)
 
 void lsr_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 7;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	lsr(addr, cpu, memory);
+
+	cpu->cycles = 7;
 }
 
 void rts(struct cpu *cpu, struct memory *memory)
@@ -1512,11 +1554,11 @@ void adc_abs_x(struct cpu *cpu, struct memory *memory)
 
 void ror_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 7;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	ror(addr, cpu, memory);
+
+	cpu->cycles = 7;
 }
 
 void sta_ind_x(struct cpu *cpu, struct memory *memory)
@@ -1620,11 +1662,11 @@ void bcc_r(struct cpu *cpu, struct memory *memory)
 
 void sta_ind_y(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 6;
-
 	cpu->PC++;
 	uint16_t addr = ind_y(cpu, memory);
 	sta(addr, cpu, memory);
+
+	cpu->cycles = 6;
 }
 
 void sty_zero_pg_x(struct cpu *cpu, struct memory *memory)
@@ -1667,11 +1709,11 @@ void tya(struct cpu *cpu, struct memory *memory)
 
 void sta_abs_y(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 5;
-
 	cpu->PC++;
 	uint16_t addr = abs_y(cpu, memory);
 	sta(addr, cpu, memory);
+
+	cpu->cycles = 5;
 }
 
 void txs(struct cpu *cpu, struct memory *memory)
@@ -1684,11 +1726,11 @@ void txs(struct cpu *cpu, struct memory *memory)
 
 void sta_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 5;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	sta(addr, cpu, memory);
+
+	cpu->cycles = 5;
 }
 
 void ldy_imm(struct cpu *cpu, struct memory *memory)
@@ -2078,11 +2120,11 @@ void cmp_abs_x(struct cpu *cpu, struct memory *memory)
 
 void dec_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 7;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	dec(addr, cpu, memory);
+
+	cpu->cycles = 7;
 }
 
 void cpx_imm(struct cpu *cpu, struct memory *memory)
@@ -2251,11 +2293,11 @@ void sbc_abs_x(struct cpu *cpu, struct memory *memory)
 
 void inc_abs_x(struct cpu *cpu, struct memory *memory)
 {
-	cpu->cycles = 7;
-
 	cpu->PC++;
 	uint16_t addr = abs_x(cpu, memory);
 	inc(addr, cpu, memory);
+
+	cpu->cycles = 7;
 }
 
 void nop_1_bytes_2_cycles(struct cpu *cpu, struct memory *memory) {
