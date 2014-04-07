@@ -271,27 +271,17 @@ inline void increment_cycle(struct ppu *ppu)
 	}
 }
 
-inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
+inline void process_sprites(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
-	// VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd dot of scanline 261
-	if (ppu->line == 261 && ppu->dot == 1) {
-		clear_vblank_flag(ppu);
-		clear_sprite_overflow_flag(ppu);
-		clear_sprite_0_hit_flag(ppu);
-	}
-
 	if (ppu->line == 261 || ppu->line >= 240) {
 		if((ppu->dot >= 257) && (ppu->dot <= 320)) {
 			ppu->oam_addr = 0;
 		}
 	}
+}
 
-	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
-	 * start of the VBLANKing interval. */
-	if (ppu->line == 241 && ppu->dot == 1) {
-		set_vblank_flag(ppu);
-	}
-
+inline void process_background(struct ppu *ppu, struct ppu_memory *ppu_mem)
+{
 	if (ppu->line < 240 || ppu->line == 261) {
 		if ((ppu->dot < 257 && ppu->dot > 0) || (ppu->dot > 320)) {
 			uint8_t fetch_cycle = ppu->dot % 8;
@@ -317,13 +307,31 @@ inline void render(struct ppu *ppu, struct ppu_memory *ppu_mem)
 	}
 }
 
+inline void set_flags(struct ppu *ppu, struct ppu_memory *ppu_mem)
+{
+	// VBLANK, sprite overflow, and sprite 0 hit flags are cleared at the 2nd dot of scanline 261
+	if (ppu->line == 261 && ppu->dot == 1) {
+		clear_vblank_flag(ppu);
+		clear_sprite_overflow_flag(ppu);
+		clear_sprite_0_hit_flag(ppu);
+	}
+
+	/* VBLANK flag is set at the 2nd cycle of scanline 241.  This is the
+	 * start of the VBLANKing interval. */
+	if (ppu->line == 241 && ppu->dot == 1) {
+		set_vblank_flag(ppu);
+	}
+}
+
 uint8_t PPU_step(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
 #ifdef DEBUG_PPU
 	(void)printf("SL %03d.%03d ", ppu->line, ppu->dot);
 #endif
 	int return_val = 1;
-	render(ppu, ppu_mem);	
+	set_flags(ppu, ppu_mem);	
+	process_sprites(ppu, ppu_mem);
+	process_background(ppu, ppu_mem);
 
 	// check for NMI
 	if (ppu->line == 241 && ppu->dot == 1) {
