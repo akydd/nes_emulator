@@ -283,12 +283,54 @@ inline void process_sprites(struct ppu *ppu, struct ppu_memory *ppu_mem)
 inline void process_background(struct ppu *ppu, struct ppu_memory *ppu_mem)
 {
 	if (ppu->line < 240 || ppu->line == 261) {
+		// special case for line 261
+		if (ppu->line == 261) {
+			if (ppu->dot >= 280 && ppu->dot <= 304) {
+				// vertical_v = vertical_t
+				ppu->loopy_v = set_bits(ppu->loopy_t, ppu->loopy_v, 5, 5, 5);
+				ppu->loopy_v = set_bits(ppu->loopy_t, ppu->loopy_v, 4, 11, 11);
+			}
+		}
+
+		if (ppu->dot == 257) {
+			// horizontal_v = horizontal_t
+			ppu->loopy_v = set_bits(ppu->loopy_t, ppu->loopy_v, 5, 0, 0);
+			ppu->loopy_v = set_bits(ppu->loopy_t, ppu->loopy_v, 1, 10, 10);
+		}
+
+		if (ppu->dot == 256) {
+			// increment vertical_v
+			// Code taken from
+			// http://wiki.nesdev.com/w/index.php/The_skinny_on_NES_scrolling#Wrapping_around
+			if ((ppu->loopy_v & 0x7000) != 0x7000) {			// if fine Y < 7
+				ppu->loopy_v += 0x1000;					// increment fine Y
+			} else {
+				ppu->loopy_v &= ~0x7000;				// fine Y = 0
+				int y = (ppu->loopy_v & 0x03E0) >> 5;			// let y = coarse Y
+				if (y == 29) {
+					y = 0;						// coarse Y = 0
+					ppu->loopy_v ^= 0x0800;				// switch vertical nametable
+				} else if (y == 31) {
+					y = 0;						// coarse Y = 0, nametable not switched
+				} else {
+					y += 1;						// increment coarse Y
+				}
+				ppu->loopy_v = (ppu->loopy_v & ~0x03E0) | (y << 5);	// put coarse Y back into v
+			}
+		}
+
 		if ((ppu->dot < 257 && ppu->dot > 0) || (ppu->dot > 320)) {
 			uint8_t fetch_cycle = ppu->dot % 8;
 
 			switch(fetch_cycle) {
 				case 0:
-					// increment horizontal
+					// increment horizontal_v
+					if ((ppu->loopy_v & 0x001F) == 31) {	// if coarse X == 31
+						ppu->loopy_v &= ~0x001F;	// coarse X = 0
+						ppu->loopy_v ^= 0x0400;		// switch horizontal nametable
+					} else {
+						ppu->loopy_v += 1;		// increment coarse X
+					}
 					break;
 				case 2:
 					// fetch nametable address
