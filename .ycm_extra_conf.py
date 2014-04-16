@@ -1,6 +1,5 @@
 import os
 import ycm_core
-from clang_helpers import PrepareClangFlags
 
 # These are the compilation flags that will be used in case there's no
 # compilation database set (by default, one is not set).
@@ -60,10 +59,12 @@ flags = [
 # 'flags' list of compilation flags. Notice that YCM itself uses that approach.
 compilation_database_folder = ''
 
-if compilation_database_folder:
+if os.path.exists(compilation_database_folder):
   database = ycm_core.CompilationDatabase( compilation_database_folder )
 else:
   database = None
+
+SOURCE_EXTENSIONS = [ '.cpp', '.cxx', '.cc', '.c' ]
 
 
 def DirectoryOfThisScript():
@@ -99,16 +100,35 @@ def MakeRelativePathsInFlagsAbsolute( flags, working_directory ):
   return new_flags
 
 
-def FlagsForFile( filename ):
+def IsHeaderFile( filename ):
+    extension = os.path.splitext( filename )[1]
+    return extension in [ '.h', '.hxx', '.hpp', '.hh' ]
+
+def GetCompilationInfoForFile( filename ):
+    if IsHeaderFile( filename ):
+        basename = os.path.splitext( filename )[0]
+        for extension in SOURCE_EXTENSIONS:
+            replacement_file = basename + extension
+            if os.path.exists( replacement_file ):
+                compilation_info = database.GetCompilationInfoForFile(
+                        replacement_file)
+                if compilation_info.compiler_flags_:
+                    return compilation_info
+        return None
+    return database.GetCompilationInfoForFile( filename )
+
+def FlagsForFile( filename, **kwargs ):
   if database:
     # Bear in mind that compilation_info.compiler_flags_ does NOT return a
     # python list, but a "list-like" StringVec object
-    compilation_info = database.GetCompilationInfoForFile( filename )
-    final_flags = PrepareClangFlags(
-        MakeRelativePathsInFlagsAbsolute(
-            compilation_info.compiler_flags_,
-            compilation_info.compiler_working_dir_ ),
-        filename )
+    compilation_info = GetCompilationInfoForFile( filename )
+    if not compilation_info:
+        return None
+
+
+    final_flags = MakeRelativePathsInFlagsAbsolute(
+        compilation_info.compiler_flags_,
+        compilation_info.compiler_working_dir_ )
 
     # NOTE: This is just for YouCompleteMe; it's highly likely that your project
     # does NOT need to remove the stdlib flag. DO NOT USE THIS IN YOUR
